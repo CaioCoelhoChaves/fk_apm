@@ -1,0 +1,39 @@
+{
+  "name": "fk-apm",
+  "owner": {
+    "name": "CaioCoelhoChaves",
+    "url": "https://github.com/CaioCoelhoChaves"
+  },
+  "plugins": [
+    {
+      "name": "flutter-widgets",
+      "description": "Best practices and architecture for creating, editing, and organizing Flutter widgets in FK projects",
+      "version": "0.1.0",
+      "source": "./skills/flutter-widgets"
+    },
+    {
+      "name": "flutter-navigation",
+      "description": "Routing and navigation best practices for Flutter applications using GoRouter",
+      "version": "0.1.0",
+      "source": "./skills/flutter-navigation"
+    },
+    {
+      "name": "flutter-testing",
+      "description": "Testing best practices for Dart and Flutter projects (unit, widget, golden tests)",
+      "version": "0.1.0",
+      "source": "./skills/flutter-testing"
+    },
+    {
+      "name": "flutter-accessibility",
+      "description": "Flutter accessibility auditing and remediation across WCAG 2.1 conformance levels (A, AA, AAA)",
+      "version": "0.1.0",
+      "source": "./skills/flutter-accessibility"
+    },
+    {
+      "name": "flutter-internationalization",
+      "description": "Flutter internationalization (i18n) and localization (l10n) best practices with ARB files",
+      "version": "0.1.0",
+      "source": "./skills/flutter-internationalization"
+    }
+  ]
+}

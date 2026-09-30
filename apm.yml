@@ -1,0 +1,68 @@
+name: fk_apm
+version: 0.1.0
+description: Central APM repository for shared Flutter, Dart, and FK ecosystem AI agent skills and dependencies
+author: Caio Coelho Chaves
+license: MIT
+
+# Which agent platforms to deploy to (uncomment or specify via --target when installing):
+# targets:
+#   - copilot
+#   - claude
+#   - cursor
+
+# Dependencies required by this package (if any upstream APM packages or MCP servers are needed)
+dependencies:
+  apm: []
+  mcp: []
+
+includes: auto
+
+# Project scripts
+scripts:
+  audit: apm audit
+  pack: apm pack
+  pack-agent-plugin: apm pack --format agent-plugin
+  check-marketplace: apm marketplace check --offline
+
+# Marketplace configuration for discovering and installing packages from this repository
+marketplace:
+  name: fk_apm
+  owner:
+    name: CaioCoelhoChaves
+    url: https://github.com/CaioCoelhoChaves
+
+  # Default tag pattern used to resolve version ranges
+  build:
+    tagPattern: "v{version}"
+
+  # Output targets for marketplace generation
+  outputs:
+    claude: {}
+    # codex: {}
+
+  # Packaged skills available in this repository
+  packages:
+    - name: flutter-widgets
+      description: Best practices and architecture for creating, editing, and organizing Flutter widgets in FK projects
+      source: ./skills/flutter-widgets
+      version: 0.1.0
+
+    - name: flutter-navigation
+      description: Routing and navigation best practices for Flutter applications using GoRouter
+      source: ./skills/flutter-navigation
+      version: 0.1.0
+
+    - name: flutter-testing
+      description: Testing best practices for Dart and Flutter projects (unit, widget, golden tests)
+      source: ./skills/flutter-testing
+      version: 0.1.0
+
+    - name: flutter-accessibility
+      description: Flutter accessibility auditing and remediation across WCAG 2.1 conformance levels (A, AA, AAA)
+      source: ./skills/flutter-accessibility
+      version: 0.1.0
+
+    - name: flutter-internationalization
+      description: Flutter internationalization (i18n) and localization (l10n) best practices with ARB files
+      source: ./skills/flutter-internationalization
+      version: 0.1.0
