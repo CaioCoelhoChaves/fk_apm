@@ -1,0 +1,34 @@
+lockfile_version: '1'
+apm_version: 0.31.0
+dependencies:
+- repo_url: _local/flutter-accessibility
+  name: flutter-accessibility
+  version: unknown
+  package_type: claude_skill
+  source: local
+  local_path: ../../skills/flutter-accessibility
+- repo_url: _local/flutter-internationalization
+  name: flutter-internationalization
+  version: unknown
+  package_type: claude_skill
+  source: local
+  local_path: ../../skills/flutter-internationalization
+- repo_url: _local/flutter-navigation
+  name: flutter-navigation
+  version: unknown
+  package_type: claude_skill
+  source: local
+  local_path: ../../skills/flutter-navigation
+- repo_url: _local/flutter-testing
+  name: flutter-testing
+  version: unknown
+  package_type: claude_skill
+  source: local
+  local_path: ../../skills/flutter-testing
+- repo_url: _local/flutter-widgets
+  name: flutter-widgets
+  version: unknown
+  package_type: claude_skill
+  source: local
+  local_path: ../../skills/flutter-widgets
+deployments: []

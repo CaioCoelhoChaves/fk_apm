@@ -14,14 +14,15 @@ Built upon the [Microsoft Agent Package Manager (APM)](https://github.com/micros
 ## Table of Contents
 
 - [Overview](#overview)
-- [Included Skills](#included-skills)
+- [Skill Bundles & Skills](#skill-bundles--skills)
 - [How to Use in Your Projects](#how-to-use-in-your-projects)
-  - [1. Install via APM CLI](#1-install-via-apm-cli)
-  - [2. Declare in `apm.yml`](#2-declare-in-apmyl)
-  - [3. Register as an APM Marketplace](#3-register-as-an-apm-marketplace)
-  - [4. Local Development (Sibling Packages)](#4-local-development-sibling-packages)
+  - [1. Install the `flutter` Bundle](#1-install-the-flutter-bundle)
+  - [2. Install Individual Skills](#2-install-individual-skills)
+  - [3. Declare in Consumer `apm.yml`](#3-declare-in-consumer-apmyl)
+  - [4. Install via APM Marketplace](#4-install-via-apm-marketplace)
+  - [5. Local Development (Sibling Packages)](#5-local-development-sibling-packages)
 - [Repository Structure](#repository-structure)
-- [Adding New Skills](#adding-new-skills)
+- [Adding New Skills or Bundles](#adding-new-skills-or-bundles)
 - [APM CLI Reference](#apm-cli-reference)
 - [Publishing to GitHub](#publishing-to-github)
 
@@ -32,13 +33,21 @@ Built upon the [Microsoft Agent Package Manager (APM)](https://github.com/micros
 When developing across multiple Dart and Flutter packages (such as `fk_booster`), maintaining agent rules, coding guidelines, and skills manually in each repository quickly causes configuration drift.
 
 With `fk_apm`:
-1. **Declare Once:** Define your AI skills, prompts, and standards in this repository.
-2. **Reproduce Everywhere:** Consumer projects install dependencies via `apm install`, automatically deploying them into client harnesses (`.github/skills/`, `.claude/skills/`, `.cursor/`, etc.).
+1. **Declare Once:** Define your AI skills, prompts, and bundles in this repository.
+2. **Reproduce Everywhere:** Consumer projects install bundles or skills via `apm install`, automatically deploying them into client harnesses (`.github/skills/`, `.claude/skills/`, `.cursor/`, etc.).
 3. **Lock & Audit:** Reproducible lockfiles (`apm.lock.yaml`) and security scanning via `apm audit`.
 
 ---
 
-## Included Skills
+## Skill Bundles & Skills
+
+### Available Bundles
+
+| Bundle | Description | Included Skills | Path |
+| :--- | :--- | :--- | :--- |
+| **`flutter`** | Complete Flutter development bundle | `flutter-widgets`, `flutter-navigation`, `flutter-testing`, `flutter-accessibility`, `flutter-internationalization` | [`bundles/flutter/`](bundles/flutter/apm.yml) |
+
+### Individual Skills
 
 | Skill | Description | Allowed Tools | Location |
 | :--- | :--- | :--- | :--- |
@@ -52,47 +61,51 @@ With `fk_apm`:
 
 ## How to Use in Your Projects
 
-### 1. Install via APM CLI
+### 1. Install the `flutter` Bundle
 
-To install the entire skill collection into an existing project:
+To install all Flutter skills in a single command, install the `flutter` bundle:
 
 ```bash
-apm install CaioCoelhoChaves/fk_apm
+apm install CaioCoelhoChaves/fk_apm/bundles/flutter
 ```
 
-To install an individual skill:
+### 2. Install Individual Skills
+
+To install only a specific skill:
 
 ```bash
 apm install CaioCoelhoChaves/fk_apm --skill flutter-widgets
 ```
 
-*(Optional)* If your project does not have harness markers configured yet, specify target platforms directly:
+*(Optional)* If your target project does not have harness markers configured yet, specify target platforms directly:
 
 ```bash
-apm install CaioCoelhoChaves/fk_apm --target copilot,claude,cursor
+apm install CaioCoelhoChaves/fk_apm/bundles/flutter --target copilot,claude,cursor
 ```
 
-### 2. Declare in `apm.yml`
+### 3. Declare in Consumer `apm.yml`
 
-In your consumer project root, declare `fk_apm` in `apm.yml`:
+In your consumer project root, declare the dependency in `apm.yml`:
 
 ```yaml
 name: my_fk_project
 version: 1.0.0
 
-# Pin target harnesses (e.g. copilot, claude, cursor)
+# Pin target harnesses
 targets:
   - copilot
   - claude
 
 dependencies:
   apm:
-    # Option A: Pull the full skill collection
-    - CaioCoelhoChaves/fk_apm
+    # Option A: Install the complete Flutter bundle (recommended)
+    - CaioCoelhoChaves/fk_apm/bundles/flutter
 
-    # Option B: Pull specific skills only
+    # Option B: Install the entire repository collection
+    # - CaioCoelhoChaves/fk_apm
+
+    # Option C: Install specific individual skills
     # - CaioCoelhoChaves/fk_apm/skills/flutter-widgets
-    # - CaioCoelhoChaves/fk_apm/skills/flutter-navigation
 ```
 
 Then resolve and deploy:
@@ -101,28 +114,31 @@ Then resolve and deploy:
 apm install
 ```
 
-### 3. Register as an APM Marketplace
+### 4. Install via APM Marketplace
 
-You can also register `fk_apm` as a named marketplace in your APM CLI environment:
+You can register `fk_apm` as a named marketplace in your APM CLI environment:
 
 ```bash
 # Register marketplace
 apm marketplace add fk CaioCoelhoChaves/fk_apm
 
-# Browse available skills
+# Browse available packages and bundles
 apm marketplace browse fk
 
-# Install skills directly from the marketplace
+# Install the flutter bundle from the marketplace
+apm install flutter@fk
+
+# Or install an individual skill
 apm install flutter-widgets@fk
 ```
 
-### 4. Local Development (Sibling Packages)
+### 5. Local Development (Sibling Packages)
 
-When working locally across `fk_packages/` without pushing to GitHub first, you can reference `fk_apm` by relative path:
+When developing locally across `fk_packages/` without pushing to GitHub first, you can reference the local bundle path:
 
 ```bash
 cd ../fk_booster
-apm install ../fk_apm --target claude
+apm install ../fk_apm/bundles/flutter --target claude
 ```
 
 ---
@@ -136,6 +152,10 @@ fk_apm/
 │       └── apm-ci.yml                 # Automated CI workflow
 ├── .claude-plugin/
 │   └── marketplace.json               # Generated Claude plugin marketplace
+├── bundles/
+│   └── flutter/                       # 'flutter' bundle manifest & lockfile
+│       ├── apm.yml
+│       └── apm.lock.yaml
 ├── skills/
 │   ├── _template/                     # Starter template for new skills
 │   ├── flutter-accessibility/         # Accessibility auditing skill & references
@@ -145,25 +165,23 @@ fk_apm/
 │   └── flutter-widgets/               # Flutter widget architecture skill
 ├── .gitignore                         # Configured for APM caches & build artifacts
 ├── apm.yml                            # Primary APM manifest & marketplace catalog
-├── apm.lock.yaml                      # Resolved lockfile
-├── CONTRIBUTING.md                    # Guidelines for authoring skills
+├── apm.lock.yaml                      # Root lockfile
+├── CONTRIBUTING.md                    # Guidelines for authoring skills and bundles
 ├── LICENSE                            # MIT License
 └── README.md                          # Documentation
 ```
 
 ---
 
-## Adding New Skills
+## Adding New Skills or Bundles
 
+### Adding a Skill
 1. Copy the starter template:
    ```bash
    cp -r skills/_template skills/my-new-skill
    ```
-2. Edit `skills/my-new-skill/SKILL.md`:
-   - Set `name: my-new-skill` in YAML frontmatter (must match folder name).
-   - Add a concise description under 1,024 characters.
-   - Keep the main body under 500 lines, delegating details to `references/`.
-3. Register the package in `apm.yml` under `marketplace.packages`.
+2. Edit `skills/my-new-skill/SKILL.md` (ensure `name:` matches folder name).
+3. If applicable, add it to a bundle in `bundles/<bundle-name>/apm.yml` or create a new bundle.
 4. Validate and build artifacts:
    ```bash
    apm marketplace check --offline

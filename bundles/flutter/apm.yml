@@ -1,0 +1,14 @@
+name: flutter
+version: 0.1.0
+description: Complete Flutter development bundle containing widgets, navigation, testing, accessibility, and internationalization skills
+author: Caio Coelho Chaves
+license: MIT
+
+dependencies:
+  apm:
+    - ../../skills/flutter-widgets
+    - ../../skills/flutter-navigation
+    - ../../skills/flutter-testing
+    - ../../skills/flutter-accessibility
+    - ../../skills/flutter-internationalization
+  mcp: []

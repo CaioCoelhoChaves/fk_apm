@@ -6,6 +6,12 @@
   },
   "plugins": [
     {
+      "name": "flutter",
+      "description": "Complete Flutter development bundle containing widgets, navigation, testing, accessibility, and internationalization skills",
+      "version": "0.1.0",
+      "source": "./bundles/flutter"
+    },
+    {
       "name": "flutter-widgets",
       "description": "Best practices and architecture for creating, editing, and organizing Flutter widgets in FK projects",
       "version": "0.1.0",

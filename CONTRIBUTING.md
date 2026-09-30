@@ -13,6 +13,10 @@ fk_apm/
 │       └── apm-ci.yml             # Automated CI auditing
 ├── .claude-plugin/
 │   └── marketplace.json           # Generated marketplace artifact
+├── bundles/
+│   └── flutter/                   # 'flutter' bundle manifest & lockfile
+│       ├── apm.yml
+│       └── apm.lock.yaml
 ├── skills/
 │   ├── _template/                 # Starter template for new skills
 │   ├── flutter-widgets/           # Widget architecture guidelines
@@ -71,18 +75,39 @@ To keep AI context windows efficient:
 
 ---
 
-## Registering in `apm.yml`
+## Authoring Bundles
 
-Whenever you add or update a skill, register it in the `marketplace.packages` block in `apm.yml`:
+Bundles allow consumers to install multiple related skills with a single command.
 
-```yaml
-marketplace:
-  packages:
-    - name: flutter-example-skill
-      description: Concise human-facing description
-      source: ./skills/flutter-example-skill
-      version: 0.1.0
-```
+To create a new bundle:
+1. Create a directory under `bundles/<bundle-name>/`.
+2. Add an `apm.yml` specifying the skills it bundles:
+   ```yaml
+   name: bundle-name
+   version: 0.1.0
+   description: Human-readable bundle description
+   license: MIT
+   dependencies:
+     apm:
+       - ../../skills/flutter-widgets
+       - ../../skills/flutter-navigation
+     mcp: []
+   ```
+3. Generate the bundle lockfile:
+   ```bash
+   cd bundles/<bundle-name>
+   apm lock
+   cd ../..
+   ```
+4. Register the bundle under `marketplace.packages` in the root `apm.yml`:
+   ```yaml
+   marketplace:
+     packages:
+       - name: bundle-name
+         description: Concise description
+         source: ./bundles/bundle-name
+         version: 0.1.0
+   ```
 
 ---
 
