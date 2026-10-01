@@ -6,6 +6,18 @@
   },
   "plugins": [
     {
+      "name": "default",
+      "description": "Default essential skill bundle containing skill-creator",
+      "version": "0.1.0",
+      "source": "./bundles/default"
+    },
+    {
+      "name": "skill-creator",
+      "description": "Create new skills, modify and improve existing skills, and measure skill performance",
+      "version": "0.1.0",
+      "source": "./skills/skill-creator"
+    },
+    {
       "name": "flutter",
       "description": "Complete Flutter development bundle containing widgets, navigation, testing, accessibility, and internationalization skills",
       "version": "0.1.0",

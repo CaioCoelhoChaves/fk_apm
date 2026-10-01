@@ -1,0 +1,10 @@
+lockfile_version: '1'
+apm_version: 0.31.0
+dependencies:
+- repo_url: _local/skill-creator
+  name: skill-creator
+  version: unknown
+  package_type: claude_skill
+  source: local
+  local_path: ../../skills/skill-creator
+deployments: []

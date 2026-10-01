@@ -45,12 +45,14 @@ With `fk_apm`:
 
 | Bundle | Description | Included Skills | Path |
 | :--- | :--- | :--- | :--- |
+| **`default`** | Default essential skill bundle | `skill-creator` | [`bundles/default/`](bundles/default/apm.yml) |
 | **`flutter`** | Complete Flutter development bundle | `flutter-widgets`, `flutter-navigation`, `flutter-testing`, `flutter-accessibility`, `flutter-internationalization` | [`bundles/flutter/`](bundles/flutter/apm.yml) |
 
 ### Individual Skills
 
 | Skill | Description | Allowed Tools | Location |
 | :--- | :--- | :--- | :--- |
+| **`skill-creator`** | Create, edit, evaluate, and iteratively optimize AI agent skills with benchmarks | Standard Agent Tools | [`skills/skill-creator/`](skills/skill-creator/SKILL.md) |
 | **`flutter-widgets`** | Architecture rules for `Page`, `PageSection`, `CoreComponent`, and `PageComponent` using `ViewState` | `Read`, `Glob`, `Grep` | [`skills/flutter-widgets/`](skills/flutter-widgets/SKILL.md) |
 | **`flutter-navigation`** | GoRouter & GoRouterBuilder routing, path/query parameters, redirects, and testing | `Read`, `Glob`, `Grep` | [`skills/flutter-navigation/`](skills/flutter-navigation/SKILL.md) |
 | **`flutter-testing`** | Unit, widget, and golden file testing standards with `mocktail` and `bloc_test` | `Read`, `Glob`, `Grep` | [`skills/flutter-testing/`](skills/flutter-testing/SKILL.md) |
@@ -86,17 +88,21 @@ You can add the bundle either **automatically via the CLI** or **manually inside
 Running `apm install` with the bundle repository path will automatically resolve the skills, deploy them into your agent folders, and **record the dependency inside your project's `apm.yml` and `apm.lock.yaml`**:
 
 ```bash
-# Install the Flutter bundle from GitHub:
+# Install the default bundle (skill-creator):
+apm install CaioCoelhoChaves/fk_apm/bundles/default
+
+# Install the Flutter bundle (all 5 Flutter skills):
 apm install CaioCoelhoChaves/fk_apm/bundles/flutter
 
 # Or install from a local sibling directory (during local development):
+apm install ../fk_apm/bundles/default
 apm install ../fk_apm/bundles/flutter
 ```
 
 > [!TIP]
 > If your project does not have harness markers configured yet (e.g. `CLAUDE.md`, `.github/copilot-instructions.md`, or `.cursor/`), tell APM which AI assistants to deploy to using `--target`:
 > ```bash
-> apm install CaioCoelhoChaves/fk_apm/bundles/flutter --target copilot,claude,cursor
+> apm install CaioCoelhoChaves/fk_apm/bundles/default --target copilot,claude,cursor
 > ```
 
 ---
@@ -118,14 +124,19 @@ targets:
 # 2. Declare APM dependencies:
 dependencies:
   apm:
-    # Install the full Flutter bundle (widgets, navigation, testing, a11y, i18n):
+    # Default bundle (skill-creator for creating and refining skills):
+    - CaioCoelhoChaves/fk_apm/bundles/default
+
+    # Complete Flutter bundle (widgets, navigation, testing, a11y, i18n):
     - CaioCoelhoChaves/fk_apm/bundles/flutter
 
     # Pin to a specific version or git branch:
+    # - CaioCoelhoChaves/fk_apm/bundles/default#v0.1.0
     # - CaioCoelhoChaves/fk_apm/bundles/flutter#v0.1.0
     # - CaioCoelhoChaves/fk_apm/bundles/flutter#main
 
     # Or reference a local sibling path during monorepo / offline work:
+    # - ../fk_apm/bundles/default
     # - ../fk_apm/bundles/flutter
 
     # Or install a single individual skill instead of the full bundle:

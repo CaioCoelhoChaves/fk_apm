@@ -42,6 +42,16 @@ marketplace:
 
   # Packages and bundles cataloged in this repository
   packages:
+    - name: default
+      description: Default essential skill bundle containing skill-creator
+      source: ./bundles/default
+      version: 0.1.0
+
+    - name: skill-creator
+      description: Create new skills, modify and improve existing skills, and measure skill performance
+      source: ./skills/skill-creator
+      version: 0.1.0
+
     - name: flutter
       description: Complete Flutter development bundle containing widgets, navigation, testing, accessibility, and internationalization skills
       source: ./bundles/flutter
