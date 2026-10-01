@@ -24,3 +24,6 @@ yarn-debug.log*
 scratch/
 *.tmp
 *.bak
+
+# Skills folder
+.agents/skills/

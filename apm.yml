@@ -4,15 +4,14 @@ description: Central APM repository for shared Flutter, Dart, and FK ecosystem A
 author: Caio Coelho Chaves
 license: MIT
 
-# Which agent platforms to deploy to (uncomment or specify via --target when installing):
-# targets:
-#   - copilot
-#   - claude
-#   - cursor
+# Agent platforms to deploy to:
+targets:
+  - antigravity
 
 # Dependencies required by this package (if any upstream APM packages or MCP servers are needed)
 dependencies:
-  apm: []
+  apm:
+    - CaioCoelhoChaves/fk_apm/bundles/default
   mcp: []
 
 includes: auto
