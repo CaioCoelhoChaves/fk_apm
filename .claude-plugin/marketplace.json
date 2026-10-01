@@ -7,9 +7,15 @@
   "plugins": [
     {
       "name": "default",
-      "description": "Default essential skill bundle containing skill-creator and skill-bundle-manager",
+      "description": "Default essential skill bundle containing skill-creator, skill-bundle-manager, and git-workflow",
       "version": "0.1.0",
       "source": "./bundles/default"
+    },
+    {
+      "name": "git-workflow",
+      "description": "Gitflow branching workflow and Conventional Commits 1.0.0 enforcement using GitHub Copilot CLI for commits and PRs",
+      "version": "0.1.0",
+      "source": "./skills/git-workflow"
     },
     {
       "name": "skill-bundle-manager",

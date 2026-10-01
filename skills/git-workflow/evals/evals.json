@@ -1,0 +1,23 @@
+{
+  "skill_name": "git-workflow",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I just finished the biometric login feature on branch feature/biometric-auth. Please commit my staged changes.",
+      "expected_output": "The agent must check staged changes, formulate a Conventional Commit 1.0.0 message directly (e.g. 'feat(auth): add biometric login support'), execute the commit via git commit, and verify with git log.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "I'm ready to open a pull request for feature/dark-mode. Can you create the PR for me?",
+      "expected_output": "The agent must verify that the branch is a feature branch, target 'develop' (not 'main') following Gitflow, use Conventional Commits for the PR title, format the PR body using the structured template, and create the PR using the GitHub CLI ('gh pr create').",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "We discovered a crash in production on main branch. I patched the null check in token_service.dart. Please commit the fix and open a PR.",
+      "expected_output": "The agent must recognize this as a hotfix (hotfix/* branch off main), commit with 'fix(auth): ...', and create the PR targeting 'main' using the GitHub CLI ('gh pr create') while noting the subsequent sync into 'develop'.",
+      "files": []
+    }
+  ]
+}

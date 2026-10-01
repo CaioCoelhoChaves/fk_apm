@@ -11,7 +11,7 @@ targets:
 # Dependencies required by this package (if any upstream APM packages or MCP servers are needed)
 dependencies:
   apm:
-    - CaioCoelhoChaves/fk_apm/bundles/default
+    - ./bundles/default
   mcp: []
 
 includes: auto
@@ -42,8 +42,13 @@ marketplace:
   # Packages and bundles cataloged in this repository
   packages:
     - name: default
-      description: Default essential skill bundle containing skill-creator and skill-bundle-manager
+      description: Default essential skill bundle containing skill-creator, skill-bundle-manager, and git-workflow
       source: ./bundles/default
+      version: 0.1.0
+
+    - name: git-workflow
+      description: Gitflow branching workflow and Conventional Commits 1.0.0 enforcement using GitHub CLI (gh) for PRs and git for commits
+      source: ./skills/git-workflow
       version: 0.1.0
 
     - name: skill-bundle-manager

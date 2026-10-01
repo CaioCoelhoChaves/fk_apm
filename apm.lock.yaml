@@ -1,27 +1,39 @@
 lockfile_version: '1'
 apm_version: 0.31.0
 dependencies:
-- repo_url: caiocoelhochaves/fk_apm
-  materialization_repo_url: CaioCoelhoChaves/fk_apm
+- repo_url: _local/default
   name: default
-  host: github.com
-  resolved_commit: 046441134423550298e216e0d88759b7367a928c
   version: 0.1.0
-  virtual_path: bundles/default
-  is_virtual: true
   package_type: apm_package
-  content_hash: sha256:fbf10756d3e5441b139b88c88bbe1de79af506ed1686288847a8d3d099da1299
+  source: local
+  local_path: ./bundles/default
   declared_license: MIT
-- repo_url: caiocoelhochaves/fk_apm
-  materialization_repo_url: CaioCoelhoChaves/fk_apm
-  name: skill-bundle-manager
-  host: github.com
-  resolved_commit: 046441134423550298e216e0d88759b7367a928c
+- repo_url: _local/git-workflow
+  name: git-workflow
   version: unknown
-  virtual_path: skills/skill-bundle-manager
-  is_virtual: true
   depth: 2
-  resolved_by: CaioCoelhoChaves/fk_apm
+  resolved_by: _local/default
+  package_type: claude_skill
+  deployed_files:
+  - .agents/skills/git-workflow
+  - .agents/skills/git-workflow/SKILL.md
+  - .agents/skills/git-workflow/evals/evals.json
+  - .agents/skills/git-workflow/references/conventional-commits.md
+  - .agents/skills/git-workflow/references/gitflow.md
+  deployed_file_hashes:
+    .agents/skills/git-workflow/SKILL.md: sha256:fe5c2dda1f1ad87495a9268bb4bf9ba188d8dfb74f0768688a4aca1ed8da14bd
+    .agents/skills/git-workflow/evals/evals.json: sha256:c6a9339a484eee8156c40d03a54a6681ea1cc59506eba4da42807e1a35636273
+    .agents/skills/git-workflow/references/conventional-commits.md: sha256:eef72f549453ecda0ea883e498f7ef2425868a8738b95b5234412ba9b98fa87c
+    .agents/skills/git-workflow/references/gitflow.md: sha256:04978cc38127efa4ee11111fad8a69a0a35eaeef4c195fcbae5aff69bdb7ff2e
+  source: local
+  local_path: ../../skills/git-workflow
+  declaring_parent: ./bundles/default
+  anchored_local_path: skills/git-workflow
+- repo_url: _local/skill-bundle-manager
+  name: skill-bundle-manager
+  version: unknown
+  depth: 2
+  resolved_by: _local/default
   package_type: claude_skill
   deployed_files:
   - .agents/skills/skill-bundle-manager
@@ -36,17 +48,15 @@ dependencies:
     .agents/skills/skill-bundle-manager/references/cross-project-pr-guide.md: sha256:fabbe5172541b8964d053f1c99e85e50480e634bb554d4c42f30430b490291c3
     .agents/skills/skill-bundle-manager/references/readme-sync-guide.md: sha256:b319dc78f9ebea6518c997c606d7afb95b63abaf68439446ad4bfd32b53bb1c3
     .agents/skills/skill-bundle-manager/scripts/verify_skills_and_bundles.py: sha256:ec34ba06082fdcaa14f4a6e5bf41cc84ecc1324b3f9f9a67bcef6575203c8dc3
-  content_hash: sha256:ffa7dc879c3e3221fae074c51cf2bbb50324f8e58ced7dee0dbdef0c4e1518a9
-- repo_url: caiocoelhochaves/fk_apm
-  materialization_repo_url: CaioCoelhoChaves/fk_apm
+  source: local
+  local_path: ../../skills/skill-bundle-manager
+  declaring_parent: ./bundles/default
+  anchored_local_path: skills/skill-bundle-manager
+- repo_url: _local/skill-creator
   name: skill-creator
-  host: github.com
-  resolved_commit: 046441134423550298e216e0d88759b7367a928c
   version: unknown
-  virtual_path: skills/skill-creator
-  is_virtual: true
   depth: 2
-  resolved_by: CaioCoelhoChaves/fk_apm
+  resolved_by: _local/default
   package_type: claude_skill
   deployed_files:
   - .agents/skills/skill-creator
@@ -87,16 +97,64 @@ dependencies:
     .agents/skills/skill-creator/scripts/run_eval.py: sha256:43e3b8f80dbf69c343967ba77e268fae991d9fa3ed68b32a0ff02532cd48657f
     .agents/skills/skill-creator/scripts/run_loop.py: sha256:7bd6f674203168520517eec94c55f493c0d154339b061b4d7c0f0dad187d0f21
     .agents/skills/skill-creator/scripts/utils.py: sha256:3af8ae62c40c73ab712207436a0d9a981e845f25c5a7040229eb189cc8e45bb1
-  content_hash: sha256:b2bfe91d69ca99994c0566baede889e7d2b9bb8791c6b6106c5d387392f717f6
+  source: local
+  local_path: ../../skills/skill-creator
+  declaring_parent: ./bundles/default
+  anchored_local_path: skills/skill-creator
 deployments:
+- kind: project-relative
+  target: antigravity
+  value: .agents/skills/git-workflow
+  runtime: null
+  scope: project
+  owners:
+  - local:skills/git-workflow
+  active_owner: local:skills/git-workflow
+  content_hash: null
+- kind: project-relative
+  target: antigravity
+  value: .agents/skills/git-workflow/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - local:skills/git-workflow
+  active_owner: local:skills/git-workflow
+  content_hash: sha256:fe5c2dda1f1ad87495a9268bb4bf9ba188d8dfb74f0768688a4aca1ed8da14bd
+- kind: project-relative
+  target: antigravity
+  value: .agents/skills/git-workflow/evals/evals.json
+  runtime: null
+  scope: project
+  owners:
+  - local:skills/git-workflow
+  active_owner: local:skills/git-workflow
+  content_hash: sha256:c6a9339a484eee8156c40d03a54a6681ea1cc59506eba4da42807e1a35636273
+- kind: project-relative
+  target: antigravity
+  value: .agents/skills/git-workflow/references/conventional-commits.md
+  runtime: null
+  scope: project
+  owners:
+  - local:skills/git-workflow
+  active_owner: local:skills/git-workflow
+  content_hash: sha256:eef72f549453ecda0ea883e498f7ef2425868a8738b95b5234412ba9b98fa87c
+- kind: project-relative
+  target: antigravity
+  value: .agents/skills/git-workflow/references/gitflow.md
+  runtime: null
+  scope: project
+  owners:
+  - local:skills/git-workflow
+  active_owner: local:skills/git-workflow
+  content_hash: sha256:04978cc38127efa4ee11111fad8a69a0a35eaeef4c195fcbae5aff69bdb7ff2e
 - kind: project-relative
   target: antigravity
   value: .agents/skills/skill-bundle-manager
   runtime: null
   scope: project
   owners:
-  - caiocoelhochaves/fk_apm/skills/skill-bundle-manager
-  active_owner: caiocoelhochaves/fk_apm/skills/skill-bundle-manager
+  - local:skills/skill-bundle-manager
+  active_owner: local:skills/skill-bundle-manager
   content_hash: null
 - kind: project-relative
   target: antigravity
@@ -104,8 +162,8 @@ deployments:
   runtime: null
   scope: project
   owners:
-  - caiocoelhochaves/fk_apm/skills/skill-bundle-manager
-  active_owner: caiocoelhochaves/fk_apm/skills/skill-bundle-manager
+  - local:skills/skill-bundle-manager
+  active_owner: local:skills/skill-bundle-manager
   content_hash: sha256:60cbf4c567b871f14e90ae5968beb9f77b3ae1d96e89a2ee7835d4f2bdce90c7
 - kind: project-relative
   target: antigravity
@@ -113,8 +171,8 @@ deployments:
   runtime: null
   scope: project
   owners:
-  - caiocoelhochaves/fk_apm/skills/skill-bundle-manager
-  active_owner: caiocoelhochaves/fk_apm/skills/skill-bundle-manager
+  - local:skills/skill-bundle-manager
+  active_owner: local:skills/skill-bundle-manager
   content_hash: sha256:34127f809a031d5637d7f1a0df7c985d73853013813938bfa92c7939304213a9
 - kind: project-relative
   target: antigravity
@@ -122,8 +180,8 @@ deployments:
   runtime: null
   scope: project
   owners:
-  - caiocoelhochaves/fk_apm/skills/skill-bundle-manager
-  active_owner: caiocoelhochaves/fk_apm/skills/skill-bundle-manager
+  - local:skills/skill-bundle-manager
+  active_owner: local:skills/skill-bundle-manager
   content_hash: sha256:fabbe5172541b8964d053f1c99e85e50480e634bb554d4c42f30430b490291c3
 - kind: project-relative
   target: antigravity
@@ -131,8 +189,8 @@ deployments:
   runtime: null
   scope: project
   owners:
-  - caiocoelhochaves/fk_apm/skills/skill-bundle-manager
-  active_owner: caiocoelhochaves/fk_apm/skills/skill-bundle-manager
+  - local:skills/skill-bundle-manager
+  active_owner: local:skills/skill-bundle-manager
   content_hash: sha256:b319dc78f9ebea6518c997c606d7afb95b63abaf68439446ad4bfd32b53bb1c3
 - kind: project-relative
   target: antigravity
@@ -140,8 +198,8 @@ deployments:
   runtime: null
   scope: project
   owners:
-  - caiocoelhochaves/fk_apm/skills/skill-bundle-manager
-  active_owner: caiocoelhochaves/fk_apm/skills/skill-bundle-manager
+  - local:skills/skill-bundle-manager
+  active_owner: local:skills/skill-bundle-manager
   content_hash: sha256:ec34ba06082fdcaa14f4a6e5bf41cc84ecc1324b3f9f9a67bcef6575203c8dc3
 - kind: project-relative
   target: antigravity
@@ -149,8 +207,8 @@ deployments:
   runtime: null
   scope: project
   owners:
-  - caiocoelhochaves/fk_apm/skills/skill-creator
-  active_owner: caiocoelhochaves/fk_apm/skills/skill-creator
+  - local:skills/skill-creator
+  active_owner: local:skills/skill-creator
   content_hash: null
 - kind: project-relative
   target: antigravity
@@ -158,8 +216,8 @@ deployments:
   runtime: null
   scope: project
   owners:
-  - caiocoelhochaves/fk_apm/skills/skill-creator
-  active_owner: caiocoelhochaves/fk_apm/skills/skill-creator
+  - local:skills/skill-creator
+  active_owner: local:skills/skill-creator
   content_hash: sha256:bc6b3af2f331cbc7fb0da1344efb2cbe5877a31498b4d70dbc7000f3405a1362
 - kind: project-relative
   target: antigravity
@@ -167,8 +225,8 @@ deployments:
   runtime: null
   scope: project
   owners:
-  - caiocoelhochaves/fk_apm/skills/skill-creator
-  active_owner: caiocoelhochaves/fk_apm/skills/skill-creator
+  - local:skills/skill-creator
+  active_owner: local:skills/skill-creator
   content_hash: sha256:dcd4803e61e913e6fc27294184cd3a71f09f5e924ff20c8a9a20173e7b3c2bcf
 - kind: project-relative
   target: antigravity
@@ -176,8 +234,8 @@ deployments:
   runtime: null
   scope: project
   owners:
-  - caiocoelhochaves/fk_apm/skills/skill-creator
-  active_owner: caiocoelhochaves/fk_apm/skills/skill-creator
+  - local:skills/skill-creator
+  active_owner: local:skills/skill-creator
   content_hash: sha256:bf68f4cac5a56c673a928c2e6d619586c5b93ea364026ab37547772cb45a663a
 - kind: project-relative
   target: antigravity
@@ -185,8 +243,8 @@ deployments:
   runtime: null
   scope: project
   owners:
-  - caiocoelhochaves/fk_apm/skills/skill-creator
-  active_owner: caiocoelhochaves/fk_apm/skills/skill-creator
+  - local:skills/skill-creator
+  active_owner: local:skills/skill-creator
   content_hash: sha256:fe1fc9787c495d864c5d6eada47396478572325fde1b33a96d78bf4b849b7a3e
 - kind: project-relative
   target: antigravity
@@ -194,8 +252,8 @@ deployments:
   runtime: null
   scope: project
   owners:
-  - caiocoelhochaves/fk_apm/skills/skill-creator
-  active_owner: caiocoelhochaves/fk_apm/skills/skill-creator
+  - local:skills/skill-creator
+  active_owner: local:skills/skill-creator
   content_hash: sha256:57134da0c1a4eea33fbd74a1c9c44aa814f07d6bc64de303edb586f941e5d21a
 - kind: project-relative
   target: antigravity
@@ -203,8 +261,8 @@ deployments:
   runtime: null
   scope: project
   owners:
-  - caiocoelhochaves/fk_apm/skills/skill-creator
-  active_owner: caiocoelhochaves/fk_apm/skills/skill-creator
+  - local:skills/skill-creator
+  active_owner: local:skills/skill-creator
   content_hash: sha256:ce477dcc74dc1c0d1d3352646a79167b5a63634e936b1019160025065974e452
 - kind: project-relative
   target: antigravity
@@ -212,8 +270,8 @@ deployments:
   runtime: null
   scope: project
   owners:
-  - caiocoelhochaves/fk_apm/skills/skill-creator
-  active_owner: caiocoelhochaves/fk_apm/skills/skill-creator
+  - local:skills/skill-creator
+  active_owner: local:skills/skill-creator
   content_hash: sha256:fc9d1b9243fe5ab6012ebd579bd76d0035de1b79fd3b969de114defab26478fb
 - kind: project-relative
   target: antigravity
@@ -221,8 +279,8 @@ deployments:
   runtime: null
   scope: project
   owners:
-  - caiocoelhochaves/fk_apm/skills/skill-creator
-  active_owner: caiocoelhochaves/fk_apm/skills/skill-creator
+  - local:skills/skill-creator
+  active_owner: local:skills/skill-creator
   content_hash: sha256:a53213426ee1100441d701a3a0d49cda7a842f992d2c36463f4d3cc0258575fa
 - kind: project-relative
   target: antigravity
@@ -230,8 +288,8 @@ deployments:
   runtime: null
   scope: project
   owners:
-  - caiocoelhochaves/fk_apm/skills/skill-creator
-  active_owner: caiocoelhochaves/fk_apm/skills/skill-creator
+  - local:skills/skill-creator
+  active_owner: local:skills/skill-creator
   content_hash: sha256:8e8876180a8989b406a4d3edddf875b04cdfd5805cc8616686d552b11ce4455f
 - kind: project-relative
   target: antigravity
@@ -239,8 +297,8 @@ deployments:
   runtime: null
   scope: project
   owners:
-  - caiocoelhochaves/fk_apm/skills/skill-creator
-  active_owner: caiocoelhochaves/fk_apm/skills/skill-creator
+  - local:skills/skill-creator
+  active_owner: local:skills/skill-creator
   content_hash: sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
 - kind: project-relative
   target: antigravity
@@ -248,8 +306,8 @@ deployments:
   runtime: null
   scope: project
   owners:
-  - caiocoelhochaves/fk_apm/skills/skill-creator
-  active_owner: caiocoelhochaves/fk_apm/skills/skill-creator
+  - local:skills/skill-creator
+  active_owner: local:skills/skill-creator
   content_hash: sha256:123ef128ea5ccc01a4b1ac212ef5567f21e9c13d3d240609780beeb3200c49aa
 - kind: project-relative
   target: antigravity
@@ -257,8 +315,8 @@ deployments:
   runtime: null
   scope: project
   owners:
-  - caiocoelhochaves/fk_apm/skills/skill-creator
-  active_owner: caiocoelhochaves/fk_apm/skills/skill-creator
+  - local:skills/skill-creator
+  active_owner: local:skills/skill-creator
   content_hash: sha256:13df7118a3c50c83c4c3250a606d5f2b20b25a3d44cbc392b3d669ec75281453
 - kind: project-relative
   target: antigravity
@@ -266,8 +324,8 @@ deployments:
   runtime: null
   scope: project
   owners:
-  - caiocoelhochaves/fk_apm/skills/skill-creator
-  active_owner: caiocoelhochaves/fk_apm/skills/skill-creator
+  - local:skills/skill-creator
+  active_owner: local:skills/skill-creator
   content_hash: sha256:87d864570220b699fac52da309d2d6efdb060647bfebc74f768128e646accf80
 - kind: project-relative
   target: antigravity
@@ -275,8 +333,8 @@ deployments:
   runtime: null
   scope: project
   owners:
-  - caiocoelhochaves/fk_apm/skills/skill-creator
-  active_owner: caiocoelhochaves/fk_apm/skills/skill-creator
+  - local:skills/skill-creator
+  active_owner: local:skills/skill-creator
   content_hash: sha256:1a33059b0db1ef73375d46d513e5ea81369d2e8838c970597b0d52ddef8d1c0f
 - kind: project-relative
   target: antigravity
@@ -284,8 +342,8 @@ deployments:
   runtime: null
   scope: project
   owners:
-  - caiocoelhochaves/fk_apm/skills/skill-creator
-  active_owner: caiocoelhochaves/fk_apm/skills/skill-creator
+  - local:skills/skill-creator
+  active_owner: local:skills/skill-creator
   content_hash: sha256:67cf5703402013936c8fb75ad6a1afecd8841d45cc5e606b634eb05825fde365
 - kind: project-relative
   target: antigravity
@@ -293,8 +351,8 @@ deployments:
   runtime: null
   scope: project
   owners:
-  - caiocoelhochaves/fk_apm/skills/skill-creator
-  active_owner: caiocoelhochaves/fk_apm/skills/skill-creator
+  - local:skills/skill-creator
+  active_owner: local:skills/skill-creator
   content_hash: sha256:43e3b8f80dbf69c343967ba77e268fae991d9fa3ed68b32a0ff02532cd48657f
 - kind: project-relative
   target: antigravity
@@ -302,8 +360,8 @@ deployments:
   runtime: null
   scope: project
   owners:
-  - caiocoelhochaves/fk_apm/skills/skill-creator
-  active_owner: caiocoelhochaves/fk_apm/skills/skill-creator
+  - local:skills/skill-creator
+  active_owner: local:skills/skill-creator
   content_hash: sha256:7bd6f674203168520517eec94c55f493c0d154339b061b4d7c0f0dad187d0f21
 - kind: project-relative
   target: antigravity
@@ -311,6 +369,6 @@ deployments:
   runtime: null
   scope: project
   owners:
-  - caiocoelhochaves/fk_apm/skills/skill-creator
-  active_owner: caiocoelhochaves/fk_apm/skills/skill-creator
+  - local:skills/skill-creator
+  active_owner: local:skills/skill-creator
   content_hash: sha256:3af8ae62c40c73ab712207436a0d9a981e845f25c5a7040229eb189cc8e45bb1
