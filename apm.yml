@@ -43,8 +43,13 @@ marketplace:
   # Packages and bundles cataloged in this repository
   packages:
     - name: default
-      description: Default essential skill bundle containing skill-creator
+      description: Default essential skill bundle containing skill-creator and skill-bundle-manager
       source: ./bundles/default
+      version: 0.1.0
+
+    - name: skill-bundle-manager
+      description: Add, register, and configure new AI skills and bundles in the fk_apm repository according to project standards
+      source: ./skills/skill-bundle-manager
       version: 0.1.0
 
     - name: skill-creator

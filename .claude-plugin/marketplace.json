@@ -7,9 +7,15 @@
   "plugins": [
     {
       "name": "default",
-      "description": "Default essential skill bundle containing skill-creator",
+      "description": "Default essential skill bundle containing skill-creator and skill-bundle-manager",
       "version": "0.1.0",
       "source": "./bundles/default"
+    },
+    {
+      "name": "skill-bundle-manager",
+      "description": "Add, register, and configure new AI skills and bundles in the fk_apm repository according to project standards",
+      "version": "0.1.0",
+      "source": "./skills/skill-bundle-manager"
     },
     {
       "name": "skill-creator",

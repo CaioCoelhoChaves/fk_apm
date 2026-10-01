@@ -1,10 +1,11 @@
 name: default
 version: 0.1.0
-description: Default essential skill bundle containing skill-creator
+description: Default essential skill bundle containing skill-creator and skill-bundle-manager
 author: Caio Coelho Chaves
 license: MIT
 
 dependencies:
   apm:
     - ../../skills/skill-creator
+    - ../../skills/skill-bundle-manager
   mcp: []

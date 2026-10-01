@@ -14,16 +14,21 @@ fk_apm/
 ├── .claude-plugin/
 │   └── marketplace.json           # Generated marketplace artifact
 ├── bundles/
+│   ├── default/                   # 'default' bundle manifest & lockfile
+│   │   ├── apm.yml
+│   │   └── apm.lock.yaml
 │   └── flutter/                   # 'flutter' bundle manifest & lockfile
 │       ├── apm.yml
 │       └── apm.lock.yaml
 ├── skills/
 │   ├── _template/                 # Starter template for new skills
-│   ├── flutter-widgets/           # Widget architecture guidelines
+│   ├── flutter-accessibility/     # WCAG 2.1 auditing & remediation
+│   ├── flutter-internationalization/ # ARB & l10n patterns
 │   ├── flutter-navigation/        # GoRouter navigation standards
 │   ├── flutter-testing/           # Unit, widget, and golden testing
-│   ├── flutter-accessibility/     # WCAG 2.1 auditing & remediation
-│   └── flutter-internationalization/ # ARB & l10n patterns
+│   ├── flutter-widgets/           # Widget architecture guidelines
+│   ├── skill-bundle-manager/      # Repository skill & bundle registration manager
+│   └── skill-creator/             # Skill authoring & benchmarking
 ├── apm.yml                        # APM primary manifest & marketplace catalog
 ├── apm.lock.yaml                  # APM dependency lockfile
 ├── LICENSE                        # MIT License

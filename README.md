@@ -45,13 +45,14 @@ With `fk_apm`:
 
 | Bundle | Description | Included Skills | Path |
 | :--- | :--- | :--- | :--- |
-| **`default`** | Default essential skill bundle | `skill-creator` | [`bundles/default/`](bundles/default/apm.yml) |
+| **`default`** | Default essential skill bundle | `skill-creator`, `skill-bundle-manager` | [`bundles/default/`](bundles/default/apm.yml) |
 | **`flutter`** | Complete Flutter development bundle | `flutter-widgets`, `flutter-navigation`, `flutter-testing`, `flutter-accessibility`, `flutter-internationalization` | [`bundles/flutter/`](bundles/flutter/apm.yml) |
 
 ### Individual Skills
 
 | Skill | Description | Allowed Tools | Location |
 | :--- | :--- | :--- | :--- |
+| **`skill-bundle-manager`** | Add, register, and configure new AI skills and bundles in fk_apm without missing README or bundle lockfiles | `Read`, `Glob`, `Grep`, `Write`, `Edit`, `Bash` | [`skills/skill-bundle-manager/`](skills/skill-bundle-manager/SKILL.md) |
 | **`skill-creator`** | Create, edit, evaluate, and iteratively optimize AI agent skills with benchmarks | Standard Agent Tools | [`skills/skill-creator/`](skills/skill-creator/SKILL.md) |
 | **`flutter-widgets`** | Architecture rules for `Page`, `PageSection`, `CoreComponent`, and `PageComponent` using `ViewState` | `Read`, `Glob`, `Grep` | [`skills/flutter-widgets/`](skills/flutter-widgets/SKILL.md) |
 | **`flutter-navigation`** | GoRouter & GoRouterBuilder routing, path/query parameters, redirects, and testing | `Read`, `Glob`, `Grep` | [`skills/flutter-navigation/`](skills/flutter-navigation/SKILL.md) |
@@ -213,6 +214,9 @@ fk_apm/
 ├── .claude-plugin/
 │   └── marketplace.json               # Generated Claude plugin marketplace
 ├── bundles/
+│   ├── default/                       # 'default' bundle manifest & lockfile
+│   │   ├── apm.yml
+│   │   └── apm.lock.yaml
 │   └── flutter/                       # 'flutter' bundle manifest & lockfile
 │       ├── apm.yml
 │       └── apm.lock.yaml
@@ -222,7 +226,9 @@ fk_apm/
 │   ├── flutter-internationalization/  # i18n & l10n skill & references
 │   ├── flutter-navigation/            # GoRouter skill & references
 │   ├── flutter-testing/               # Testing skill & references
-│   └── flutter-widgets/               # Flutter widget architecture skill
+│   ├── flutter-widgets/               # Flutter widget architecture skill
+│   ├── skill-bundle-manager/          # Repository skill & bundle registration manager
+│   └── skill-creator/                 # AI skill authoring & benchmarking
 ├── .gitignore                         # Configured for APM caches & build artifacts
 ├── apm.yml                            # Primary APM manifest & marketplace catalog
 ├── apm.lock.yaml                      # Root lockfile
@@ -235,21 +241,28 @@ fk_apm/
 
 ## Adding New Skills or Bundles
 
-### Adding a Skill
-1. Copy the starter template:
+Use the [`skill-bundle-manager`](skills/skill-bundle-manager/SKILL.md) skill to orchestrate skill and bundle additions, ensuring all manifests, lockfiles, and documentation stay synchronized.
+
+### Workflow Summary:
+1. **Scaffold or Draft Skill:**
+   - Copy `skills/_template` to `skills/<skill-name>`, or use [`skill-creator`](skills/skill-creator/SKILL.md) to author and evaluate prompt logic.
+2. **Configure Frontmatter & Structure:**
+   - Keep `SKILL.md` under 500 lines, extract references into `references/*.md`.
+3. **Bundle Configuration:**
+   - If grouping into an existing or new bundle, update `bundles/<bundle-name>/apm.yml` and run `apm lock` in that bundle directory.
+4. **Register in Root `apm.yml`:**
+   - Add entry under `marketplace.packages`.
+5. **Update Documentation (`README.md`):**
+   - Add entries to `Available Bundles` and/or `Individual Skills` tables.
+6. **Validate & Build:**
    ```bash
-   cp -r skills/_template skills/my-new-skill
-   ```
-2. Edit `skills/my-new-skill/SKILL.md` (ensure `name:` matches folder name).
-3. If applicable, add it to a bundle in `bundles/<bundle-name>/apm.yml` or create a new bundle.
-4. Validate and build artifacts:
-   ```bash
+   python skills/skill-bundle-manager/scripts/verify_skills_and_bundles.py
    apm marketplace check --offline
    apm pack
    apm audit
    ```
 
-For detailed specifications, see [CONTRIBUTING.md](CONTRIBUTING.md).
+For detailed specifications, see [CONTRIBUTING.md](CONTRIBUTING.md) and [`skill-bundle-manager`](skills/skill-bundle-manager/SKILL.md).
 
 ---
 
