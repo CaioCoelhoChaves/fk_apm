@@ -47,6 +47,7 @@ With `fk_apm`:
 | :--- | :--- | :--- | :--- |
 | **`default`** | Default essential skill bundle | `skill-creator`, `skill-bundle-manager`, `git-workflow` | [`bundles/default/`](bundles/default/apm.yml) |
 | **`flutter`** | Complete Flutter development bundle | `flutter-widgets`, `flutter-navigation`, `flutter-testing`, `flutter-accessibility`, `flutter-internationalization` | [`bundles/flutter/`](bundles/flutter/apm.yml) |
+| **`spring-boot`** | Complete enterprise Spring Boot 3.x development bundle | `spring-boot-architecture`, `spring-boot-persistence`, `spring-boot-api-resilience`, `spring-boot-testing` | [`bundles/spring-boot/`](bundles/spring-boot/apm.yml) |
 
 ### Individual Skills
 
@@ -60,6 +61,11 @@ With `fk_apm`:
 | **`flutter-testing`** | Unit, widget, and golden file testing standards with `mocktail` and `bloc_test` | `Read`, `Glob`, `Grep` | [`skills/flutter-testing/`](skills/flutter-testing/SKILL.md) |
 | **`flutter-accessibility`** | WCAG 2.1 (A, AA, AAA) auditing, semantics, touch target minimums, and contrast | `Read`, `Glob`, `Grep` | [`skills/flutter-accessibility/`](skills/flutter-accessibility/SKILL.md) |
 | **`flutter-internationalization`** | Flutter i18n & l10n best practices with ARB single-source-of-truth and RTL support | `Read`, `Glob`, `Grep` | [`skills/flutter-internationalization/`](skills/flutter-internationalization/SKILL.md) |
+| **`spring-boot-architecture`** | Architectural governance, layered boundaries, ArchUnit tests, constructor injection, and rich domain modeling | `Read`, `Glob`, `Grep`, `Write`, `Edit`, `Bash` | [`skills/spring-boot-architecture/`](skills/spring-boot-architecture/SKILL.md) |
+| **`spring-boot-persistence`** | High-performance persistence, sequential ULID primary keys, two-phase pagination, and Liquibase migrations | `Read`, `Glob`, `Grep`, `Write`, `Edit`, `Bash` | [`skills/spring-boot-persistence/`](skills/spring-boot-persistence/SKILL.md) |
+| **`spring-boot-api-resilience`** | REST API design with Java records, Bean Validation, RFC 7807 Problem Details, and distributed resilience with `X-Idempotency-Id` | `Read`, `Glob`, `Grep`, `Write`, `Edit`, `Bash` | [`skills/spring-boot-api-resilience/`](skills/spring-boot-api-resilience/SKILL.md) |
+| **`spring-boot-testing`** | Testing pyramid, domain tests, test slices (`@WebMvcTest`, `@DataJpaTest`), Testcontainers, and Actuator observability | `Read`, `Glob`, `Grep`, `Write`, `Edit`, `Bash` | [`skills/spring-boot-testing/`](skills/spring-boot-testing/SKILL.md) |
+
 
 ---
 

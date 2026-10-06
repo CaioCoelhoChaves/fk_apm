@@ -90,3 +90,29 @@ marketplace:
       description: Flutter internationalization (i18n) and localization (l10n) best practices with ARB files
       source: ./skills/flutter-internationalization
       version: 0.1.0
+
+    - name: spring-boot
+      description: Complete enterprise Spring Boot 3.x development bundle containing architecture, persistence, API resilience, and testing skills
+      source: ./bundles/spring-boot
+      version: 0.1.0
+
+    - name: spring-boot-architecture
+      description: Architectural governance, layered boundaries, ArchUnit tests, constructor injection, and rich anti-anemic domain modeling
+      source: ./skills/spring-boot-architecture
+      version: 0.1.0
+
+    - name: spring-boot-persistence
+      description: High-performance persistence, sequential ULID primary keys, two-phase pagination, N+1 query resolution, and Liquibase migrations
+      source: ./skills/spring-boot-persistence
+      version: 0.1.0
+
+    - name: spring-boot-api-resilience
+      description: REST API design with Java records, Bean Validation, RFC 7807 Problem Details error handling, and distributed resilience with X-Idempotency-Id
+      source: ./skills/spring-boot-api-resilience
+      version: 0.1.0
+
+    - name: spring-boot-testing
+      description: Testing strategies, testing pyramid, domain tests, test slices (@WebMvcTest, @DataJpaTest), Testcontainers, and Actuator observability
+      source: ./skills/spring-boot-testing
+      version: 0.1.0
+

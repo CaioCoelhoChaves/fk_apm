@@ -1,0 +1,28 @@
+lockfile_version: '1'
+apm_version: 0.33.0
+dependencies:
+- repo_url: _local/spring-boot-api-resilience
+  name: spring-boot-api-resilience
+  version: unknown
+  package_type: claude_skill
+  source: local
+  local_path: ../../skills/spring-boot-api-resilience
+- repo_url: _local/spring-boot-architecture
+  name: spring-boot-architecture
+  version: unknown
+  package_type: claude_skill
+  source: local
+  local_path: ../../skills/spring-boot-architecture
+- repo_url: _local/spring-boot-persistence
+  name: spring-boot-persistence
+  version: unknown
+  package_type: claude_skill
+  source: local
+  local_path: ../../skills/spring-boot-persistence
+- repo_url: _local/spring-boot-testing
+  name: spring-boot-testing
+  version: unknown
+  package_type: claude_skill
+  source: local
+  local_path: ../../skills/spring-boot-testing
+deployments: []

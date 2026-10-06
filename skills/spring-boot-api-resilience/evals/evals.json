@@ -1,0 +1,41 @@
+{
+  "skill_name": "spring-boot-api-resilience",
+  "evals": [
+    {
+      "id": 1,
+      "name": "rfc7807-and-rest-validation",
+      "prompt": "Preciso implementar um endpoint REST de criação de reservas (POST /reservas) que receba um DTO record validado com Jakarta Validation, retorne HTTP 201 com header Location, e configure um @RestControllerAdvice com RFC 7807 ProblemDetail tratando MethodArgumentNotValidException para devolver erros detalhados por campo sob a propriedade invalidParams.",
+      "expected_output": "Controller REST com Java record validado, retorno 201 Created com header Location, e classe GlobalExceptionHandler retornando ProblemDetail com type, title e invalidParams.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "DTOs are defined using immutable Java records"
+        },
+        {
+          "text": "Controller returns ResponseEntity.created with Location header"
+        },
+        {
+          "text": "Exception handler returns ProblemDetail with invalidParams property for field errors"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "idempotency-and-retry-watchdog",
+      "prompt": "Como implementar o controle de idempotência na criação de pagamentos (POST /pagamentos) para evitar cobrança duplicada caso o cliente envie retries sob timeout de rede? Mostre a validação com X-Idempotency-Id, unique constraint no banco de dados, anotação @Retryable para conflitos de concorrência e um scheduler Watchdog de reconciliação de pagamentos pendentes.",
+      "expected_output": "Implementação do endpoint recebendo X-Idempotency-Id, entidade com unique constraint de tx_id, serviço resiliente com @Retryable e classe Watchdog agendada com @Scheduled.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Endpoint extracts X-Idempotency-Id from request headers"
+        },
+        {
+          "text": "Data model or migration enforces unique constraint on the idempotency token"
+        },
+        {
+          "text": "Watchdog scheduler uses @Scheduled to reconcile pending operations"
+        }
+      ]
+    }
+  ]
+}
