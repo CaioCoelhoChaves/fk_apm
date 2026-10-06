@@ -41,15 +41,20 @@ A standardized workflow for AI coding agents to integrate Linear issue managemen
 5. **100% Transparency & User Notification**:
    - **Every** Linear operation (issue queried, card created, state transitioned, or missing project) must be explicitly communicated in the response with issue keys (e.g. `LIN-42`) and status.
 
+6. **Linear Agent Interaction Guidelines (AIG Compliance)**:
+   - Adhere to Linear's official [Agent Interaction Guidelines](https://linear.app/developers/agents).
+   - Clearly signal agent identity: prefix all Linear comments with `🤖 **AI Agent Update**:` so human teammates immediately recognize automated actions in team activity feeds.
+   - Align with Linear Git automation: use the standard branch format `<type>/<identifier>-<slug>` (e.g. `feat/RENT-104-user-auth`).
+
 ---
 
 ## Tool Execution Matrix (MCP vs Bundled CLI)
 
 The agent dynamically uses whatever tool is available in the current environment:
 
-| Operation | Linear MCP Available | Bundled CLI (`python skills/linear-workflow/scripts/linear_api.py`) |
+| Operation | Official Linear MCP (`https://mcp.linear.app/mcp`) | Bundled CLI (`python skills/linear-workflow/scripts/linear_api.py`) |
 | :--- | :--- | :--- |
-| **Verify Auth** | Automatically authenticated | `python <skill-dir>/scripts/linear_api.py auth-check` |
+| **Verify Auth** | OAuth 2.1 via Linear MCP | `python <skill-dir>/scripts/linear_api.py auth-check` |
 | **Find Project** | `linear_list_projects` | `python <skill-dir>/scripts/linear_api.py find-project "<name>"` |
 | **Search Issue** | `linear_issue_search` | `python <skill-dir>/scripts/linear_api.py search-issues "<term>" --project-id "<id>"` |
 | **Create Card** | `linear_create_issue` | `python <skill-dir>/scripts/linear_api.py create-issue --team-id "<tid>" --project-id "<pid>" --title "<title>" --description "<desc>" --state "<state>" --label "Front"` |
@@ -190,5 +195,7 @@ When the user asks to analyze architecture, investigate a bug root cause, or eva
 
 ## References
 
-- [references/states-and-labels.md](references/states-and-labels.md) for full state definitions and subproject rules.
+- [references/states-and-labels.md](references/states-and-labels.md) for full state definitions, subproject rules, and AIG compliance.
 - [references/configuration.md](references/configuration.md) for API key setup and MCP integration.
+- [Linear Developers: Agent Interaction Guidelines (AIG)](https://linear.app/developers/agents)
+- [Linear Docs: Model Context Protocol (MCP)](https://linear.app/docs/mcp)

@@ -60,12 +60,43 @@ Developers can place a `.linear.json` file in the root of any repository to spec
 > [!TIP]
 > If a real token is provided directly inside `.linear.json`, make sure `.linear.json` is added to `.gitignore`. Alternatively, use the environment variable reference `${LINEAR_API_KEY}`.
 
-### Option C: Linear MCP Server
+### Option C: Official Linear MCP Server (`https://mcp.linear.app/mcp`)
 
-If a Linear MCP server is configured in the AI agent host (e.g. Claude Desktop, Antigravity CLI, or IDE extensions), the agent can invoke MCP tools directly (`linear_issue_search`, `linear_create_issue`, `linear_update_issue`).
+Linear provides an official, plug-and-play Model Context Protocol server ([linear.app/docs/mcp](https://linear.app/docs/mcp)) that authenticates via OAuth 2.1 without needing manual API key management:
 
-Example MCP server configuration in `agy` / `claude_desktop_config.json`:
+- **Endpoint**: `https://mcp.linear.app/mcp`
 
+#### Claude Code (CLI):
+```bash
+claude mcp add --transport http linear https://mcp.linear.app/mcp
+```
+Run `/mcp` in your session to complete the one-time browser OAuth flow.
+
+#### Cursor (`mcp.json`):
+```json
+{
+  "mcpServers": {
+    "linear": {
+      "url": "https://mcp.linear.app/mcp"
+    }
+  }
+}
+```
+
+#### Antigravity CLI / Stdio Bridge (`mcp-remote`):
+```json
+{
+  "mcpServers": {
+    "linear": {
+      "command": "npx",
+      "args": ["-y", "mcp-remote", "https://mcp.linear.app/mcp"]
+    }
+  }
+}
+```
+
+#### Self-Hosted / Personal API Key Fallback:
+If using community or offline MCP servers:
 ```json
 {
   "mcpServers": {

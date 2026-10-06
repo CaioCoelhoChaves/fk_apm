@@ -84,3 +84,25 @@ Every Linear transition or query must be communicated explicitly in the AI agent
 
 - **Project Not Found in Linear**:
   > `⚠️ [Linear]: Projeto 'NovoProjetoX' não encontrado no Linear. O desenvolvimento seguiu normalmente sem vincular cards.`
+
+---
+
+## 4. Linear Agent Interaction Guidelines (AIG Compliance)
+
+In accordance with official Linear guidelines ([linear.app/developers/agents](https://linear.app/developers/agents)):
+
+1. **Clear Identity Signaling**:
+   - Every comment posted by the agent to a Linear issue must be clearly identified with an agent header to prevent confusion in team activity feeds:
+     ```markdown
+     🤖 **AI Agent Update**:
+     - Status: Implemented & verified via automated tests.
+     - Commits: `abc1234`
+     - Notes: Added biometric authentication flow with fallback to PIN.
+     ```
+2. **Native Git Automation Integration**:
+   - When creating Git branches (alongside `git-workflow`), use the standard Linear branch format `<type>/<identifier>-<slug>` (e.g., `feat/RENT-104-biometric-auth`).
+   - Linear natively detects this branch name to automate issue tracking across Pull Requests.
+3. **Non-Destructive Context Enrichment**:
+   - Never overwrite or wipe existing issue descriptions provided by human product managers or developers.
+   - Append technical context or post new observations via comments.
+
