@@ -1,0 +1,41 @@
+{
+  "skill_name": "spring-boot-architecture",
+  "evals": [
+    {
+      "id": 1,
+      "name": "rich-domain-model-anti-anemic",
+      "prompt": "Quero refatorar minhas entidades JPA Pacote e Cliente. O modelo atual é anêmico (apenas getters e setters públicos onde qualquer um pode limpar coleções ou definir preços inválidos). Refatore para um modelo rico com encapsulamento defensivo (Collections.unmodifiableList), cálculo de valor total no próprio domínio, método de contratação que preserva invariantes e mapeamento de herança com @Inheritance(strategy = InheritanceType.JOINED) para itens do pacote (hotel, voo e veículo).",
+      "expected_output": "Classes de domínio ricas seguindo encapsulamento defensivo, métodos de negócio que protegem invariantes, coleções imutáveis externamente e mapeamento polimórfico JOINED com Jackson annotations.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Domain classes protect invariants and do not expose indiscriminate public setters on state properties"
+        },
+        {
+          "text": "Collection getters return immutable or unmodifiable views using Collections.unmodifiableList or List.copyOf"
+        },
+        {
+          "text": "Entity inheritance uses InheritanceType.JOINED and polymorphic Jackson configuration"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "archunit-layered-governance",
+      "prompt": "Preciso configurar testes de governança arquitetural com ArchUnit para o projeto Spring Boot 3 no pacote br.com.empresa.rental. Garanta que controllers nunca acessem repositories diretamente, que camadas inferiores não dependam de camadas superiores, que não haja injeção de campo (@Autowired em atributos privados), e que as convenções de sufixo *Controller e *Service sejam respeitadas.",
+      "expected_output": "Classe ApplicationArchUnitTest completa com regras ArchUnit layeredArchitecture, noClasses().resideInAPackage(..controller..).should().dependOnClassesThat().resideInAPackage(..repository..), e checagens de injeção de dependência e sufixos.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "ArchUnit test imports package classes excluding tests"
+        },
+        {
+          "text": "Rule explicitly forbids Controller layer from directly depending on Repository layer"
+        },
+        {
+          "text": "Rule or guidelines require constructor injection with final fields instead of field injection"
+        }
+      ]
+    }
+  ]
+}

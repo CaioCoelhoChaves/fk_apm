@@ -1,0 +1,41 @@
+{
+  "skill_name": "spring-boot-testing",
+  "evals": [
+    {
+      "id": 1,
+      "name": "web-mvc-slice-mockmvc",
+      "prompt": "Como escrever um teste de slice de controller usando @WebMvcTest e MockMvc para o PacoteController garantindo que a resposta retorne HTTP 201 Created com header Location no cadastro e HTTP 400 Bad Request com ProblemDetail RFC 7807 quando o DTO de entrada for inválido?",
+      "expected_output": "Classe de teste anotada com @WebMvcTest(PacoteController.class), injeção de MockMvc, mock com @MockBean e validação das respostas HTTP usando status(), header() e jsonPath().",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Test class is annotated with @WebMvcTest specifying the target controller"
+        },
+        {
+          "text": "Collaborators are mocked using @MockBean or @MockitoBean without loading full application context"
+        },
+        {
+          "text": "Assertions verify status().isCreated() and status().isBadRequest() using MockMvc"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "data-jpa-slice-query-testing",
+      "prompt": "Preciso testar as queries customizadas e o comportamento de paginação do meu PacoteRepository usando @DataJpaTest sem inicializar os controllers ou outros serviços desnecessários. Mostre como estruturar este teste com TestEntityManager para persistir dados de fixtures.",
+      "expected_output": "Teste de repositório anotado com @DataJpaTest, injetando TestEntityManager e o repositório, persistindo dados de teste e validando o retorno de Page<UUID> findIds.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Test class is annotated with @DataJpaTest"
+        },
+        {
+          "text": "Test uses TestEntityManager or repository to persist fixture entities"
+        },
+        {
+          "text": "Assertions verify query execution and pagination results"
+        }
+      ]
+    }
+  ]
+}

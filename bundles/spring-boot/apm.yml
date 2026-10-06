@@ -1,0 +1,13 @@
+name: spring-boot
+version: 0.1.0
+description: Complete enterprise Spring Boot 3.x development bundle containing architecture, persistence, API resilience, and testing skills
+author: Caio Coelho Chaves
+license: MIT
+
+dependencies:
+  apm:
+    - ../../skills/spring-boot-architecture
+    - ../../skills/spring-boot-persistence
+    - ../../skills/spring-boot-api-resilience
+    - ../../skills/spring-boot-testing
+  mcp: []

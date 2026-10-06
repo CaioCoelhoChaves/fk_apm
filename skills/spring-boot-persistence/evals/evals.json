@@ -1,0 +1,41 @@
+{
+  "skill_name": "spring-boot-persistence",
+  "evals": [
+    {
+      "id": 1,
+      "name": "two-phase-pagination-n-plus-one",
+      "prompt": "Estou tendo problemas de performance na listagem de pacotes com paginação (Pageable) e relacionamentos de itens: o Hibernate está emitindo o aviso HHH000104 de paginação em memória e gerando N+1 queries. Como implementar o padrão de busca paginada em duas fases para evitar carregar a tabela inteira na memória da JVM?",
+      "expected_output": "Implementação completa da busca paginada em duas fases: consulta de IDs paginada a nível de índice do banco seguida de busca em lote por IDs com join fetch dos itens filhos, montando um PageImpl.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Repository defines a dedicated query to paginate IDs returning Page<UUID> without joining collection"
+        },
+        {
+          "text": "Repository defines a batch fetch query using join fetch and 'where id in :ids'"
+        },
+        {
+          "text": "Service combines both queries and constructs a PageImpl preserving totalElements and Pageable"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "monotonic-ulid-and-liquibase",
+      "prompt": "Preciso configurar chaves primárias sequenciais ULID (evitando fragmentação em B+Tree de UUID v4) no Hibernate 6 e preparar uma migration Liquibase com timestamp UTC para criar a tabela de aluguéis com chave primária e índice em chave estrangeira.",
+      "expected_output": "Gerador customizado UlidGenerator implementando IdentifierGenerator com supportsJdbcBatchInserts, package-info.java e changeset Liquibase com UTC timestamp e índice explícito de foreign key.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "IdentifierGenerator implements UlidCreator.getMonotonicUlid and returns true for supportsJdbcBatchInserts"
+        },
+        {
+          "text": "Liquibase changeset filename follows UTC timestamp pattern YYYYMMDDHHmmss"
+        },
+        {
+          "text": "Foreign key columns have a dedicated createIndex tag"
+        }
+      ]
+    }
+  ]
+}
