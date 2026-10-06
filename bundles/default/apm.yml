@@ -10,4 +10,7 @@ dependencies:
     - ../../skills/skill-bundle-manager
     - ../../skills/git-workflow
     - ../../skills/linear-workflow
-  mcp: []
+  mcp:
+    - name: linear
+      transport: http
+      url: https://mcp.linear.app/mcp

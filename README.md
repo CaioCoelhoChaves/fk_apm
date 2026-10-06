@@ -45,7 +45,7 @@ With `fk_apm`:
 
 | Bundle | Description | Included Skills | Path |
 | :--- | :--- | :--- | :--- |
-| **`default`** | Default essential skill bundle | `skill-creator`, `skill-bundle-manager`, `git-workflow`, `linear-workflow` | [`bundles/default/`](bundles/default/apm.yml) |
+| **`default`** | Default essential skill bundle with Linear MCP server | `skill-creator`, `skill-bundle-manager`, `git-workflow`, `linear-workflow` | [`bundles/default/`](bundles/default/apm.yml) |
 | **`flutter`** | Complete Flutter development bundle | `flutter-widgets`, `flutter-navigation`, `flutter-testing`, `flutter-accessibility`, `flutter-internationalization` | [`bundles/flutter/`](bundles/flutter/apm.yml) |
 | **`spring-boot`** | Complete enterprise Spring Boot 3.x development bundle | `spring-boot-architecture`, `spring-boot-persistence`, `spring-boot-api-resilience`, `spring-boot-testing` | [`bundles/spring-boot/`](bundles/spring-boot/apm.yml) |
 
