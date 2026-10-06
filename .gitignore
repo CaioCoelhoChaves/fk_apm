@@ -25,5 +25,16 @@ scratch/
 *.tmp
 *.bak
 
+# Python artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Local Linear credentials/config
+.linear.json
+.linearrc
+.env
+
 # Skills folder
 .agents/skills/
