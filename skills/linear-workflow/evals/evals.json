@@ -1,0 +1,23 @@
+{
+  "skill_name": "linear-workflow",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Vamos planejar o projeto Rent Easy: precisamos criar as tarefas de autenticação com biometria, listagem de imóveis e checkout de aluguel.",
+      "expected_output": "Identifica o projeto Rent Easy no Linear, categoriza o subprojeto (Front ou Back de acordo com a stack do repositório), cria os cards no status Backlog ou Todo com descrições estruturadas e labels corretas, e reporta cada card criado (ID e título) ao usuário.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "Quero desenvolver a tarefa de autenticação biométrica que estava planejada no linear para o app Rent Easy.",
+      "expected_output": "Busca no Linear o projeto Rent Easy e a issue correspondente. Ao encontrar, extrai os critérios e contexto do card, move o status para 'In Progress', notifica o usuário com transparência total e prossegue com a implementação.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "Desenvolva o componente de cálculo de amortização no projeto QuickLoan.",
+      "expected_output": "Consulta o Linear pelo projeto QuickLoan. Caso não exista no Linear, prossegue com o desenvolvimento normalmente e notifica o usuário ao final que o projeto não possui Linear correspondente sem interromper a esteira.",
+      "files": []
+    }
+  ]
+}

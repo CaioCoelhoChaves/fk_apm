@@ -42,13 +42,18 @@ marketplace:
   # Packages and bundles cataloged in this repository
   packages:
     - name: default
-      description: Default essential skill bundle containing skill-creator, skill-bundle-manager, and git-workflow
+      description: Default essential skill bundle containing skill-creator, skill-bundle-manager, git-workflow, and linear-workflow
       source: ./bundles/default
       version: 0.1.0
 
     - name: git-workflow
       description: Gitflow branching workflow and Conventional Commits 1.0.0 enforcement using GitHub CLI (gh) for PRs and git for commits
       source: ./skills/git-workflow
+      version: 0.1.0
+
+    - name: linear-workflow
+      description: Seamless Linear issue tracking, task lifecycle transitions, subproject front/back labeling, and development planning synchronization
+      source: ./skills/linear-workflow
       version: 0.1.0
 
     - name: skill-bundle-manager

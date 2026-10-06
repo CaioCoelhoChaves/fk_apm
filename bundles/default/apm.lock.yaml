@@ -1,5 +1,5 @@
 lockfile_version: '1'
-apm_version: 0.31.0
+apm_version: 0.33.0
 dependencies:
 - repo_url: _local/git-workflow
   name: git-workflow
@@ -7,6 +7,12 @@ dependencies:
   package_type: claude_skill
   source: local
   local_path: ../../skills/git-workflow
+- repo_url: _local/linear-workflow
+  name: linear-workflow
+  version: unknown
+  package_type: claude_skill
+  source: local
+  local_path: ../../skills/linear-workflow
 - repo_url: _local/skill-bundle-manager
   name: skill-bundle-manager
   version: unknown

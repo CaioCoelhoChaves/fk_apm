@@ -1,6 +1,6 @@
 name: default
 version: 0.1.0
-description: Default essential skill bundle containing skill-creator, skill-bundle-manager, and git-workflow
+description: Default essential skill bundle containing skill-creator, skill-bundle-manager, git-workflow, and linear-workflow
 author: Caio Coelho Chaves
 license: MIT
 
@@ -9,4 +9,5 @@ dependencies:
     - ../../skills/skill-creator
     - ../../skills/skill-bundle-manager
     - ../../skills/git-workflow
+    - ../../skills/linear-workflow
   mcp: []
