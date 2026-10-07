@@ -1,6 +1,6 @@
 ---
 name: linear-workflow
-description: Synchronize development and planning tasks with Linear issue tracking across any project. Triggers whenever the user asks to plan a project or sprint, create task cards, develop or implement a feature or bugfix, work on an existing Linear ticket, or track progress. Checks Linear via MCP tools or bundled CLI to match or create tasks, transitions states (Backlog -> Todo -> Technical Analysis -> In Progress -> In Review -> Done), tags monorepo subprojects with Front/Back labels, and notifies the user of all Linear actions.
+description: Synchronize development and planning tasks with Linear issue tracking across any project. Triggers whenever the user asks to plan a project or sprint, create task cards, develop or implement a feature or bugfix, work on an existing Linear ticket, or track progress. Checks Linear via MCP tools or bundled CLI to match or create tasks, transitions states (Backlog -> Technical Analysis -> Todo -> In Progress -> In Review -> Done), tags monorepo subprojects with Front/Back labels, and notifies the user of all Linear actions.
 allowed-tools: Read,Glob,Grep,Bash
 ---
 
@@ -27,8 +27,8 @@ A standardized workflow for AI coding agents to integrate Linear issue managemen
 
 3. **Lifecycle State Machine**:
    - Enforce the official state progression:
-     `Backlog` ➔ `Todo` ➔ `Technical Analysis` ➔ `In Progress` ➔ `In Review` ➔ `Done` (plus `Canceled` or `Duplicate`).
-   - Planning mode places items in `Backlog` or `Todo`.
+     `Backlog` ➔ `Technical Analysis` ➔ `Todo` ➔ `In Progress` ➔ `In Review` ➔ `Done` (plus `Canceled` or `Duplicate`).
+   - Planning mode places items in `Backlog` or directly in `Technical Analysis` / `Todo`.
    - Investigation or architectural spikes move items to `Technical Analysis`.
    - Active coding moves items to `In Progress`.
    - Pull Requests and verification moves items to `In Review`.
