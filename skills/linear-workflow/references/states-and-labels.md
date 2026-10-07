@@ -11,10 +11,10 @@ Every task tracked via `linear-workflow` follows this standard progression:
 ```mermaid
 stateDiagram-v2
     [*] --> Backlog: Planning / Idea
-    Backlog --> Todo: Groomed / Sprint Backlog
-    Todo --> Technical_Analysis: Architecture / Investigation
-    Technical_Analysis --> In_Progress: Active Coding
-    Todo --> In_Progress: Direct Implementation
+    Backlog --> Technical_Analysis: Architecture / Investigation
+    Technical_Analysis --> Todo: Refined / Actionable
+    Todo --> In_Progress: Active Coding
+    Backlog --> Todo: Direct Grooming without Analysis
     In_Progress --> In_Review: PR Opened / Verification
     In_Review --> Done: Merged & Validated
     Backlog --> Canceled: Abandoned
@@ -27,8 +27,8 @@ stateDiagram-v2
 | State | Role & Description | When to Transition Here |
 | :--- | :--- | :--- |
 | **`Backlog`** | Unscheduled backlog items | When breaking down broad plans or brainstorming future features during planning sessions. |
-| **`Todo`** | Actionable tasks ready for development | When a card has been refined with clear acceptance criteria and is ready to be picked up. |
 | **`Technical Analysis`** | Architecture design, spikes, research | When the agent is tasked with designing architecture, performing deep codebase analysis, or exploring technical alternatives before coding. |
+| **`Todo`** | Actionable tasks ready for development | When a card has been refined with clear acceptance criteria and is ready to be picked up. |
 | **`In Progress`** | Active implementation | **As soon as coding begins** for a planned or newly created task. |
 | **`In Review`** | Quality verification, Pull Request, testing | When implementation is completed, automated tests pass, and a Pull Request is opened or code is submitted for user review. |
 | **`Done`** | Shipped and completed | When the Pull Request is merged or the user validates that the feature is fully delivered and operational. |
