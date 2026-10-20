@@ -1,12 +1,12 @@
 ---
 name: linear-workflow
-description: Synchronize development and planning tasks with Linear issue tracking across any project. Triggers whenever the user asks to plan a project or sprint, create task cards, develop or implement a feature or bugfix, work on an existing Linear ticket, or track progress. Checks Linear via MCP tools or bundled CLI to match or create tasks, transitions states (Backlog -> Technical Analysis -> Todo -> In Progress -> In Review -> Done), tags monorepo subprojects with Front/Back labels, and notifies the user of all Linear actions.
+description: Synchronize development and planning tasks with Linear issue tracking across any project. Enforces lifecycle commands (/fk-new-issue, /fk-technical-analysis, /fk-develop), the mandatory 3-stage Consent Gate protocol (zero mutation until user approval), atomic state advancement (advancing to In Review upon PR opening), comment idempotency (10-minute deduplication window), manual-only developer transitions for 'Done', and review feedback loops returning to 'In Progress'. Checks Linear via MCP tools or bundled CLI (scripts/linear_api.py), tags monorepo subprojects with Front/Back labels, and notifies the user of all board actions.
 allowed-tools: Read,Glob,Grep,Bash
 ---
 
-# Linear Workflow: Seamless Task Tracking & Lifecycle Sync
+# Linear Workflow: Seamless Task Tracking, Lifecycle Commands & Consent Gate
 
-A standardized workflow for AI coding agents to integrate Linear issue management directly into development and planning lifecycles. Supports native Linear MCP servers and provides a standalone zero-dependency Python CLI helper (`scripts/linear_api.py`) for GraphQL API execution.
+A standardized workflow for AI coding agents to integrate Linear issue management directly into development and planning lifecycles. Supports native Linear MCP servers and provides a standalone zero-dependency Python CLI helper (`scripts/linear_api.py`) for GraphQL API execution with built-in comment idempotency, atomic updates, and automated state resolution.
 
 ---
 
@@ -25,26 +25,48 @@ A standardized workflow for AI coding agents to integrate Linear issue managemen
    - Proceed with development or implementation normally.
    - Inform the user clearly at the start or completion that the project is not tracked in Linear.
 
-3. **Lifecycle State Machine**:
+3. **Lifecycle State Machine & Responsabilidades de Transição**:
    - Enforce the official state progression:
      `Backlog` ➔ `Technical Analysis` ➔ `Todo` ➔ `In Progress` ➔ `In Review` ➔ `Done` (plus `Canceled` or `Duplicate`).
-   - Planning mode places items in `Backlog` or directly in `Technical Analysis` / `Todo`.
-   - Investigation or architectural spikes move items to `Technical Analysis`.
-   - Active coding moves items to `In Progress`.
-   - Pull Requests and verification moves items to `In Review`.
-   - Merged or finalized deliveries move items to `Done`.
+   - **Transições do Agente (Anti-Estagnação)**:
+     - Conclusão de Análise Técnica: Agente move de `Technical Analysis` ➔ **`Todo`** com comentário estruturado.
+     - Início de Desenvolvimento: Agente move de `Todo` ➔ **`In Progress`** com branch Git criada.
+     - Conclusão de Desenvolvimento (PR Aberto): Agente move obrigatoriamente de `In Progress` ➔ **`In Review`** com link do PR e sumário técnico.
+   - **Rito Exclusivamente Manual a partir de `In Review`**:
+     - A partir de **`In Review`**, o controle é **exclusivamente manual pelo desenvolvedor**.
+     - **`Done`**: O desenvolvedor move manualmente para **`Done`** após revisar o PR no GitHub, validar os testes e realizar o merge. O agente **NUNCA** move o card para `Done`.
+     - **Retorno para Correções**: Se o desenvolvedor encontrar falhas ou pedir ajustes durante o review, o card pode ser retornado para **`In Progress`** (via intervenção no Linear ou comando no chat) para que o agente execute o ciclo corretivo.
 
-4. **Parent Project & Subproject Component Labeling**:
+4. **Mandatory 3-Stage Protocol (*Consent Gate*)**:
+   - Both for explicit commands (`/fk-*`) and natural language triggers (e.g. *"vamos analisar tecnicamente o card X"*, *"vamos desenvolver a tarefa Y"*), the agent must strictly follow this protocol:
+     - **Stage 1 (Initial Presentation & Questions)**: The agent prepares the plan/analysis in chat/workspace, raising options and doubts with the developer. **Zero mutation**: No API calls altering Linear (`update-issue`, `create-issue`, `create-comment`) are permitted in this stage. Only read queries (`get-issue`, `search-issues`, `list-states`, `list-projects`) are allowed.
+     - **Stage 2 (Consent Gate - Explicit Confirmation)**: After resolving all questions, the agent explicitly asks the developer for permission to close or start the phase on Linear (e.g.: *"O direcionamento está aprovado? Posso mover o card para [Status] e registrar o comentário consolidado?"*).
+     - **Stage 3 (Atomic Execution - Move Card + Register Comment)**: Only after affirmative developer response, execute the closing actions atomically on Linear (advancing the status and registering the consolidated comment).
+
+5. **Comment Idempotency & AIG Compliance**:
+   - In accordance with Linear's official [Agent Interaction Guidelines (AIG)](https://linear.app/developers/agents):
+     - Clearly signal agent identity: prefix all comments with `🤖 **AI Agent Update**:`.
+     - Align with Linear Git automation: use the standard branch format `<type>/<identifier>-<slug>` (e.g. `feat/RENT-104-user-auth`).
+     - **Idempotency Protection**: `scripts/linear_api.py` inspects recent card comments to prevent duplicate comments with identical body/payload within a 10-minute window.
+
+6. **Parent Project & Subproject Component Labeling**:
    - Detect when a repository represents a subproject of a unified Linear project (e.g., local project `Rent Easy Frontend` or `Rent Easy Backend` mapping to parent Linear project `Rent Easy`).
    - Automatically tag cards with **`Front`** (Flutter, React, Vue, Web, Mobile) or **`Back`** (Spring Boot, Node, Java, Python API) component labels.
 
-5. **100% Transparency & User Notification**:
-   - **Every** Linear operation (issue queried, card created, state transitioned, or missing project) must be explicitly communicated in the response with issue keys (e.g. `LIN-42`) and status.
+7. **100% Transparency & User Notification**:
+   - Every Linear operation (issue queried, card created, state transitioned, or comment added) must be explicitly communicated in the response with issue keys (e.g. `LIN-42`) and status.
 
-6. **Linear Agent Interaction Guidelines (AIG Compliance)**:
-   - Adhere to Linear's official [Agent Interaction Guidelines](https://linear.app/developers/agents).
-   - Clearly signal agent identity: prefix all Linear comments with `🤖 **AI Agent Update**:` so human teammates immediately recognize automated actions in team activity feeds.
-   - Align with Linear Git automation: use the standard branch format `<type>/<identifier>-<slug>` (e.g. `feat/RENT-104-user-auth`).
+---
+
+## Lifecycle Commands Reference
+
+| Command Trigger | Aliases | Target State Transition | Executado Por | Scope & Purpose |
+| :--- | :--- | :--- | :--- | :--- |
+| **`/fk-new-issue`** | `/fk-issue` | `Backlog` ou `Todo` | **Agente** (com Consent Gate) | Planejamento, decomposição e criação atômica de novos cards no Linear. |
+| **`/fk-technical-analysis`** | `/fk-ta` | `Technical Analysis` ➔ `Todo` | **Agente** (com Consent Gate) | Investigação arquitetural, spikes técnicos, desenho de solução e avanço para `Todo` ao concluir. |
+| **`/fk-develop`** | `/fk-dev` | `Todo` ➔ `In Progress` ➔ `In Review` | **Agente** | Início do desenvolvimento (`In Progress`), implementação, testes e avanço para `In Review` ao abrir o PR. |
+| *(Retorno de Correção)* | `/fk-dev` | `In Review` ➔ `In Progress` | **Desenvolvedor / Agente** | Retorno do card para correções quando a revisão do PR apontar ajustes necessários. |
+| *(Transição Manual)* | — | `In Review` ➔ `Done` | **Desenvolvedor** | **Exclusivamente manual pelo desenvolvedor** após merge e homologação da entrega. |
 
 ---
 
@@ -56,140 +78,128 @@ The agent dynamically uses whatever tool is available in the current environment
 | :--- | :--- | :--- |
 | **Verify Auth** | OAuth 2.1 via Linear MCP | `python <skill-dir>/scripts/linear_api.py auth-check` |
 | **Find Project** | `linear_list_projects` | `python <skill-dir>/scripts/linear_api.py find-project "<name>"` |
-| **Search Issue** | `linear_issue_search` | `python <skill-dir>/scripts/linear_api.py search-issues "<term>" --project-id "<id>"` |
+| **Get Issue** | `linear_issue_search` | `python <skill-dir>/scripts/linear_api.py get-issue "<key-or-id>"` |
+| **Search Issue** | `linear_issue_search` | `python <skill-dir>/scripts/linear_api.py search-issues "<term>" [--project-id "<id>"]` |
 | **Create Card** | `linear_create_issue` | `python <skill-dir>/scripts/linear_api.py create-issue --team-id "<tid>" --project-id "<pid>" --title "<title>" --description "<desc>" --state "<state>" --label "Front"` |
-| **Update State** | `linear_update_issue` | `python <skill-dir>/scripts/linear_api.py update-issue "<id>" --team-id "<tid>" --state "In Progress"` |
-| **Add Comment** | `linear_create_comment` | `python <skill-dir>/scripts/linear_api.py update-issue "<id>" --comment "<summary>"` |
+| **Atomic Update** | `linear_update_issue` + `linear_create_comment` | `python <skill-dir>/scripts/linear_api.py update-issue "<id>" [--team-id "<tid>"] [--state "<state>"] [--comment "<summary>"]` |
+| **Add Comment** | `linear_create_comment` | `python <skill-dir>/scripts/linear_api.py update-issue "<id>" --comment "<summary>"` *(idempotente)* |
 
 ---
 
-## Workflow 1: Task Implementation & Auto-Tracking
+## Workflow 1: Protocolo Universal Consent Gate em 3 Etapas
 
-Follow this workflow whenever asked to develop, implement, or fix a task (e.g. *"vamos desenvolver a tarefa X"*, *"quero desenvolver x funcionalidade"*):
+Todo rito assistido (via comando `/fk-*` ou intenção em linguagem natural) segue rigorosamente este fluxo:
 
 ```mermaid
 flowchart TD
-    A["1. User requests development task"] --> B["Detect Project & Credentials"]
-    B --> C{"Linear Project found?"}
-    C -- "No" --> D["Proceed with coding normally"]
-    D --> E["At end: Notify that project has no Linear mapping"]
-    C -- "Yes" --> F{"Task already exists in Linear?"}
-    F -- "Yes" --> G["Read context & move to 'In Progress'"]
-    F -- "No" --> H["Create card under project + set 'In Progress'"]
-    G --> I["Notify user with card ID & start coding"]
-    H --> I
-    I --> J["Implement feature & run tests"]
-    J --> K{"PR or Delivery complete?"}
-    K -- "PR opened" --> L["Move to 'In Review' + post comment"]
-    K -- "Direct completion" --> M["Move to 'Done' + post delivery summary"]
-    L --> N["Notify user of final Linear status"]
-    M --> N
+    A["1. Comando de Rito (/fk-*) ou Linguagem Natural"] --> B["Etapa 1: Leitura, Apresentação & Alinhamento"]
+    B --> C["Zero Mutação: Apenas Leitura no Linear"]
+    C --> D{"Dúvidas resolvidas e plano estruturado?"}
+    D -- "Não" --> B
+    D -- "Sim" --> E["Etapa 2: Consent Gate"]
+    E --> F{"Desenvolvedor aprovou fechamento/início explicitamente?"}
+    F -- "Não / Ajustes solicitados" --> B
+    F -- "Sim" --> G["Etapa 3: Execução Atômica"]
+    G --> H["Mover Card para Próximo Estado + Comentário Consolidado"]
+    H --> I["Prosseguir com próxima etapa técnica ou branch Git"]
 ```
 
-### Step 1: Detect Project & Subproject Context
-1. Read project name from `.linear.json`, `package.json`, `pubspec.yaml`, `pom.xml`, or working directory name.
-2. Search for the project in Linear using MCP or:
-   ```bash
-   python skills/linear-workflow/scripts/linear_api.py find-project "<project-name>"
-   ```
-3. If no project is found:
-   - Output note: `ℹ️ [Linear]: Projeto '<nome>' não localizado no Linear. O desenvolvimento prosseguirá normalmente.`
-   - Continue task implementation immediately.
-   - At the conclusion of your response, remind the user that the project was not linked to Linear.
+---
 
-### Step 2: Search or Create Issue
-If the project exists:
-1. Search project issues for the requested task:
-   ```bash
-   python skills/linear-workflow/scripts/linear_api.py search-issues "<task keywords>" --project-id "<project-id>"
-   ```
-2. **If issue is found**:
-   - Read full description, acceptance criteria, and previous comments.
-   - Transition state to **`In Progress`**:
-     ```bash
-     python skills/linear-workflow/scripts/linear_api.py update-issue "<issue-id>" --team-id "<team-id>" --state "In Progress"
-     ```
-   - Inform user: `📋 [Linear]: Task encontrada '<KEY>: <Title>'. Status movido para 'In Progress'. Incorporando requisitos ao desenvolvimento.`
-3. **If issue is NOT found**:
-   - Determine component label (`Front` or `Back`) based on workspace files.
-   - Create new issue in **`In Progress`**:
-     ```bash
-     python skills/linear-workflow/scripts/linear_api.py create-issue --team-id "<team-id>" --project-id "<project-id>" --title "<Title>" --description "<Description>" --state "In Progress" --label "Front"
-     ```
-   - Inform user: `➕ [Linear]: Nova task criada: '<KEY>: <Title>' no projeto '<Project>'. Status: 'In Progress'. Labels: ['Front'].`
+## Workflow 2: Planejamento & Criação de Tarefas (`/fk-new-issue`)
 
-### Step 3: Lifecycle Finalization
-When development is complete:
-- If submitting for review / opening PR: Move to **`In Review`** and attach summary comment.
-- If task is fully delivered: Move to **`Done`** and attach completion summary.
-- Notify user: `✅ [Linear]: Task <KEY> atualizada para '<Novo Status>'.`
+Gatilhos: `/fk-new-issue`, `/fk-issue`, *"vamos planejar tarefas"*, *"crie os cards para..."*.
+
+1. **Etapa 1 - Apresentação & Dúvidas (Leitura)**:
+   - Localiza o projeto pai no Linear (`find-project`).
+   - Decompõe os requisitos em tarefas atômicas no chat (título, descrição, critérios de aceitação e label `Front`/`Back`).
+   - Apresenta a tabela proposta sem chamar `create-issue`.
+2. **Etapa 2 - Consent Gate**:
+   - Pergunta: *"O escopo e a divisão dos cards estão alinhados? Posso criá-los no Linear sob o status [Backlog/Todo]?"*
+3. **Etapa 3 - Execução Atômica**:
+   - Cria os cards no Linear via CLI/MCP.
+   - Apresenta o sumário final com links diretos e IDs.
 
 ---
 
-## Workflow 2: Planning & Backlog Creation
+## Workflow 3: Análise Técnica & Spikes Arquiteturais (`/fk-technical-analysis`)
 
-Follow this workflow whenever the user asks to plan a project, sprint, or create cards without immediate coding (e.g. *"vamos planejar meu projeto"*, *"crie os cards de tais tarefas"*):
+Gatilhos: `/fk-technical-analysis`, `/fk-ta`, *"vamos analisar tecnicamente o card X"*, *"faça um spike técnico sobre Y"*.
 
-1. **Locate Target Project**: Find or confirm target Linear project and team ID.
-2. **Break Down Scope**: Structure tasks into atomic items with title, user story/rationale, technical scope, and acceptance criteria.
-3. **Identify Subproject Label**: Determine if items belong to `Front`, `Back`, or both.
-4. **Create Cards in `Backlog` or `Todo`**:
-   ```bash
-   python skills/linear-workflow/scripts/linear_api.py create-issue --team-id "<team-id>" --project-id "<project-id>" --title "<Title>" --description "<Description>" --state "Backlog" --label "Front"
-   ```
-5. **Report to User**: Present a summary table of all cards created with their identifiers, titles, and links:
-   ```markdown
-   | Identificador | Título | Status | Labels |
-   | :--- | :--- | :--- | :--- |
-   | **RENT-12** | Implementar tela de checkout | Backlog | `Front` |
-   | **RENT-13** | Endpoint de autorização de pagamento | Backlog | `Back` |
-   ```
+1. **Etapa 1 - Apresentação & Dúvidas (Leitura)**:
+   - Consulta o card via `get-issue` ou `search-issues`.
+   - Se o card estava em `Backlog`, o início da análise é apresentado no chat.
+   - Realiza a análise arquitetural, opções de implementação, trade-offs e impactos no workspace.
+   - **Zero mutação prematura no card**: Nenhum comentário preliminar ou mudança de estado é postada enquanto houver dúvidas em aberto.
+2. **Etapa 2 - Consent Gate**:
+   - Pergunta: *"A análise técnica está aprovada? Posso registrar as decisões no Linear e mover o card para **Todo** (pronto para desenvolvimento)?"*
+3. **Etapa 3 - Execução Atômica**:
+   - Executa atomicamente:
+     ```bash
+     python skills/linear-workflow/scripts/linear_api.py update-issue "<id>" --state "Todo" --comment "🤖 **AI Agent Update**: Análise Técnica Consolidada..."
+     ```
+   - O card avança formalmente para **`Todo`** e não permanece em `Technical Analysis`.
 
 ---
 
-## Workflow 3: Technical Analysis & Investigation Spikes
+## Workflow 4: Ciclo de Desenvolvimento & Implementação (`/fk-develop`)
 
-When the user asks to analyze architecture, investigate a bug root cause, or evaluate technical feasibility:
-1. Locate or create the corresponding issue.
-2. Move state to **`Technical Analysis`**.
-3. Notify the user: `🔬 [Linear]: Task <KEY> movida para 'Technical Analysis' para investigação técnica.`
-4. Document findings and add a comment with key decisions to the Linear card.
+Gatilhos: `/fk-develop`, `/fk-dev`, *"vamos desenvolver a tarefa X"*, *"quero implementar o card Y"*.
+
+1. **Etapa 1 - Apresentação & Dúvidas (Leitura)**:
+   - Lê o card (`get-issue <id>`), requisitos, histórico de comentários e critérios de aceitação.
+   - Apresenta o plano de implementação, arquivos afetados e a branch de trabalho proposta (`<type>/<key>-<slug>`).
+2. **Etapa 2 - Consent Gate**:
+   - Pergunta: *"O plano de desenvolvimento está aprovado? Posso mover o card para **In Progress** e criar a branch de trabalho?"*
+3. **Etapa 3 - Execução Atômica & Início de Codificação**:
+   - Transiciona o card para **`In Progress`** com comentário inicial:
+     ```bash
+     python skills/linear-workflow/scripts/linear_api.py update-issue "<id>" --state "In Progress" --comment "🤖 **AI Agent Update**: Início do desenvolvimento na branch <branch-name>..."
+     ```
+   - Cria a branch Git alinhada ao Gitflow e inicia a codificação e testes.
+4. **Etapa 4 - Finalização do Desenvolvimento & Movimentação para `In Review`**:
+   - Após implementar, rodar a suíte de testes e abrir o Pull Request no GitHub (`gh pr create`):
+   - **O agente move obrigatoriamente o card para `In Review`**:
+     ```bash
+     python skills/linear-workflow/scripts/linear_api.py update-issue "<id>" --state "In Review" --comment "🤖 **AI Agent Update**: Desenvolvimento concluído e PR aberto no GitHub: <pr-url>..."
+     ```
+   - Notifica o desenvolvedor de que a tarefa está pronta para sua revisão manual.
+
+---
+
+## Workflow 5: Rito de Revisão Manual & Conclusão (`In Review` ➔ `Done`)
+
+A partir da coluna **`In Review`**, o controle é exclusivamente manual pelo desenvolvedor:
+
+1. **Revisão Humana do Pull Request**:
+   - O desenvolvedor analisa o código no GitHub, valida os testes automatizados e a conformidade funcional.
+2. **Cenário A: Necessidade de Correções / Ajustes**:
+   - O desenvolvedor devolve o card para **`In Progress`** e sinaliza ao agente no chat as correções necessárias.
+   - O agente assume as correções na branch existente, comita, atualiza o PR e, ao finalizar, move novamente para **`In Review`**.
+3. **Cenário B: Aprovação & Merge**:
+   - O desenvolvedor realiza o merge do PR no GitHub.
+   - O **desenvolvedor move manualmente o card para `Done`**.
+   - O agente nunca força a transição para `Done` sem intervenção humana no repositório remoto.
 
 ---
 
 ## Concrete Interaction Examples
 
-### Example 1: Planning Session
-**User**: *"Vamos planejar o projeto Rent Easy: precisamos das tarefas de autenticação biométrica e listagem de imóveis."*
-**Agent Actions**:
-1. Queries project `Rent Easy` (finds team `ENG`, project ID `proj_123`).
-2. Detects workspace is Flutter ➔ selects label `Front`.
-3. Creates card 1: `RENT-21 - "Autenticação Biométrica com FaceID/TouchID"` (Status: `Backlog`, Label: `Front`).
-4. Creates card 2: `RENT-22 - "Tela de Listagem de Imóveis com Filtros"` (Status: `Backlog`, Label: `Front`).
-5. Informs user:
-   > `📋 [Linear]: 2 tarefas criadas no projeto Rent Easy (Time ENG):`
-   > - `RENT-21: Autenticação Biométrica [Backlog] [Front]`
-   > - `RENT-22: Tela de Listagem de Imóveis [Backlog] [Front]`
+### Example 1: Consent Gate em Análise Técnica
+**Usuário**: `"/fk-ta FAL-24"`  
+**Agente (Etapa 1)**: Consulta `get-issue FAL-24`, estuda a arquitetura e responde no chat com a análise detalhada e trade-offs.  
+**Agente (Etapa 2)**: *"O direcionamento da análise técnica está aprovado? Posso registrar o sumário e avançar o card para **Todo**?"*  
+**Usuário**: *"Aprovado, pode registrar."*  
+**Agente (Etapa 3)**: Executa `update-issue FAL-24 --state "Todo" --comment "..."`. Comunica ao usuário a transição concluída.
 
-### Example 2: Developing an Existing Task
-**User**: *"Quero desenvolver a tarefa de autenticação biométrica do Rent Easy."*
-**Agent Actions**:
-1. Searches project `Rent Easy` for `autenticação biométrica`.
-2. Finds `RENT-21`. Reads description and criteria.
-3. Moves `RENT-21` to `In Progress`.
-4. Informs user:
-   > `📋 [Linear]: Task identificada: RENT-21 - "Autenticação Biométrica". Status atualizado para 'In Progress'. Iniciando implementação...`
-5. Implements code and runs tests.
-6. When complete: moves `RENT-21` to `In Review` and reports delivery.
-
-### Example 3: Project Not Found in Linear
-**User**: *"Implemente uma função de ordenação rápida no projeto QuickSortLab."*
-**Agent Actions**:
-1. Checks Linear for project `QuickSortLab` ➔ Not found.
-2. Implements the quicksort algorithm directly.
-3. Informs user:
-   > `✅ Algoritmo implementado com sucesso.`
-   > `⚠️ [Linear]: O projeto 'QuickSortLab' não foi encontrado no Linear. O desenvolvimento seguiu normalmente sem vincular cards.`
+### Example 2: Ciclo de Desenvolvimento e Entrega em `In Review`
+**Usuário**: `"Vamos desenvolver a tarefa FAL-24"`  
+**Agente (Etapa 1 & 2)**: Lê os critérios do card, apresenta o plano de branch e arquivos a alterar, e pergunta: *"Podemos criar a branch `feat/FAL-24-...`, mover o card para **In Progress** e iniciar a implementação?"*  
+**Usuário**: *"Podemos."*  
+**Agente (Etapa 3 & 4)**: Executa `update-issue FAL-24 --state "In Progress" --comment "..."`, cria a branch, implementa código, roda os testes, abre o PR #5 no GitHub e executa:
+```bash
+python skills/linear-workflow/scripts/linear_api.py update-issue FAL-24 --state "In Review" --comment "🤖 **AI Agent Update**: PR #5 aberto no GitHub..."
+```
 
 ---
 

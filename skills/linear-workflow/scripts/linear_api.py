@@ -12,7 +12,14 @@ import argparse
 import urllib.request
 import urllib.error
 from pathlib import Path
-from typing import Optional, Dict, Any, List
+from datetime import datetime, timezone
+from typing import Optional, Dict, Any, List, Tuple
+
+# Ensure stdout and stderr use UTF-8 on Windows
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8")
 
 LINEAR_GRAPHQL_ENDPOINT = "https://api.linear.app/graphql"
 
@@ -113,6 +120,45 @@ query ViewerQuery {
 }
 """
 
+GET_ISSUE_QUERY = """
+query GetIssueQuery($id: String!) {
+  issue(id: $id) {
+    id
+    identifier
+    title
+    description
+    url
+    state {
+      id
+      name
+      type
+    }
+    project {
+      id
+      name
+    }
+    team {
+      id
+      name
+      key
+    }
+    labels {
+      nodes {
+        id
+        name
+      }
+    }
+    comments(last: 15) {
+      nodes {
+        id
+        body
+        createdAt
+      }
+    }
+  }
+}
+"""
+
 LIST_PROJECTS_QUERY = """
 query ListProjectsQuery($filter: ProjectFilter) {
   projects(filter: $filter, first: 50) {
@@ -136,8 +182,8 @@ query ListProjectsQuery($filter: ProjectFilter) {
 """
 
 SEARCH_ISSUES_QUERY = """
-query SearchIssuesQuery($filter: IssueFilter, $term: String) {
-  issueSearch(query: $term, filter: $filter, first: 30) {
+query SearchIssuesQuery($filter: IssueFilter) {
+  issues(filter: $filter, first: 30) {
     nodes {
       id
       identifier
@@ -153,6 +199,11 @@ query SearchIssuesQuery($filter: IssueFilter, $term: String) {
         id
         name
       }
+      team {
+        id
+        name
+        key
+      }
       labels {
         nodes {
           id
@@ -165,7 +216,7 @@ query SearchIssuesQuery($filter: IssueFilter, $term: String) {
 """
 
 PROJECT_ISSUES_QUERY = """
-query ProjectIssuesQuery($projectId: ID!) {
+query ProjectIssuesQuery($projectId: String!) {
   project(id: $projectId) {
     id
     name
@@ -194,7 +245,7 @@ query ProjectIssuesQuery($projectId: ID!) {
 """
 
 LIST_STATES_QUERY = """
-query ListStatesQuery($teamId: ID!) {
+query ListStatesQuery($teamId: String!) {
   team(id: $teamId) {
     id
     name
@@ -288,8 +339,35 @@ mutation CreateLabel($input: IssueLabelCreateInput!) {
 }
 """
 
+def check_comment_idempotency(comments: List[Dict[str, Any]], target_body: str, window_minutes: float = 10.0) -> Tuple[bool, Optional[Dict[str, Any]]]:
+    """
+    Check if an identical comment was already posted within the specified time window.
+    Returns (is_duplicate, duplicate_comment_node).
+    """
+    clean_target = target_body.strip()
+    now = datetime.now(timezone.utc)
+
+    for c in comments:
+        clean_existing = (c.get("body") or "").strip()
+        if clean_existing == clean_target:
+            created_at_str = c.get("createdAt")
+            if created_at_str:
+                try:
+                    dt = datetime.fromisoformat(created_at_str.replace("Z", "+00:00"))
+                    diff_minutes = (now - dt).total_seconds() / 60.0
+                    if diff_minutes <= window_minutes:
+                        return True, c
+                except Exception:
+                    # If date parsing fails, compare text identically
+                    return True, c
+    return False, None
+
 def cmd_auth_check(api_key: str):
     res = execute_graphql(api_key, VIEWER_QUERY)
+    print(json.dumps(res, indent=2, ensure_ascii=False))
+
+def cmd_get_issue(api_key: str, issue_id: str):
+    res = execute_graphql(api_key, GET_ISSUE_QUERY, {"id": issue_id})
     print(json.dumps(res, indent=2, ensure_ascii=False))
 
 def cmd_find_project(api_key: str, name_query: str):
@@ -306,7 +384,6 @@ def cmd_find_project(api_key: str, name_query: str):
     
     # 2. Substring or parent project match
     if not matched:
-        # Check if project name is prefix or substring (e.g. query "Rent Easy Frontend" matches project "Rent Easy")
         matched = [p for p in projects if p["name"].lower() in clean_query or clean_query in p["name"].lower()]
 
     output = {
@@ -327,16 +404,34 @@ def cmd_get_project_issues(api_key: str, project_id: str):
     print(json.dumps(res, indent=2, ensure_ascii=False))
 
 def cmd_search_issues(api_key: str, term: str, project_id: Optional[str] = None):
-    # Search with term
-    res = execute_graphql(api_key, SEARCH_ISSUES_QUERY, {"term": term})
+    # If term looks like an issue key (e.g. FAL-24), try direct lookup first
+    if re.match(r"^[A-Za-z]+-\d+$", term.strip()):
+        direct = execute_graphql(api_key, GET_ISSUE_QUERY, {"id": term.strip()})
+        if direct.get("success") and direct.get("data", {}).get("issue"):
+            issue_node = direct["data"]["issue"]
+            if not project_id or (issue_node.get("project") and issue_node["project"].get("id") == project_id):
+                print(json.dumps({"success": True, "count": 1, "issues": [issue_node]}, indent=2, ensure_ascii=False))
+                return
+
+    # GraphQL filter using modern issues(filter: ...)
+    filter_conditions: List[Dict[str, Any]] = [
+        {
+            "or": [
+                {"title": {"containsIgnoreCase": term}},
+                {"description": {"containsIgnoreCase": term}}
+            ]
+        }
+    ]
+    if project_id:
+        filter_conditions.append({"project": {"id": {"eq": project_id}}})
+
+    filter_dict = {"and": filter_conditions} if len(filter_conditions) > 1 else filter_conditions[0]
+    res = execute_graphql(api_key, SEARCH_ISSUES_QUERY, {"filter": filter_dict})
     if not res.get("success"):
         print(json.dumps(res, indent=2, ensure_ascii=False))
         return
 
-    issues = res["data"].get("issueSearch", {}).get("nodes", [])
-    if project_id:
-        issues = [i for i in issues if i.get("project") and i["project"].get("id") == project_id]
-
+    issues = res["data"].get("issues", {}).get("nodes", [])
     print(json.dumps({"success": True, "count": len(issues), "issues": issues}, indent=2, ensure_ascii=False))
 
 def cmd_list_states(api_key: str, team_id: str):
@@ -350,7 +445,7 @@ def resolve_state_id(api_key: str, team_id: str, state_name: str) -> Optional[st
     states = res["data"]["team"]["states"]["nodes"]
     target = state_name.strip().lower()
     
-    # Exact or fuzzy match
+    # Exact match
     for s in states:
         if s["name"].lower() == target:
             return s["id"]
@@ -358,8 +453,8 @@ def resolve_state_id(api_key: str, team_id: str, state_name: str) -> Optional[st
     # Fuzzy alias mapping
     aliases = {
         "backlog": ["backlog"],
-        "todo": ["todo", "to do", "a fazer"],
         "technical analysis": ["technical analysis", "analysis", "analise tecnica", "análise técnica", "spike", "investigation"],
+        "todo": ["todo", "to do", "a fazer"],
         "in progress": ["in progress", "started", "doing", "em progresso", "em andamento"],
         "in review": ["in review", "review", "revisão", "em revisão", "pr"],
         "done": ["done", "completed", "concluído", "finalizado"],
@@ -415,21 +510,102 @@ def cmd_create_issue(api_key: str, team_id: str, title: str, description: str, p
     res = execute_graphql(api_key, CREATE_ISSUE_MUTATION, {"input": input_data})
     print(json.dumps(res, indent=2, ensure_ascii=False))
 
-def cmd_update_issue(api_key: str, issue_id: str, team_id: Optional[str] = None, state_name: Optional[str] = None, comment: Optional[str] = None):
-    input_data: Dict[str, Any] = {}
-    if state_name and team_id:
-        state_id = resolve_state_id(api_key, team_id, state_name)
-        if state_id:
-            input_data["stateId"] = state_id
+def cmd_update_issue(
+    api_key: str,
+    issue_id: str,
+    team_id: Optional[str] = None,
+    state_name: Optional[str] = None,
+    comment: Optional[str] = None,
+    force_comment: bool = False
+):
+    """
+    Atomic update for Linear issue:
+    1. Resolves issue UUID, team, and recent comments.
+    2. Updates state (if requested).
+    3. Posts comment with idempotency protection (skips duplicates posted within 10 min).
+    """
+    # 1. Fetch current issue context
+    issue_res = execute_graphql(api_key, GET_ISSUE_QUERY, {"id": issue_id})
+    if not issue_res.get("success") or not issue_res.get("data", {}).get("issue"):
+        print(json.dumps({
+            "success": False,
+            "error": f"Issue '{issue_id}' not found.",
+            "details": issue_res
+        }, indent=2, ensure_ascii=False))
+        return
 
-    res = execute_graphql(api_key, UPDATE_ISSUE_MUTATION, {"id": issue_id, "input": input_data})
-    
+    issue_data = issue_res["data"]["issue"]
+    real_uuid = issue_data["id"]
+    resolved_team_id = team_id or (issue_data.get("team") and issue_data["team"].get("id"))
+
+    output: Dict[str, Any] = {
+        "success": True,
+        "issue": {
+            "id": real_uuid,
+            "identifier": issue_data.get("identifier"),
+            "title": issue_data.get("title")
+        }
+    }
+
+    # 2. Update state if requested
+    if state_name:
+        if not resolved_team_id:
+            output["state_update"] = {
+                "success": False,
+                "error": "Cannot resolve team ID to update state. Provide --team-id explicitly."
+            }
+        else:
+            state_id = resolve_state_id(api_key, resolved_team_id, state_name)
+            if not state_id:
+                output["state_update"] = {
+                    "success": False,
+                    "error": f"State '{state_name}' not found for team '{resolved_team_id}'."
+                }
+            else:
+                state_res = execute_graphql(api_key, UPDATE_ISSUE_MUTATION, {
+                    "id": real_uuid,
+                    "input": {"stateId": state_id}
+                })
+                if state_res.get("success"):
+                    output["state_update"] = {
+                        "success": True,
+                        "state": state_name,
+                        "stateId": state_id
+                    }
+                else:
+                    output["state_update"] = state_res
+
+    # 3. Add comment if requested with idempotency check
     if comment:
-        execute_graphql(api_key, CREATE_COMMENT_MUTATION, {
-            "input": {"issueId": issue_id, "body": comment}
-        })
+        existing_comments = issue_data.get("comments", {}).get("nodes", [])
+        is_dup, dup_node = check_comment_idempotency(existing_comments, comment, window_minutes=10.0)
 
-    print(json.dumps(res, indent=2, ensure_ascii=False))
+        if is_dup and not force_comment:
+            output["comment"] = {
+                "success": True,
+                "created": False,
+                "skipped": True,
+                "reason": "Idempotent comment skipped: identical comment was posted within the last 10 minutes.",
+                "existing_comment_id": dup_node.get("id") if dup_node else None
+            }
+        else:
+            c_res = execute_graphql(api_key, CREATE_COMMENT_MUTATION, {
+                "input": {"issueId": real_uuid, "body": comment}
+            })
+            if c_res.get("success"):
+                output["comment"] = {
+                    "success": True,
+                    "created": True,
+                    "comment_id": c_res["data"]["commentCreate"]["comment"]["id"]
+                }
+            else:
+                output["comment"] = c_res
+
+    print(json.dumps(output, indent=2, ensure_ascii=False))
+
+def cmd_create_comment(api_key: str, issue_id: str, comment: str, force: bool = False):
+    """Create comment on issue with idempotency protection."""
+    cmd_update_issue(api_key, issue_id=issue_id, comment=comment, force_comment=force)
 
 def main():
     parser = argparse.ArgumentParser(description="Linear GraphQL API helper CLI")
@@ -438,6 +614,10 @@ def main():
 
     # auth-check
     subparsers.add_parser("auth-check", help="Verify credentials and list current viewer & teams")
+
+    # get-issue
+    get_i = subparsers.add_parser("get-issue", help="Get issue details, state, team and recent comments")
+    get_i.add_argument("issue_id", help="Linear Issue ID or identifier (e.g. FAL-24)")
 
     # list-projects
     subparsers.add_parser("list-projects", help="List all projects in workspace")
@@ -451,8 +631,8 @@ def main():
     p_issues.add_argument("project_id", help="Linear Project ID")
 
     # search-issues
-    s_issues = subparsers.add_parser("search-issues", help="Search issues by query text")
-    s_issues.add_argument("term", help="Search term")
+    s_issues = subparsers.add_parser("search-issues", help="Search issues by query text or identifier")
+    s_issues.add_argument("term", help="Search term or issue key")
     s_issues.add_argument("--project-id", help="Filter by Linear Project ID")
 
     # list-states
@@ -469,11 +649,18 @@ def main():
     c_issue.add_argument("--label", action="append", dest="labels", help="Labels to attach (e.g. Front, Back)")
 
     # update-issue
-    u_issue = subparsers.add_parser("update-issue", help="Update issue state or add comment")
+    u_issue = subparsers.add_parser("update-issue", help="Update issue state and/or add comment with idempotency protection")
     u_issue.add_argument("issue_id", help="Linear Issue ID or identifier")
-    u_issue.add_argument("--team-id", help="Linear Team ID (required if changing state)")
-    u_issue.add_argument("--state", help="New state name (e.g., 'Technical Analysis', 'In Progress', 'In Review', 'Done')")
+    u_issue.add_argument("--team-id", help="Linear Team ID (optional, automatically resolved from issue if omitted)")
+    u_issue.add_argument("--state", help="New state name (e.g., 'Technical Analysis', 'Todo', 'In Progress', 'In Review', 'Done')")
     u_issue.add_argument("--comment", help="Comment body to post")
+    u_issue.add_argument("--force-comment", action="store_true", help="Force posting comment even if identical comment exists within 10 minutes")
+
+    # create-comment
+    c_comment = subparsers.add_parser("create-comment", help="Create comment on issue with idempotency protection")
+    c_comment.add_argument("issue_id", help="Linear Issue ID or identifier")
+    c_comment.add_argument("comment", help="Comment body text")
+    c_comment.add_argument("--force", action="store_true", help="Force posting comment even if identical comment exists within 10 minutes")
 
     args = parser.parse_args()
 
@@ -488,6 +675,8 @@ def main():
 
     if args.command == "auth-check":
         cmd_auth_check(api_key)
+    elif args.command == "get-issue":
+        cmd_get_issue(api_key, args.issue_id)
     elif args.command == "list-projects":
         cmd_list_projects(api_key)
     elif args.command == "find-project":
@@ -501,7 +690,9 @@ def main():
     elif args.command == "create-issue":
         cmd_create_issue(api_key, args.team_id, args.title, args.description, args.project_id, args.state, args.labels)
     elif args.command == "update-issue":
-        cmd_update_issue(api_key, args.issue_id, args.team_id, args.state, args.comment)
+        cmd_update_issue(api_key, args.issue_id, args.team_id, args.state, args.comment, args.force_comment)
+    elif args.command == "create-comment":
+        cmd_create_comment(api_key, args.issue_id, args.comment, args.force)
 
 if __name__ == "__main__":
     main()
