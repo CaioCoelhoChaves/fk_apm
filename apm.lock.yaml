@@ -37,6 +37,18 @@ dependencies:
   package_type: claude_skill
   deployed_files:
   - .agents/rules/linear-lifecycle-commands.md
+  - .agents/skills/fk-dev
+  - .agents/skills/fk-dev/SKILL.md
+  - .agents/skills/fk-develop
+  - .agents/skills/fk-develop/SKILL.md
+  - .agents/skills/fk-issue
+  - .agents/skills/fk-issue/SKILL.md
+  - .agents/skills/fk-new-issue
+  - .agents/skills/fk-new-issue/SKILL.md
+  - .agents/skills/fk-ta
+  - .agents/skills/fk-ta/SKILL.md
+  - .agents/skills/fk-technical-analysis
+  - .agents/skills/fk-technical-analysis/SKILL.md
   - .agents/skills/linear-workflow
   - .agents/skills/linear-workflow/SKILL.md
   - .agents/skills/linear-workflow/evals/evals.json
@@ -46,10 +58,16 @@ dependencies:
   - .agents/skills/linear-workflow/scripts/linear_api.py
   deployed_file_hashes:
     .agents/rules/linear-lifecycle-commands.md: sha256:71d32ecf5669b4cf85837032990bb2cbf363535f058cbe4752b286a957631202
-    .agents/skills/linear-workflow/SKILL.md: sha256:213564fdfe2dee9482cf9a95654901bf3608a67896be9c57708c51aa5660f9ba
+    .agents/skills/fk-dev/SKILL.md: sha256:68dc856cb1be7a5d99eb168c8aba8ec474b98b0075f3dbef34a4ff673e775dcc
+    .agents/skills/fk-develop/SKILL.md: sha256:bb936a1fb31b60c78d8769a1f3b2cd84faca9b1bd1f2e8fbbf5f931aa376b3ad
+    .agents/skills/fk-issue/SKILL.md: sha256:3ff2728ad71b0c25c87aae5cfb35520d70be2bd59bcaa0d33b55754713b899ac
+    .agents/skills/fk-new-issue/SKILL.md: sha256:7db2199665bf061fd1c49fec1fa2dae05afc711aafcca3d0d3749903fe864728
+    .agents/skills/fk-ta/SKILL.md: sha256:fbb1228bee76c8c9369f3127b1549912802406133afbc1d242e967e635374b1c
+    .agents/skills/fk-technical-analysis/SKILL.md: sha256:69171bd44ed0705ecca97d858759fde35c6207a3eba1ab93788208916b8d2959
+    .agents/skills/linear-workflow/SKILL.md: sha256:ded7ab14ba491721fb39f756ac3399b80941947e48c731e77317109dd3eb505d
     .agents/skills/linear-workflow/evals/evals.json: sha256:3f847ff4802e1974d296a6fad200c05ecf7a73e20f493f8661e502a321233682
     .agents/skills/linear-workflow/references/configuration.md: sha256:cb1fcf7737aebeed7079664bdf794ffa9d7ec0771d9af16bcf03e6fe84d42d39
-    .agents/skills/linear-workflow/references/multi-harness-commands.md: sha256:01e9255d208f496531dadf99867a260d8f257d3a9a7469c362c8c59a6c8e1625
+    .agents/skills/linear-workflow/references/multi-harness-commands.md: sha256:f7a8bf59259ecad3b6908f1a2b1657bc1c6cd725f6e2d58763b8a5a05de9c2c1
     .agents/skills/linear-workflow/references/states-and-labels.md: sha256:9cb78b090fc24c697c5e295f3e25f02c33fe9ec56da0d19a90d1dab41977a856
     .agents/skills/linear-workflow/scripts/linear_api.py: sha256:03d327ceeb4277a45badf2a2f5c2969f1bfc4b77c2915e9f2e76d91b08873371
   source: local
@@ -140,6 +158,114 @@ deployments:
   content_hash: sha256:71d32ecf5669b4cf85837032990bb2cbf363535f058cbe4752b286a957631202
 - kind: project-relative
   target: antigravity
+  value: .agents/skills/fk-dev
+  runtime: null
+  scope: project
+  owners:
+  - local:skills/linear-workflow
+  active_owner: local:skills/linear-workflow
+  content_hash: null
+- kind: project-relative
+  target: antigravity
+  value: .agents/skills/fk-dev/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - local:skills/linear-workflow
+  active_owner: local:skills/linear-workflow
+  content_hash: sha256:68dc856cb1be7a5d99eb168c8aba8ec474b98b0075f3dbef34a4ff673e775dcc
+- kind: project-relative
+  target: antigravity
+  value: .agents/skills/fk-develop
+  runtime: null
+  scope: project
+  owners:
+  - local:skills/linear-workflow
+  active_owner: local:skills/linear-workflow
+  content_hash: null
+- kind: project-relative
+  target: antigravity
+  value: .agents/skills/fk-develop/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - local:skills/linear-workflow
+  active_owner: local:skills/linear-workflow
+  content_hash: sha256:bb936a1fb31b60c78d8769a1f3b2cd84faca9b1bd1f2e8fbbf5f931aa376b3ad
+- kind: project-relative
+  target: antigravity
+  value: .agents/skills/fk-issue
+  runtime: null
+  scope: project
+  owners:
+  - local:skills/linear-workflow
+  active_owner: local:skills/linear-workflow
+  content_hash: null
+- kind: project-relative
+  target: antigravity
+  value: .agents/skills/fk-issue/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - local:skills/linear-workflow
+  active_owner: local:skills/linear-workflow
+  content_hash: sha256:3ff2728ad71b0c25c87aae5cfb35520d70be2bd59bcaa0d33b55754713b899ac
+- kind: project-relative
+  target: antigravity
+  value: .agents/skills/fk-new-issue
+  runtime: null
+  scope: project
+  owners:
+  - local:skills/linear-workflow
+  active_owner: local:skills/linear-workflow
+  content_hash: null
+- kind: project-relative
+  target: antigravity
+  value: .agents/skills/fk-new-issue/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - local:skills/linear-workflow
+  active_owner: local:skills/linear-workflow
+  content_hash: sha256:7db2199665bf061fd1c49fec1fa2dae05afc711aafcca3d0d3749903fe864728
+- kind: project-relative
+  target: antigravity
+  value: .agents/skills/fk-ta
+  runtime: null
+  scope: project
+  owners:
+  - local:skills/linear-workflow
+  active_owner: local:skills/linear-workflow
+  content_hash: null
+- kind: project-relative
+  target: antigravity
+  value: .agents/skills/fk-ta/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - local:skills/linear-workflow
+  active_owner: local:skills/linear-workflow
+  content_hash: sha256:fbb1228bee76c8c9369f3127b1549912802406133afbc1d242e967e635374b1c
+- kind: project-relative
+  target: antigravity
+  value: .agents/skills/fk-technical-analysis
+  runtime: null
+  scope: project
+  owners:
+  - local:skills/linear-workflow
+  active_owner: local:skills/linear-workflow
+  content_hash: null
+- kind: project-relative
+  target: antigravity
+  value: .agents/skills/fk-technical-analysis/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - local:skills/linear-workflow
+  active_owner: local:skills/linear-workflow
+  content_hash: sha256:69171bd44ed0705ecca97d858759fde35c6207a3eba1ab93788208916b8d2959
+- kind: project-relative
+  target: antigravity
   value: .agents/skills/git-workflow
   runtime: null
   scope: project
@@ -200,7 +326,7 @@ deployments:
   owners:
   - local:skills/linear-workflow
   active_owner: local:skills/linear-workflow
-  content_hash: sha256:213564fdfe2dee9482cf9a95654901bf3608a67896be9c57708c51aa5660f9ba
+  content_hash: sha256:ded7ab14ba491721fb39f756ac3399b80941947e48c731e77317109dd3eb505d
 - kind: project-relative
   target: antigravity
   value: .agents/skills/linear-workflow/evals/evals.json
@@ -227,7 +353,7 @@ deployments:
   owners:
   - local:skills/linear-workflow
   active_owner: local:skills/linear-workflow
-  content_hash: sha256:01e9255d208f496531dadf99867a260d8f257d3a9a7469c362c8c59a6c8e1625
+  content_hash: sha256:f7a8bf59259ecad3b6908f1a2b1657bc1c6cd725f6e2d58763b8a5a05de9c2c1
 - kind: project-relative
   target: antigravity
   value: .agents/skills/linear-workflow/references/states-and-labels.md
@@ -471,6 +597,15 @@ deployments:
   - local:skills/skill-creator
   active_owner: local:skills/skill-creator
   content_hash: sha256:3af8ae62c40c73ab712207436a0d9a981e845f25c5a7040229eb189cc8e45bb1
+- kind: uri
+  target: mcp
+  value: linear
+  runtime: antigravity
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: null
 mcp_servers:
 - linear
 mcp_configs:
@@ -479,6 +614,8 @@ mcp_configs:
     transport: http
     registry: false
     url: https://mcp.linear.app/mcp
-mcp_target_servers: {}
+mcp_target_servers:
+  antigravity:
+  - linear
 mcp_config_provenance:
   linear: default

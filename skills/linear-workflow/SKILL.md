@@ -57,8 +57,8 @@ A standardized workflow for AI coding agents to integrate Linear issue managemen
    - Every Linear operation (issue queried, card created, state transitioned, or comment added) must be explicitly communicated in the response with issue keys (e.g. `LIN-42`) and status.
 
 8. **Multi-Harness Architecture Support**:
-   - Standardized APM primitives under `.apm/prompts/` (`.prompt.md`) and `.apm/instructions/` (`.instructions.md`) provide cross-platform command routing:
-     - **Google Antigravity**: Unconditional rules in `.agents/rules/` and compiled `AGENTS.md` intercept commands and enforce the 3-stage Consent Gate without colliding with native slash commands.
+   - Standardized APM primitives under `.apm/skills/` (`SKILL.md`), `.apm/prompts/` (`.prompt.md`) and `.apm/instructions/` (`.instructions.md`) provide cross-platform command routing:
+     - **Google Antigravity**: Native slash commands via promoted sub-skills in `.agents/skills/` (`/fk-new-issue`, `/fk-issue`, `/fk-technical-analysis`, `/fk-ta`, `/fk-develop`, `/fk-dev`), backed by unconditional rules in `.agents/rules/` and compiled `AGENTS.md` enforcing the 3-stage Consent Gate.
      - **Claude Code**: Native custom slash commands in `.claude/commands/` and rules in `.claude/rules/`.
      - **Cursor**: Custom slash commands in `.cursor/commands/` and rules in `.cursor/rules/`.
      - **GitHub Copilot**: Prompt templates in `.github/prompts/` and instructions in `.github/instructions/`.

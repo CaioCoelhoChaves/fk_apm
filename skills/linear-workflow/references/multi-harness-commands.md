@@ -10,7 +10,7 @@ Different AI coding harnesses implement command discovery and user inputs with d
 
 | Harness | Command Discovery Mechanism | Slash (`/`) Interception Behavior | Native Primitives Path |
 | :--- | :--- | :--- | :--- |
-| **Google Antigravity** (`agy` CLI / IDE) | Progressive disclosure via rules & `AGENTS.md` | Intercepts `/` in CLI for internal commands (`/goal`, `/plan`, `/browser`, etc.) | Rules: `.agents/rules/`<br>Skills: `.agents/skills/` |
+| **Google Antigravity** (`agy` CLI / IDE) | Native slash commands via sub-skills (`.agents/skills/`) & rules (`.agents/rules/`) | Supports typeahead `/` commands via promoted sub-skills and progressive disclosure rules | Sub-skills: `.agents/skills/`<br>Rules: `.agents/rules/` |
 | **Claude Code** | Custom slash commands | Native support for project commands via Markdown files | Commands: `.claude/commands/`<br>Rules: `.claude/rules/` |
 | **Cursor** | Custom slash commands & Agent rules | Native commands & rules via MDC | Commands: `.cursor/commands/`<br>Rules: `.cursor/rules/` |
 | **GitHub Copilot** | Prompt files & Instruction sets | Discovers prompt files in project | Prompts: `.github/prompts/`<br>Instructions: `.github/instructions/` |
@@ -30,12 +30,14 @@ Without harness-aware distribution:
 flowchart TD
     subgraph Package ["Package: skills/linear-workflow"]
         P1[".apm/prompts/fk-*.prompt.md"]
+        SK1[".apm/skills/fk-*/SKILL.md"]
         I1[".apm/instructions/linear-lifecycle-commands.instructions.md"]
-        S1["SKILL.md (Tolerant Description)"]
+        S1["SKILL.md (Parent Orchestrator)"]
     end
 
     subgraph APM ["APM Engine (install / compile)"]
         CI["CommandIntegrator"]
+        SI["SkillIntegrator (Sub-Skill Promotion)"]
         II["InstructionIntegrator"]
         AC["AgentsCompiler"]
     end
@@ -48,11 +50,13 @@ flowchart TD
     end
 
     P1 --> CI
+    SK1 --> SI
     I1 --> II
     I1 --> AC
     CI --> Claude
     CI --> Cursor
     CI --> Copilot
+    SI --> Antigravity
     II --> Antigravity
     II --> Claude
     II --> Cursor
