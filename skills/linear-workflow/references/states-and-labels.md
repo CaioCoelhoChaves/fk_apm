@@ -12,11 +12,12 @@ Every task tracked via `linear-workflow` follows this standard progression:
 stateDiagram-v2
     [*] --> Backlog: Planning / Idea
     Backlog --> Technical_Analysis: Architecture / Investigation
-    Technical_Analysis --> Todo: Refined / Actionable
-    Todo --> In_Progress: Active Coding
+    Technical_Analysis --> Todo: Refined / Actionable (Agent move)
+    Todo --> In_Progress: Active Coding (Agent move)
     Backlog --> Todo: Direct Grooming without Analysis
-    In_Progress --> In_Review: Manual Developer Move (PR Opened)
-    In_Review --> Done: Manual Developer Move (Merged & Validated)
+    In_Progress --> In_Review: PR Opened / Tests Passed (Agent move)
+    In_Review --> In_Progress: Feedback / Request Corrections (Developer move)
+    In_Review --> Done: Merged & Validated (Developer manual move)
     Backlog --> Canceled: Abandoned
     Todo --> Duplicate: Redundant Task
     In_Progress --> Canceled: Discarded
@@ -24,20 +25,23 @@ stateDiagram-v2
 
 ### State Definitions & Trigger Criteria
 
-| State | Role & Description | When to Transition Here |
-| :--- | :--- | :--- |
-| **`Backlog`** | Unscheduled backlog items | When breaking down broad plans or brainstorming future features during planning sessions. |
-| **`Technical Analysis`** | Architecture design, spikes, research | When the agent is tasked with designing architecture, performing deep codebase analysis, or exploring technical alternatives before coding. |
-| **`Todo`** | Actionable tasks ready for development | When a card has been refined with clear acceptance criteria and is ready to be picked up. |
-| **`In Progress`** | Active implementation | **As soon as coding begins** for a planned or newly created task. |
-| **`In Review`** | Quality verification, Pull Request, testing | **Transição manual pelo desenvolvedor**: Realizada pelo humano ao abrir o Pull Request no GitHub após testes passarem. |
-| **`Done`** | Shipped and completed | **Transição manual pelo desenvolvedor**: Realizada pelo humano após merge do PR e homologação funcional da entrega. |
-| **`Canceled`** | Deprecated or obsolete | When the user explicitly cancels or abandons a planned feature. |
-| **`Duplicate`** | Redundant with existing issue | When the task overlaps completely with an existing Linear card. |
+| State | Role & Description | When to Transition Here | Executado Por |
+| :--- | :--- | :--- | :--- |
+| **`Backlog`** | Unscheduled backlog items | When breaking down broad plans or brainstorming future features during planning sessions. | Desenvolvedor / Agente (`/fk-new-issue`) |
+| **`Technical Analysis`** | Architecture design, spikes, research | When the agent is tasked with designing architecture, performing deep codebase analysis, or exploring technical alternatives before coding. | Agente (`/fk-technical-analysis`) |
+| **`Todo`** | Actionable tasks ready for development | When a card has been refined with clear acceptance criteria and is ready to be picked up. | **Agente** (ao fechar Análise Técnica com Consent Gate) |
+| **`In Progress`** | Active implementation | **As soon as coding begins** for a planned or newly created task, or when returned from review for corrections. | **Agente** (`/fk-develop`) ou Desenvolvedor (para correções) |
+| **`In Review`** | Quality verification, Pull Request, testing | When implementation is completed, automated tests pass, and a Pull Request is opened on GitHub. | **Agente** (ao abrir o PR e concluir o ciclo de codificação) |
+| **`Done`** | Shipped and completed | When the Pull Request is merged or the user validates that the feature is fully delivered and operational. | **Transição manual pelo desenvolvedor** (após merge do PR no GitHub) |
+| **`Canceled`** | Deprecated or obsolete | When the user explicitly cancels or abandons a planned feature. | Desenvolvedor |
+| **`Duplicate`** | Redundant with existing issue | When the task overlaps completely with an existing Linear card. | Desenvolvedor |
 
 > [!IMPORTANT]
-> **Regra de Avanço de Fase (Anti-Estagnação)**:
-> Ao concluir uma etapa assistida pelo agente, o card **deve obrigatoriamente avançar para o próximo estado** (`Technical Analysis` ➔ `Todo`, `Todo` ➔ `In Progress`) juntamente com o registro do comentário consolidado. O card nunca deve permanecer parado no estado anterior após sua conclusão formal.
+> **Divisão de Responsabilidades & Ciclo de Feedback**:
+> - **Papel do Agente**: Mover o card ao finalizar o desenvolvimento para **`In Review`** juntamente com o comentário de entrega contendo o link do PR.
+> - **Papel do Desenvolvedor a partir de `In Review`**:
+>   - Se houver falhas ou ajustes necessários: O desenvolvedor retorna o card para **`In Progress`** e instrui o agente a efetuar as correções.
+>   - Se a entrega estiver aprovada: O desenvolvedor realiza o merge do PR e move manualmente o card para **`Done`**. O agente nunca deve mover para `Done` automaticamente.
 
 ---
 
@@ -77,16 +81,16 @@ Every Linear transition or query must be communicated explicitly in the AI agent
 - **Task Found & Started**:
   > `📋 [Linear]: Task identificada no projeto Rent Easy: LIN-104 - "Implementar tela de listagem de imóveis". Status atualizado para 'In Progress'. Labels: ['Front'].`
 
-- **New Task Created & Started**:
-  > `➕ [Linear]: Nova task criada no projeto Rent Easy: LIN-152 - "Adicionar filtro por faixa de preço". Status: 'In Progress'. Labels: ['Front'].`
-
 - **Task Transitioned to Todo (Post-Technical Analysis)**:
   > `🔬 [Linear]: Análise técnica de LIN-104 concluída. Card avançado para 'Todo' com sumário técnico consolidado registrado.`
 
-- **Pull Request Created (Reminder for Manual Move)**:
-  > `🔍 [Linear]: PR #45 aberto no repositório. Lembrete: Mova o card LIN-104 manualmente para 'In Review' no Linear.`
+- **Development Concluded & Moved to In Review**:
+  > `🔍 [Linear]: Desenvolvimento concluído e PR #45 aberto no GitHub. Task LIN-104 movida para 'In Review' para sua validação.`
 
-- **Delivery Validated (Reminder for Manual Done)**:
+- **Correction Cycle (Returned to In Progress)**:
+  > `🔄 [Linear]: Task LIN-104 retornada para 'In Progress' para aplicação dos ajustes solicitados na revisão do PR #45.`
+
+- **Reminder for Manual Done**:
   > `✅ [Linear]: PR #45 mergeado com sucesso. Lembrete: Mova o card LIN-104 manualmente para 'Done' no Linear.`
 
 - **Project Not Found in Linear**:

@@ -1,6 +1,6 @@
 ---
 name: linear-workflow
-description: Synchronize development and planning tasks with Linear issue tracking across any project. Enforces lifecycle commands (/fk-new-issue, /fk-technical-analysis, /fk-develop), the mandatory 3-stage Consent Gate protocol (zero mutation until user approval), atomic state advancement with comment registration, comment idempotency (10-minute deduplication window), and manual-only developer transitions for 'In Review' and 'Done'. Checks Linear via MCP tools or bundled CLI (scripts/linear_api.py), tags monorepo subprojects with Front/Back labels, and notifies the user of all board actions.
+description: Synchronize development and planning tasks with Linear issue tracking across any project. Enforces lifecycle commands (/fk-new-issue, /fk-technical-analysis, /fk-develop), the mandatory 3-stage Consent Gate protocol (zero mutation until user approval), atomic state advancement (advancing to In Review upon PR opening), comment idempotency (10-minute deduplication window), manual-only developer transitions for 'Done', and review feedback loops returning to 'In Progress'. Checks Linear via MCP tools or bundled CLI (scripts/linear_api.py), tags monorepo subprojects with Front/Back labels, and notifies the user of all board actions.
 allowed-tools: Read,Glob,Grep,Bash
 ---
 
@@ -25,11 +25,17 @@ A standardized workflow for AI coding agents to integrate Linear issue managemen
    - Proceed with development or implementation normally.
    - Inform the user clearly at the start or completion that the project is not tracked in Linear.
 
-3. **Lifecycle State Machine & Manual Rites (`In Review` & `Done`)**:
+3. **Lifecycle State Machine & Responsabilidades de Transição**:
    - Enforce the official state progression:
      `Backlog` ➔ `Technical Analysis` ➔ `Todo` ➔ `In Progress` ➔ `In Review` ➔ `Done` (plus `Canceled` or `Duplicate`).
-   - **Exclusively Manual Transitions**: The stages **`In Review`** and **`Done`** do NOT have automated agent slash commands and are performed **exclusively manually by the developer** after pull request reviews on GitHub and validation tests.
-   - **Mandatory Stage Advancement Rule**: Upon concluding an assisted stage, the agent **must advance the card state to the next stage** (`Technical Analysis` ➔ `Todo`, `Todo` ➔ `In Progress`) and register the consolidated structured comment. A card must never remain stagnant in the previous stage after its formal conclusion.
+   - **Transições do Agente (Anti-Estagnação)**:
+     - Conclusão de Análise Técnica: Agente move de `Technical Analysis` ➔ **`Todo`** com comentário estruturado.
+     - Início de Desenvolvimento: Agente move de `Todo` ➔ **`In Progress`** com branch Git criada.
+     - Conclusão de Desenvolvimento (PR Aberto): Agente move obrigatoriamente de `In Progress` ➔ **`In Review`** com link do PR e sumário técnico.
+   - **Rito Exclusivamente Manual a partir de `In Review`**:
+     - A partir de **`In Review`**, o controle é **exclusivamente manual pelo desenvolvedor**.
+     - **`Done`**: O desenvolvedor move manualmente para **`Done`** após revisar o PR no GitHub, validar os testes e realizar o merge. O agente **NUNCA** move o card para `Done`.
+     - **Retorno para Correções**: Se o desenvolvedor encontrar falhas ou pedir ajustes durante o review, o card pode ser retornado para **`In Progress`** (via intervenção no Linear ou comando no chat) para que o agente execute o ciclo corretivo.
 
 4. **Mandatory 3-Stage Protocol (*Consent Gate*)**:
    - Both for explicit commands (`/fk-*`) and natural language triggers (e.g. *"vamos analisar tecnicamente o card X"*, *"vamos desenvolver a tarefa Y"*), the agent must strictly follow this protocol:
@@ -54,13 +60,13 @@ A standardized workflow for AI coding agents to integrate Linear issue managemen
 
 ## Lifecycle Commands Reference
 
-| Command Trigger | Aliases | Target State Transition | Scope & Purpose |
-| :--- | :--- | :--- | :--- |
-| **`/fk-new-issue`** | `/fk-issue` | `Backlog` ou `Todo` | Planejamento, decomposição e criação atômica de novos cards no Linear. |
-| **`/fk-technical-analysis`** | `/fk-ta` | `Technical Analysis` ➔ `Todo` | Investigação arquitetural, spikes técnicos, desenho de solução e avanço para `Todo` ao concluir. |
-| **`/fk-develop`** | `/fk-dev` | `Todo` ➔ `In Progress` | Início do ciclo de desenvolvimento, criação de branch Git e implementação com testes. |
-| *(Transição Manual)* | — | `In Review` | **Exclusivamente manual pelo desenvolvedor** após abertura de PR no GitHub. |
-| *(Transição Manual)* | — | `Done` | **Exclusivamente manual pelo desenvolvedor** após merge e homologação da entrega. |
+| Command Trigger | Aliases | Target State Transition | Executado Por | Scope & Purpose |
+| :--- | :--- | :--- | :--- | :--- |
+| **`/fk-new-issue`** | `/fk-issue` | `Backlog` ou `Todo` | **Agente** (com Consent Gate) | Planejamento, decomposição e criação atômica de novos cards no Linear. |
+| **`/fk-technical-analysis`** | `/fk-ta` | `Technical Analysis` ➔ `Todo` | **Agente** (com Consent Gate) | Investigação arquitetural, spikes técnicos, desenho de solução e avanço para `Todo` ao concluir. |
+| **`/fk-develop`** | `/fk-dev` | `Todo` ➔ `In Progress` ➔ `In Review` | **Agente** | Início do desenvolvimento (`In Progress`), implementação, testes e avanço para `In Review` ao abrir o PR. |
+| *(Retorno de Correção)* | `/fk-dev` | `In Review` ➔ `In Progress` | **Desenvolvedor / Agente** | Retorno do card para correções quando a revisão do PR apontar ajustes necessários. |
+| *(Transição Manual)* | — | `In Review` ➔ `Done` | **Desenvolvedor** | **Exclusivamente manual pelo desenvolvedor** após merge e homologação da entrega. |
 
 ---
 
@@ -145,22 +151,35 @@ Gatilhos: `/fk-develop`, `/fk-dev`, *"vamos desenvolver a tarefa X"*, *"quero im
    - Apresenta o plano de implementação, arquivos afetados e a branch de trabalho proposta (`<type>/<key>-<slug>`).
 2. **Etapa 2 - Consent Gate**:
    - Pergunta: *"O plano de desenvolvimento está aprovado? Posso mover o card para **In Progress** e criar a branch de trabalho?"*
-3. **Etapa 3 - Execução Atômica**:
+3. **Etapa 3 - Execução Atômica & Início de Codificação**:
    - Transiciona o card para **`In Progress`** com comentário inicial:
      ```bash
      python skills/linear-workflow/scripts/linear_api.py update-issue "<id>" --state "In Progress" --comment "🤖 **AI Agent Update**: Início do desenvolvimento na branch <branch-name>..."
      ```
    - Cria a branch Git alinhada ao Gitflow e inicia a codificação e testes.
+4. **Etapa 4 - Finalização do Desenvolvimento & Movimentação para `In Review`**:
+   - Após implementar, rodar a suíte de testes e abrir o Pull Request no GitHub (`gh pr create`):
+   - **O agente move obrigatoriamente o card para `In Review`**:
+     ```bash
+     python skills/linear-workflow/scripts/linear_api.py update-issue "<id>" --state "In Review" --comment "🤖 **AI Agent Update**: Desenvolvimento concluído e PR aberto no GitHub: <pr-url>..."
+     ```
+   - Notifica o desenvolvedor de que a tarefa está pronta para sua revisão manual.
 
 ---
 
-## Workflow 5: Ritos Finais Manuais (`In Review` e `Done`)
+## Workflow 5: Rito de Revisão Manual & Conclusão (`In Review` ➔ `Done`)
 
-> [!IMPORTANT]
-> **Ritos 100% Manuais do Desenvolvedor**:
-> - Ao abrir Pull Request no GitHub, o **desenvolvedor** move o card para **`In Review`**.
-> - Ao validar os testes e realizar o merge do PR, o **desenvolvedor** move o card para **`Done`**.
-> - O agente nunca força ou automatiza a conclusão para `Done` sem intervenção humana no repositório remoto.
+A partir da coluna **`In Review`**, o controle é exclusivamente manual pelo desenvolvedor:
+
+1. **Revisão Humana do Pull Request**:
+   - O desenvolvedor analisa o código no GitHub, valida os testes automatizados e a conformidade funcional.
+2. **Cenário A: Necessidade de Correções / Ajustes**:
+   - O desenvolvedor devolve o card para **`In Progress`** e sinaliza ao agente no chat as correções necessárias.
+   - O agente assume as correções na branch existente, comita, atualiza o PR e, ao finalizar, move novamente para **`In Review`**.
+3. **Cenário B: Aprovação & Merge**:
+   - O desenvolvedor realiza o merge do PR no GitHub.
+   - O **desenvolvedor move manualmente o card para `Done`**.
+   - O agente nunca força a transição para `Done` sem intervenção humana no repositório remoto.
 
 ---
 
@@ -173,11 +192,14 @@ Gatilhos: `/fk-develop`, `/fk-dev`, *"vamos desenvolver a tarefa X"*, *"quero im
 **Usuário**: *"Aprovado, pode registrar."*  
 **Agente (Etapa 3)**: Executa `update-issue FAL-24 --state "Todo" --comment "..."`. Comunica ao usuário a transição concluída.
 
-### Example 2: Consent Gate em Desenvolvimento
+### Example 2: Ciclo de Desenvolvimento e Entrega em `In Review`
 **Usuário**: `"Vamos desenvolver a tarefa FAL-24"`  
 **Agente (Etapa 1 & 2)**: Lê os critérios do card, apresenta o plano de branch e arquivos a alterar, e pergunta: *"Podemos criar a branch `feat/FAL-24-...`, mover o card para **In Progress** e iniciar a implementação?"*  
 **Usuário**: *"Podemos."*  
-**Agente (Etapa 3)**: Executa `update-issue FAL-24 --state "In Progress" --comment "..."`, cria a branch e começa o desenvolvimento.
+**Agente (Etapa 3 & 4)**: Executa `update-issue FAL-24 --state "In Progress" --comment "..."`, cria a branch, implementa código, roda os testes, abre o PR #5 no GitHub e executa:
+```bash
+python skills/linear-workflow/scripts/linear_api.py update-issue FAL-24 --state "In Review" --comment "🤖 **AI Agent Update**: PR #5 aberto no GitHub..."
+```
 
 ---
 
