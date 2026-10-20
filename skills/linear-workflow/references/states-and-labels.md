@@ -15,8 +15,8 @@ stateDiagram-v2
     Technical_Analysis --> Todo: Refined / Actionable
     Todo --> In_Progress: Active Coding
     Backlog --> Todo: Direct Grooming without Analysis
-    In_Progress --> In_Review: PR Opened / Verification
-    In_Review --> Done: Merged & Validated
+    In_Progress --> In_Review: Manual Developer Move (PR Opened)
+    In_Review --> Done: Manual Developer Move (Merged & Validated)
     Backlog --> Canceled: Abandoned
     Todo --> Duplicate: Redundant Task
     In_Progress --> Canceled: Discarded
@@ -30,10 +30,14 @@ stateDiagram-v2
 | **`Technical Analysis`** | Architecture design, spikes, research | When the agent is tasked with designing architecture, performing deep codebase analysis, or exploring technical alternatives before coding. |
 | **`Todo`** | Actionable tasks ready for development | When a card has been refined with clear acceptance criteria and is ready to be picked up. |
 | **`In Progress`** | Active implementation | **As soon as coding begins** for a planned or newly created task. |
-| **`In Review`** | Quality verification, Pull Request, testing | When implementation is completed, automated tests pass, and a Pull Request is opened or code is submitted for user review. |
-| **`Done`** | Shipped and completed | When the Pull Request is merged or the user validates that the feature is fully delivered and operational. |
+| **`In Review`** | Quality verification, Pull Request, testing | **Transição manual pelo desenvolvedor**: Realizada pelo humano ao abrir o Pull Request no GitHub após testes passarem. |
+| **`Done`** | Shipped and completed | **Transição manual pelo desenvolvedor**: Realizada pelo humano após merge do PR e homologação funcional da entrega. |
 | **`Canceled`** | Deprecated or obsolete | When the user explicitly cancels or abandons a planned feature. |
 | **`Duplicate`** | Redundant with existing issue | When the task overlaps completely with an existing Linear card. |
+
+> [!IMPORTANT]
+> **Regra de Avanço de Fase (Anti-Estagnação)**:
+> Ao concluir uma etapa assistida pelo agente, o card **deve obrigatoriamente avançar para o próximo estado** (`Technical Analysis` ➔ `Todo`, `Todo` ➔ `In Progress`) juntamente com o registro do comentário consolidado. O card nunca deve permanecer parado no estado anterior após sua conclusão formal.
 
 ---
 
@@ -76,11 +80,14 @@ Every Linear transition or query must be communicated explicitly in the AI agent
 - **New Task Created & Started**:
   > `➕ [Linear]: Nova task criada no projeto Rent Easy: LIN-152 - "Adicionar filtro por faixa de preço". Status: 'In Progress'. Labels: ['Front'].`
 
-- **Task Moved to Review**:
-  > `🔍 [Linear]: Task LIN-104 movida para 'In Review'. PR #45 aberto no repositório com o resumo das alterações.`
+- **Task Transitioned to Todo (Post-Technical Analysis)**:
+  > `🔬 [Linear]: Análise técnica de LIN-104 concluída. Card avançado para 'Todo' com sumário técnico consolidado registrado.`
 
-- **Task Completed**:
-  > `✅ [Linear]: Task LIN-104 atualizada para 'Done'. Entrega concluída e verificada com sucesso.`
+- **Pull Request Created (Reminder for Manual Move)**:
+  > `🔍 [Linear]: PR #45 aberto no repositório. Lembrete: Mova o card LIN-104 manualmente para 'In Review' no Linear.`
+
+- **Delivery Validated (Reminder for Manual Done)**:
+  > `✅ [Linear]: PR #45 mergeado com sucesso. Lembrete: Mova o card LIN-104 manualmente para 'Done' no Linear.`
 
 - **Project Not Found in Linear**:
   > `⚠️ [Linear]: Projeto 'NovoProjetoX' não encontrado no Linear. O desenvolvimento seguiu normalmente sem vincular cards.`
@@ -105,4 +112,3 @@ In accordance with official Linear guidelines ([linear.app/developers/agents](ht
 3. **Non-Destructive Context Enrichment**:
    - Never overwrite or wipe existing issue descriptions provided by human product managers or developers.
    - Append technical context or post new observations via comments.
-
