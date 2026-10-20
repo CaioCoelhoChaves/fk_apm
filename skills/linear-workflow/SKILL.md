@@ -1,6 +1,6 @@
 ---
 name: linear-workflow
-description: Synchronize development and planning tasks with Linear issue tracking across any project. Enforces lifecycle commands (/fk-new-issue, /fk-technical-analysis, /fk-develop), the mandatory 3-stage Consent Gate protocol (zero mutation until user approval), atomic state advancement (advancing to In Review upon PR opening), comment idempotency (10-minute deduplication window), manual-only developer transitions for 'Done', and review feedback loops returning to 'In Progress'. Checks Linear via MCP tools or bundled CLI (scripts/linear_api.py), tags monorepo subprojects with Front/Back labels, and notifies the user of all board actions.
+description: Synchronize development and planning tasks with Linear issue tracking across any project and harness (Google Antigravity, Claude Code, Cursor, Copilot). Enforces lifecycle commands (/fk-new-issue, fk-new-issue, /fk-technical-analysis, fk-technical-analysis, /fk-develop, fk-develop, /fk-ta, fk-ta, /fk-dev, fk-dev, /fk-issue, fk-issue), the mandatory 3-stage Consent Gate protocol (zero mutation until user approval), atomic state advancement (advancing to In Review upon PR opening), comment idempotency (10-minute deduplication window), manual-only developer transitions for 'Done', and review feedback loops returning to 'In Progress'. Checks Linear via MCP tools or bundled CLI (scripts/linear_api.py), tags monorepo subprojects with Front/Back labels, and notifies the user of all board actions.
 allowed-tools: Read,Glob,Grep,Bash
 ---
 
@@ -37,8 +37,8 @@ A standardized workflow for AI coding agents to integrate Linear issue managemen
      - **`Done`**: O desenvolvedor move manualmente para **`Done`** após revisar o PR no GitHub, validar os testes e realizar o merge. O agente **NUNCA** move o card para `Done`.
      - **Retorno para Correções**: Se o desenvolvedor encontrar falhas ou pedir ajustes durante o review, o card pode ser retornado para **`In Progress`** (via intervenção no Linear ou comando no chat) para que o agente execute o ciclo corretivo.
 
-4. **Mandatory 3-Stage Protocol (*Consent Gate*)**:
-   - Both for explicit commands (`/fk-*`) and natural language triggers (e.g. *"vamos analisar tecnicamente o card X"*, *"vamos desenvolver a tarefa Y"*), the agent must strictly follow this protocol:
+4. **Mandatory 3-Stage Protocol (*Consent Gate*) & Syntactic Tolerance**:
+   - Both for explicit commands (`/fk-*` and slash-free `fk-*`), aliases (`/fk-dev`, `fk-dev`, `/fk-ta`, `fk-ta`, `/fk-issue`, `fk-issue`), and natural language triggers (e.g. *"vamos analisar tecnicamente o card X"*, *"vamos desenvolver a tarefa Y"*), the agent must strictly follow this protocol across all harnesses (Google Antigravity, Claude Code, Cursor, GitHub Copilot):
      - **Stage 1 (Initial Presentation & Questions)**: The agent prepares the plan/analysis in chat/workspace, raising options and doubts with the developer. **Zero mutation**: No API calls altering Linear (`update-issue`, `create-issue`, `create-comment`) are permitted in this stage. Only read queries (`get-issue`, `search-issues`, `list-states`, `list-projects`) are allowed.
      - **Stage 2 (Consent Gate - Explicit Confirmation)**: After resolving all questions, the agent explicitly asks the developer for permission to close or start the phase on Linear (e.g.: *"O direcionamento está aprovado? Posso mover o card para [Status] e registrar o comentário consolidado?"*).
      - **Stage 3 (Atomic Execution - Move Card + Register Comment)**: Only after affirmative developer response, execute the closing actions atomically on Linear (advancing the status and registering the consolidated comment).
@@ -56,16 +56,23 @@ A standardized workflow for AI coding agents to integrate Linear issue managemen
 7. **100% Transparency & User Notification**:
    - Every Linear operation (issue queried, card created, state transitioned, or comment added) must be explicitly communicated in the response with issue keys (e.g. `LIN-42`) and status.
 
+8. **Multi-Harness Architecture Support**:
+   - Standardized APM primitives under `.apm/prompts/` (`.prompt.md`) and `.apm/instructions/` (`.instructions.md`) provide cross-platform command routing:
+     - **Google Antigravity**: Unconditional rules in `.agents/rules/` and compiled `AGENTS.md` intercept commands and enforce the 3-stage Consent Gate without colliding with native slash commands.
+     - **Claude Code**: Native custom slash commands in `.claude/commands/` and rules in `.claude/rules/`.
+     - **Cursor**: Custom slash commands in `.cursor/commands/` and rules in `.cursor/rules/`.
+     - **GitHub Copilot**: Prompt templates in `.github/prompts/` and instructions in `.github/instructions/`.
+
 ---
 
 ## Lifecycle Commands Reference
 
-| Command Trigger | Aliases | Target State Transition | Executado Por | Scope & Purpose |
+| Canonical Trigger | Slash-Free & Short Aliases | Target State Transition | Executado Por | Scope & Purpose |
 | :--- | :--- | :--- | :--- | :--- |
-| **`/fk-new-issue`** | `/fk-issue` | `Backlog` ou `Todo` | **Agente** (com Consent Gate) | Planejamento, decomposição e criação atômica de novos cards no Linear. |
-| **`/fk-technical-analysis`** | `/fk-ta` | `Technical Analysis` ➔ `Todo` | **Agente** (com Consent Gate) | Investigação arquitetural, spikes técnicos, desenho de solução e avanço para `Todo` ao concluir. |
-| **`/fk-develop`** | `/fk-dev` | `Todo` ➔ `In Progress` ➔ `In Review` | **Agente** | Início do desenvolvimento (`In Progress`), implementação, testes e avanço para `In Review` ao abrir o PR. |
-| *(Retorno de Correção)* | `/fk-dev` | `In Review` ➔ `In Progress` | **Desenvolvedor / Agente** | Retorno do card para correções quando a revisão do PR apontar ajustes necessários. |
+| **`/fk-new-issue`** | `fk-new-issue`, `/fk-issue`, `fk-issue` | `Backlog` ou `Todo` | **Agente** (com Consent Gate) | Planejamento, decomposição e criação atômica de novos cards no Linear. |
+| **`/fk-technical-analysis`** | `fk-technical-analysis`, `/fk-ta`, `fk-ta` | `Technical Analysis` ➔ `Todo` | **Agente** (com Consent Gate) | Investigação arquitetural, spikes técnicos, desenho de solução e avanço para `Todo` ao concluir. |
+| **`/fk-develop`** | `fk-develop`, `/fk-dev`, `fk-dev` | `Todo` ➔ `In Progress` ➔ `In Review` | **Agente** | Início do desenvolvimento (`In Progress`), implementação, testes e avanço para `In Review` ao abrir o PR. |
+| *(Retorno de Correção)* | `/fk-dev`, `fk-dev` | `In Review` ➔ `In Progress` | **Desenvolvedor / Agente** | Retorno do card para correções quando a revisão do PR apontar ajustes necessários. |
 | *(Transição Manual)* | — | `In Review` ➔ `Done` | **Desenvolvedor** | **Exclusivamente manual pelo desenvolvedor** após merge e homologação da entrega. |
 
 ---
@@ -108,7 +115,7 @@ flowchart TD
 
 ## Workflow 2: Planejamento & Criação de Tarefas (`/fk-new-issue`)
 
-Gatilhos: `/fk-new-issue`, `/fk-issue`, *"vamos planejar tarefas"*, *"crie os cards para..."*.
+Gatilhos: `/fk-new-issue`, `fk-new-issue`, `/fk-issue`, `fk-issue`, *"vamos planejar tarefas"*, *"crie os cards para..."*.
 
 1. **Etapa 1 - Apresentação & Dúvidas (Leitura)**:
    - Localiza o projeto pai no Linear (`find-project`).
@@ -124,7 +131,7 @@ Gatilhos: `/fk-new-issue`, `/fk-issue`, *"vamos planejar tarefas"*, *"crie os ca
 
 ## Workflow 3: Análise Técnica & Spikes Arquiteturais (`/fk-technical-analysis`)
 
-Gatilhos: `/fk-technical-analysis`, `/fk-ta`, *"vamos analisar tecnicamente o card X"*, *"faça um spike técnico sobre Y"*.
+Gatilhos: `/fk-technical-analysis`, `fk-technical-analysis`, `/fk-ta`, `fk-ta`, *"vamos analisar tecnicamente o card X"*, *"faça um spike técnico sobre Y"*.
 
 1. **Etapa 1 - Apresentação & Dúvidas (Leitura)**:
    - Consulta o card via `get-issue` ou `search-issues`.
@@ -144,7 +151,7 @@ Gatilhos: `/fk-technical-analysis`, `/fk-ta`, *"vamos analisar tecnicamente o ca
 
 ## Workflow 4: Ciclo de Desenvolvimento & Implementação (`/fk-develop`)
 
-Gatilhos: `/fk-develop`, `/fk-dev`, *"vamos desenvolver a tarefa X"*, *"quero implementar o card Y"*.
+Gatilhos: `/fk-develop`, `fk-develop`, `/fk-dev`, `fk-dev`, *"vamos desenvolver a tarefa X"*, *"quero implementar o card Y"*.
 
 1. **Etapa 1 - Apresentação & Dúvidas (Leitura)**:
    - Lê o card (`get-issue <id>`), requisitos, histórico de comentários e critérios de aceitação.
@@ -205,6 +212,7 @@ python skills/linear-workflow/scripts/linear_api.py update-issue FAL-24 --state 
 
 ## References
 
+- [references/multi-harness-commands.md](references/multi-harness-commands.md) for cross-harness architecture (Antigravity, Claude, Cursor, Copilot) and APM primitives.
 - [references/states-and-labels.md](references/states-and-labels.md) for full state definitions, subproject rules, and AIG compliance.
 - [references/configuration.md](references/configuration.md) for API key setup and MCP integration.
 - [Linear Developers: Agent Interaction Guidelines (AIG)](https://linear.app/developers/agents)
