@@ -37,4 +37,5 @@ __pycache__/
 .env
 
 # Skills folder
-.agents/skills/
+.agents/
+session_export.txt
