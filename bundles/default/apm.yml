@@ -1,6 +1,6 @@
 name: default
 version: 0.1.0
-description: Default essential skill bundle containing skill-creator, skill-bundle-manager, git-workflow, and linear-workflow
+description: Default essential skill bundle containing skill-creator, skill-bundle-manager, git-workflow, linear-workflow, and semver-changelog
 author: Caio Coelho Chaves
 license: MIT
 
@@ -10,6 +10,7 @@ dependencies:
     - ../../skills/skill-bundle-manager
     - ../../skills/git-workflow
     - ../../skills/linear-workflow
+    - ../../skills/semver-changelog
   mcp:
     - name: linear
       registry: false

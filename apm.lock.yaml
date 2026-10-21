@@ -74,6 +74,41 @@ dependencies:
   local_path: ../../skills/linear-workflow
   declaring_parent: ./bundles/default
   anchored_local_path: skills/linear-workflow
+- repo_url: _local/semver-changelog
+  name: semver-changelog
+  version: unknown
+  depth: 2
+  resolved_by: _local/default
+  package_type: claude_skill
+  deployed_files:
+  - .agents/rules/semver-changelog.md
+  - .agents/skills/fk-semver-owner
+  - .agents/skills/fk-semver-owner/SKILL.md
+  - .agents/skills/semver
+  - .agents/skills/semver-changelog
+  - .agents/skills/semver-changelog/SKILL.md
+  - .agents/skills/semver-changelog/evals/evals.json
+  - .agents/skills/semver-changelog/references/keep-a-changelog.md
+  - .agents/skills/semver-changelog/references/multi-harness-commands.md
+  - .agents/skills/semver-changelog/references/semver-spec.md
+  - .agents/skills/semver-changelog/scripts/changelog_manager.py
+  - .agents/skills/semver-changelog/tests/test_changelog_manager.py
+  - .agents/skills/semver/SKILL.md
+  deployed_file_hashes:
+    .agents/rules/semver-changelog.md: sha256:6ceb96093fd4b4d52b20445a5acd52ac48c0a13e2f3622d0eee0b97009641205
+    .agents/skills/fk-semver-owner/SKILL.md: sha256:60596ef89c661d640553ffe0103d9db3266211eb09ed62f360255131aaf9d25b
+    .agents/skills/semver-changelog/SKILL.md: sha256:453162ab10022e7e5c7fb17d5a09cfbef5b1886e6ad6f11dabb30936b6949a69
+    .agents/skills/semver-changelog/evals/evals.json: sha256:de9f4f2d44798a23df65abe5a6f31648129647e0563a348faec19dfcd926ef24
+    .agents/skills/semver-changelog/references/keep-a-changelog.md: sha256:45a95418180578f59983404d4b731040c25389eaa264bc1124a1904b702a0598
+    .agents/skills/semver-changelog/references/multi-harness-commands.md: sha256:b5557a2dd6f23ae464d75116a8e933101cd13e66424c29813ece7bde306dfc4b
+    .agents/skills/semver-changelog/references/semver-spec.md: sha256:f8ead08cd49f9de2f3c1f9c2071d586be4260a638ab39f83df1ff861d8b432a1
+    .agents/skills/semver-changelog/scripts/changelog_manager.py: sha256:6185c88d3f9629df91af52b574f0d3ce283659842d0f425d8756b315a0a4bb0f
+    .agents/skills/semver-changelog/tests/test_changelog_manager.py: sha256:ed90c0d5b269124f06f0a74ecfcedefcf0a46b1c3ab8667f670b6a163389cdb4
+    .agents/skills/semver/SKILL.md: sha256:456ae3ccf7feb734ce0235272daac04601eea4f5a5eab7fb14d642adf5348a42
+  source: local
+  local_path: ../../skills/semver-changelog
+  declaring_parent: ./bundles/default
+  anchored_local_path: skills/semver-changelog
 - repo_url: _local/skill-bundle-manager
   name: skill-bundle-manager
   version: unknown
@@ -158,6 +193,15 @@ deployments:
   content_hash: sha256:71d32ecf5669b4cf85837032990bb2cbf363535f058cbe4752b286a957631202
 - kind: project-relative
   target: antigravity
+  value: .agents/rules/semver-changelog.md
+  runtime: null
+  scope: project
+  owners:
+  - local:skills/semver-changelog
+  active_owner: local:skills/semver-changelog
+  content_hash: sha256:6ceb96093fd4b4d52b20445a5acd52ac48c0a13e2f3622d0eee0b97009641205
+- kind: project-relative
+  target: antigravity
   value: .agents/skills/fk-dev
   runtime: null
   scope: project
@@ -228,6 +272,24 @@ deployments:
   - local:skills/linear-workflow
   active_owner: local:skills/linear-workflow
   content_hash: sha256:7db2199665bf061fd1c49fec1fa2dae05afc711aafcca3d0d3749903fe864728
+- kind: project-relative
+  target: antigravity
+  value: .agents/skills/fk-semver-owner
+  runtime: null
+  scope: project
+  owners:
+  - local:skills/semver-changelog
+  active_owner: local:skills/semver-changelog
+  content_hash: null
+- kind: project-relative
+  target: antigravity
+  value: .agents/skills/fk-semver-owner/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - local:skills/semver-changelog
+  active_owner: local:skills/semver-changelog
+  content_hash: sha256:60596ef89c661d640553ffe0103d9db3266211eb09ed62f360255131aaf9d25b
 - kind: project-relative
   target: antigravity
   value: .agents/skills/fk-ta
@@ -372,6 +434,96 @@ deployments:
   - local:skills/linear-workflow
   active_owner: local:skills/linear-workflow
   content_hash: sha256:03d327ceeb4277a45badf2a2f5c2969f1bfc4b77c2915e9f2e76d91b08873371
+- kind: project-relative
+  target: antigravity
+  value: .agents/skills/semver
+  runtime: null
+  scope: project
+  owners:
+  - local:skills/semver-changelog
+  active_owner: local:skills/semver-changelog
+  content_hash: null
+- kind: project-relative
+  target: antigravity
+  value: .agents/skills/semver-changelog
+  runtime: null
+  scope: project
+  owners:
+  - local:skills/semver-changelog
+  active_owner: local:skills/semver-changelog
+  content_hash: null
+- kind: project-relative
+  target: antigravity
+  value: .agents/skills/semver-changelog/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - local:skills/semver-changelog
+  active_owner: local:skills/semver-changelog
+  content_hash: sha256:453162ab10022e7e5c7fb17d5a09cfbef5b1886e6ad6f11dabb30936b6949a69
+- kind: project-relative
+  target: antigravity
+  value: .agents/skills/semver-changelog/evals/evals.json
+  runtime: null
+  scope: project
+  owners:
+  - local:skills/semver-changelog
+  active_owner: local:skills/semver-changelog
+  content_hash: sha256:de9f4f2d44798a23df65abe5a6f31648129647e0563a348faec19dfcd926ef24
+- kind: project-relative
+  target: antigravity
+  value: .agents/skills/semver-changelog/references/keep-a-changelog.md
+  runtime: null
+  scope: project
+  owners:
+  - local:skills/semver-changelog
+  active_owner: local:skills/semver-changelog
+  content_hash: sha256:45a95418180578f59983404d4b731040c25389eaa264bc1124a1904b702a0598
+- kind: project-relative
+  target: antigravity
+  value: .agents/skills/semver-changelog/references/multi-harness-commands.md
+  runtime: null
+  scope: project
+  owners:
+  - local:skills/semver-changelog
+  active_owner: local:skills/semver-changelog
+  content_hash: sha256:b5557a2dd6f23ae464d75116a8e933101cd13e66424c29813ece7bde306dfc4b
+- kind: project-relative
+  target: antigravity
+  value: .agents/skills/semver-changelog/references/semver-spec.md
+  runtime: null
+  scope: project
+  owners:
+  - local:skills/semver-changelog
+  active_owner: local:skills/semver-changelog
+  content_hash: sha256:f8ead08cd49f9de2f3c1f9c2071d586be4260a638ab39f83df1ff861d8b432a1
+- kind: project-relative
+  target: antigravity
+  value: .agents/skills/semver-changelog/scripts/changelog_manager.py
+  runtime: null
+  scope: project
+  owners:
+  - local:skills/semver-changelog
+  active_owner: local:skills/semver-changelog
+  content_hash: sha256:6185c88d3f9629df91af52b574f0d3ce283659842d0f425d8756b315a0a4bb0f
+- kind: project-relative
+  target: antigravity
+  value: .agents/skills/semver-changelog/tests/test_changelog_manager.py
+  runtime: null
+  scope: project
+  owners:
+  - local:skills/semver-changelog
+  active_owner: local:skills/semver-changelog
+  content_hash: sha256:ed90c0d5b269124f06f0a74ecfcedefcf0a46b1c3ab8667f670b6a163389cdb4
+- kind: project-relative
+  target: antigravity
+  value: .agents/skills/semver/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - local:skills/semver-changelog
+  active_owner: local:skills/semver-changelog
+  content_hash: sha256:456ae3ccf7feb734ce0235272daac04601eea4f5a5eab7fb14d642adf5348a42
 - kind: project-relative
   target: antigravity
   value: .agents/skills/skill-bundle-manager

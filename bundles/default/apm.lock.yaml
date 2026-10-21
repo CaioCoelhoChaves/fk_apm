@@ -13,6 +13,12 @@ dependencies:
   package_type: claude_skill
   source: local
   local_path: ../../skills/linear-workflow
+- repo_url: _local/semver-changelog
+  name: semver-changelog
+  version: unknown
+  package_type: claude_skill
+  source: local
+  local_path: ../../skills/semver-changelog
 - repo_url: _local/skill-bundle-manager
   name: skill-bundle-manager
   version: unknown

@@ -42,7 +42,7 @@ marketplace:
   # Packages and bundles cataloged in this repository
   packages:
     - name: default
-      description: Default essential skill bundle containing skill-creator, skill-bundle-manager, git-workflow, and linear-workflow
+      description: Default essential skill bundle containing skill-creator, skill-bundle-manager, git-workflow, linear-workflow, and semver-changelog
       source: ./bundles/default
       version: 0.1.0
 
@@ -54,6 +54,11 @@ marketplace:
     - name: linear-workflow
       description: Seamless Linear issue tracking, task lifecycle commands (/fk-* & fk-* multi-harness), 3-stage Consent Gate, subproject front/back labeling, and task sync
       source: ./skills/linear-workflow
+      version: 0.1.0
+
+    - name: semver-changelog
+      description: Automated Keep a Changelog 1.1.0 and Semantic Versioning 2.0.0 management across software lifecycles (Antigravity, OpenCode, Claude Code)
+      source: ./skills/semver-changelog
       version: 0.1.0
 
     - name: skill-bundle-manager
