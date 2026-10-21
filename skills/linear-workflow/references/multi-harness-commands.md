@@ -99,16 +99,65 @@ No matter which syntax the user inputs:
 
 ---
 
-## 4. Consent Gate Behavioral Guarantee & `/fk-fix` Exception
+## 4. Multi-Harness Interactive Consent Gate Protocol
 
-### Standard Lifecycle Commands (`/fk-new-issue`, `/fk-technical-analysis`, `/fk-develop`)
+### Behavioral Guarantee & Zero Mutation
 Regardless of whether a command was triggered via a native slash command (`/fk-develop FAL-25`) or a plain prompt (`fk-develop FAL-25` or natural language):
-- **No Premature Mutation**: Linear state updates, comment creation, and card creation are strictly forbidden before developer consent.
-- **Stage 1**: Query card, present plan or architecture, discuss trade-offs.
-- **Stage 2**: Ask explicit approval (*"O plano está aprovado? Posso mover o card para [Status]?"*).
-- **Stage 3**: On affirmative answer, update Linear state atomically and proceed.
+- **Zero Mutation**: Linear state updates (`update-issue`), comment creation, card creation (`create-issue`), and branch checkout are strictly forbidden prior to explicit developer confirmation in Stage 2.
+- **Stage 1 (Presentation & Reading)**: Query card/project, present implementation/architecture plan, list affected files and proposed branch.
+- **Stage 2 (Interactive Consent Gate)**: Invoke the native question tool of the active harness presenting structured choices:
+  - `(Recommended) Sim, aprovar`: Proceed immediately to Stage 3.
+  - `Editar...`: Free-form text input allowing the developer to request changes. The agent **loops back to Stage 1**, adjusts the plan/analysis, and triggers a new Consent Gate.
+- **Stage 3 (Atomic Execution)**: On affirmative answer, update Linear state atomically and proceed.
 
-### Autonomous Fix Command (`/fk-fix`)
+### Harness-to-Tool Mapping Matrix
+
+| Harness | Interactive Tool Support | Native Tool Name | Invocation Signature / Arguments | Fallback Mode |
+| :--- | :--- | :--- | :--- | :--- |
+| **Google Antigravity** (`agy` CLI / IDE) | ✅ Native Tool | `ask_question` | `{"questions": [{"question": "...", "options": ["(Recommended) Sim, aprovar", "Editar..."], "is_multi_select": false}]}` | Formatted Markdown chat prompt |
+| **Claude Code** | ✅ Native Tool | `AskUserQuestion` | `{"question": "...", "options": ["Sim, aprovar", "Editar..."]}` | Formatted Markdown chat prompt |
+| **OpenCode v2** | ✅ Native Tool | `question` / `ask` | `{"question": "...", "options": ["Sim, aprovar", "Editar..."]}` | Formatted Markdown chat prompt |
+| **Cursor** | ⚠️ Fallback Textual | — | Markdown chat prompt com opções `1. (Recomendado) Sim, aprovar` e `2. Editar...` | Formatted Markdown chat prompt |
+| **GitHub Copilot** | ⚠️ Fallback Textual | — | Markdown chat prompt com opções `1. (Recomendado) Sim, aprovar` e `2. Editar...` | Formatted Markdown chat prompt |
+| **Gemini CLI** | ⚠️ Fallback Textual | — | Markdown chat prompt com opções `1. (Recomendado) Sim, aprovar` e `2. Editar...` | Formatted Markdown chat prompt |
+
+### Loopback Flow on "Editar..."
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Dev as Desenvolvedor
+    participant Agent as AI Coding Agent
+    participant Harness as Harness Tool / Chat
+    participant Linear as Linear API / Git
+
+    Agent->>Dev: Etapa 1: Apresenta plano / analise tecnica no Chat
+    Agent->>Harness: Etapa 2: Invoca tool nativa de perguntas
+    Harness-->>Dev: Exibe opcoes: [Sim, aprovar] | [Editar...]
+    alt Usuario seleciona Editar...
+        Dev->>Agent: Fornece apontamentos / texto de ajuste
+        Agent->>Agent: Permanece com Zero Mutacao (sem tocar Linear)
+        Agent->>Dev: Retorna a Etapa 1 com plano revisado
+        Agent->>Harness: Dispara novo Consent Gate interativo
+    else Usuario seleciona Sim, aprovar
+        Dev->>Agent: Confirmacao afirmativa recebida
+        Agent->>Linear: Etapa 3: Transiciona card + commit / branch Git
+    end
+```
+
+### Standard Chat Fallback Format
+When the active harness does not expose an interactive question tool:
+```markdown
+> [!IMPORTANT]
+> **Consent Gate (Confirmação Explícita)**
+> <pergunta de consentimento>
+> 
+> - **1. (Recomendado) Sim, aprovar**: Executar ações no Linear e prosseguir.
+> - **2. Editar...**: Digite o que deseja ajustar no plano para retornarmos à Etapa 1.
+```
+
+---
+
+## 5. Autonomous Fix Command (`/fk-fix`) Exception
 - **Explicit Exception to Consent Gate**: Unlike initial development or planning, code review feedback already represents explicit developer intent.
 - Once invoked (`/fk-fix` or `fk-fix`), the agent executes the entire loop autonomously:
   1. Gathers comments and reviews from GitHub PR;

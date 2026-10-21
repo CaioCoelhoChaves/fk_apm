@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Integrar perguntas interativas aos Consent Gates de /fk-new-issue, /fk-technical-analysis e /fk-develop com suporte a loopback ("Editar...") e fallback multi-harness (FAL-27)
 - Adicionar comando /fk-fix para aplicação autônoma de feedback de code review no PR e Linear (FAL-28)
 - Adicionar skill semver-changelog para gerenciamento de CHANGELOG e SemVer 2.0.0 (FAL-23)
 

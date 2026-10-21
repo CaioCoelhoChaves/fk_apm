@@ -21,10 +21,29 @@ Este comando orquestra o ciclo de desenvolvimento de uma tarefa no Linear, aplic
 - **Apresentação em Chat**: Apresente no chat o plano de implementação, arquivos a modificar e a branch proposta.
 - ⚠️ **Zero Mutação**: **NÃO altere o Linear nesta etapa.**
 
-### 2. Etapa 2: Consent Gate (Confirmação Explícita)
-- Apresente a pergunta de consentimento ao desenvolvedor:
-  > *"O plano de desenvolvimento está aprovado? Posso mover o card para **In Progress** e iniciar a branch de trabalho?"*
-- **Aguarde aprovação explícita** do desenvolvedor antes de avançar.
+### 2. Etapa 2: Consent Gate Interativo (Confirmação Explícita)
+- Apresente a pergunta de consentimento invocando a **ferramenta nativa de perguntas** do harness:
+  - **Google Antigravity**: chame `ask_question`:
+    ```json
+    {
+      "questions": [
+        {
+          "question": "O plano de desenvolvimento está aprovado? Posso mover o card para In Progress e iniciar a branch de trabalho?",
+          "options": [
+            "(Recommended) Sim, aprovar",
+            "Editar..."
+          ],
+          "is_multi_select": false
+        }
+      ]
+    }
+    ```
+  - **Claude Code**: chame `AskUserQuestion` com opções `["Sim, aprovar", "Editar..."]`.
+  - **OpenCode v2**: chame a ferramenta nativa de pergunta com opções `["Sim, aprovar", "Editar..."]`.
+  - **Fallback Textual (Cursor, Copilot, Gemini CLI ou sem tool nativa)**: apresente em bloco Markdown destacado com opções numeradas (`1. (Recomendado) Sim, aprovar` e `2. Editar...`).
+- **Tratamento das Opções**:
+  - `(Recommended) Sim, aprovar`: avança imediatamente para a **Etapa 3 (Execução Atômica)**.
+  - `Editar...`: permite ao desenvolvedor digitar observações ou ajustes no plano em texto livre. O agente **retorna à Etapa 1**, refina o plano de desenvolvimento/arquivos/branch e apresenta novo Consent Gate. **Zero mutação é estritamente mantida**.
 
 ### 3. Etapa 3: Execução Atômica & Codificação
 - Transicione o card no Linear para **`In Progress`** com comentário inicial:

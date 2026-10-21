@@ -23,8 +23,10 @@ Sempre que a mensagem do usuário contiver qualquer um dos seguintes gatilhos (c
 2. **Protocolo Inviolável de 3 Etapas (*Consent Gate*) & Exceção Autônoma**:
    - Para `fk-new-issue`, `fk-technical-analysis` e `fk-develop` (e seus aliases):
      - **Etapa 1 (Leitura & Alinhamento)**: Apenas operações de leitura no Linear (`get-issue`, `search-issues`, `list-projects`). Zero mutação no Linear antes da aprovação do desenvolvedor.
-     - **Etapa 2 (Consent Gate)**: Apresente o plano ou análise e faça a pergunta explícita de consentimento ao desenvolvedor.
-     - **Etapa 3 (Execução Atômica)**: Somente após resposta afirmativa ("sim", "aprovado", "pode prosseguir"), realize a transição de estado no Linear acompanhada do comentário consolidado.
+     - **Etapa 2 (Consent Gate Interativo)**: Apresente o plano ou análise e acione a **ferramenta nativa de perguntas** do harness (`ask_question` no Antigravity, `AskUserQuestion` no Claude Code, tool nativa no OpenCode, ou fallback em texto formatado para outros harnesses) com as opções:
+       - `(Recommended) Sim, aprovar`: avança para a Etapa 3.
+       - `Editar...`: desenvolvedor informa ajustes em texto livre; o agente retorna à Etapa 1 sem qualquer mutação e reapresenta o Consent Gate após ajustar o plano.
+     - **Etapa 3 (Execução Atômica)**: Somente após `Sim, aprovar`, realize a transição de estado no Linear acompanhada do comentário consolidado.
    - ⚠️ **Exceção ao Consent Gate (`/fk-fix` / `fk-fix`)**:
      - O comando `/fk-fix` roda **sem Consent Gate**.
      - Ao ser invocado, o agente executa diretamente: leitura dos comentários/reviews do PR e texto extra ➔ transição para `In Progress` no Linear ➔ aplicação de correções e testes na branch ➔ push e comentário no PR ➔ transição final para `In Review` no Linear.
