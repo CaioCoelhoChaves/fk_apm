@@ -1,0 +1,40 @@
+{
+  "skill": "semver-changelog",
+  "evals": [
+    {
+      "id": "bootstrap-changelog",
+      "prompt": "Preciso começar a manter o changelog deste projeto. Crie o CHANGELOG.md se não existir.",
+      "expected_actions": [
+        "Check if CHANGELOG.md exists",
+        "Call changelog_manager.py init",
+        "Verify Keep a Changelog header and Unreleased sections"
+      ]
+    },
+    {
+      "id": "add-feature-unreleased",
+      "prompt": "Acabei de implementar o login social com Google para o card FAL-42. Atualize o changelog.",
+      "expected_actions": [
+        "Call changelog_manager.py add feat 'Login social com Google' --issue FAL-42",
+        "Confirm addition under ### Added in ## [Unreleased]"
+      ]
+    },
+    {
+      "id": "interactive-edit-fk-semver-owner",
+      "prompt": "/fk-semver-owner Quero mudar o texto da mudança de login social para 'Suporte a login com Google e Apple'. Fim /",
+      "expected_actions": [
+        "Extract target 'login social' and replacement 'Suporte a login com Google e Apple'",
+        "Call changelog_manager.py edit --target 'login social' --replacement 'Suporte a login com Google e Apple'",
+        "Display revised Unreleased section"
+      ]
+    },
+    {
+      "id": "bump-release-version",
+      "prompt": "Vamos fechar a versão atual e preparar o release.",
+      "expected_actions": [
+        "Call changelog_manager.py bump auto",
+        "Calculate next SemVer version based on unreleased changes",
+        "Reset ## [Unreleased] with clean category skeleton"
+      ]
+    }
+  ]
+}

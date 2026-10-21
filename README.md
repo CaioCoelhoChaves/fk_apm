@@ -45,7 +45,7 @@ With `fk_apm`:
 
 | Bundle | Description | Included Skills | Path |
 | :--- | :--- | :--- | :--- |
-| **`default`** | Default essential skill bundle with Linear MCP server | `skill-creator`, `skill-bundle-manager`, `git-workflow`, `linear-workflow` | [`bundles/default/`](bundles/default/apm.yml) |
+| **`default`** | Default essential skill bundle with Linear MCP server | `skill-creator`, `skill-bundle-manager`, `git-workflow`, `linear-workflow`, `semver-changelog` | [`bundles/default/`](bundles/default/apm.yml) |
 | **`flutter`** | Complete Flutter development bundle | `flutter-widgets`, `flutter-navigation`, `flutter-testing`, `flutter-accessibility`, `flutter-internationalization` | [`bundles/flutter/`](bundles/flutter/apm.yml) |
 | **`spring-boot`** | Complete enterprise Spring Boot 3.x development bundle | `spring-boot-architecture`, `spring-boot-persistence`, `spring-boot-api-resilience`, `spring-boot-testing` | [`bundles/spring-boot/`](bundles/spring-boot/apm.yml) |
 
@@ -55,6 +55,7 @@ With `fk_apm`:
 | :--- | :--- | :--- | :--- |
 | **`git-workflow`** | Gitflow branching and Conventional Commits 1.0.0 enforcement using GitHub CLI (`gh`) for PRs and git for commits | `Read`, `Glob`, `Grep`, `Bash` | [`skills/git-workflow/`](skills/git-workflow/SKILL.md) |
 | **`linear-workflow`** | Linear issue tracking, task lifecycle transitions, Front/Back subproject labeling, and development planning synchronization | `Read`, `Glob`, `Grep`, `Bash` | [`skills/linear-workflow/`](skills/linear-workflow/SKILL.md) |
+| **`semver-changelog`** | Automated Keep a Changelog 1.1.0 & SemVer 2.0.0 management, zero-config bootstrap, and interactive release bumps | `Read`, `Glob`, `Grep`, `Bash` | [`skills/semver-changelog/`](skills/semver-changelog/SKILL.md) |
 | **`skill-bundle-manager`** | Add, register, and configure new AI skills and bundles in fk_apm without missing README or bundle lockfiles | `Read`, `Glob`, `Grep`, `Write`, `Edit`, `Bash` | [`skills/skill-bundle-manager/`](skills/skill-bundle-manager/SKILL.md) |
 | **`skill-creator`** | Create, edit, evaluate, and iteratively optimize AI agent skills with benchmarks | Standard Agent Tools | [`skills/skill-creator/`](skills/skill-creator/SKILL.md) |
 | **`flutter-widgets`** | Architecture rules for `Page`, `PageSection`, `CoreComponent`, and `PageComponent` using `ViewState` | `Read`, `Glob`, `Grep` | [`skills/flutter-widgets/`](skills/flutter-widgets/SKILL.md) |
