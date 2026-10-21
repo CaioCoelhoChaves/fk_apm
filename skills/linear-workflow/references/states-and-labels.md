@@ -16,7 +16,7 @@ stateDiagram-v2
     Todo --> In_Progress: Active Coding (Agent move)
     Backlog --> Todo: Direct Grooming without Analysis
     In_Progress --> In_Review: PR Opened / Tests Passed (Agent move)
-    In_Review --> In_Progress: Feedback / Request Corrections (Developer move)
+    In_Review --> In_Progress: Feedback / Request Corrections (Developer or Agent via /fk-fix)
     In_Review --> Done: Merged & Validated (Developer manual move)
     Backlog --> Canceled: Abandoned
     Todo --> Duplicate: Redundant Task
@@ -30,7 +30,7 @@ stateDiagram-v2
 | **`Backlog`** | Unscheduled backlog items | When breaking down broad plans or brainstorming future features during planning sessions. | Desenvolvedor / Agente (`/fk-new-issue`) |
 | **`Technical Analysis`** | Architecture design, spikes, research | When the agent is tasked with designing architecture, performing deep codebase analysis, or exploring technical alternatives before coding. | Agente (`/fk-technical-analysis`) |
 | **`Todo`** | Actionable tasks ready for development | When a card has been refined with clear acceptance criteria and is ready to be picked up. | **Agente** (ao fechar Análise Técnica com Consent Gate) |
-| **`In Progress`** | Active implementation | **As soon as coding begins** for a planned or newly created task, or when returned from review for corrections. | **Agente** (`/fk-develop`) ou Desenvolvedor (para correções) |
+| **`In Progress`** | Active implementation | **As soon as coding begins** for a planned or newly created task, or when returned from review for corrections. | **Agente** (`/fk-develop`, `/fk-fix`) ou Desenvolvedor (para correções) |
 | **`In Review`** | Quality verification, Pull Request, testing | When implementation is completed, automated tests pass, and a Pull Request is opened on GitHub. | **Agente** (ao abrir o PR e concluir o ciclo de codificação) |
 | **`Done`** | Shipped and completed | When the Pull Request is merged or the user validates that the feature is fully delivered and operational. | **Transição manual pelo desenvolvedor** (após merge do PR no GitHub) |
 | **`Canceled`** | Deprecated or obsolete | When the user explicitly cancels or abandons a planned feature. | Desenvolvedor |
@@ -40,7 +40,7 @@ stateDiagram-v2
 > **Divisão de Responsabilidades & Ciclo de Feedback**:
 > - **Papel do Agente**: Mover o card ao finalizar o desenvolvimento para **`In Review`** juntamente com o comentário de entrega contendo o link do PR.
 > - **Papel do Desenvolvedor a partir de `In Review`**:
->   - Se houver falhas ou ajustes necessários: O desenvolvedor retorna o card para **`In Progress`** e instrui o agente a efetuar as correções.
+>   - Se houver falhas ou ajustes necessários: O desenvolvedor retorna o card para **`In Progress`** (ou aciona `/fk-fix`) e instrui o agente a efetuar as correções.
 >   - Se a entrega estiver aprovada: O desenvolvedor realiza o merge do PR e move manualmente o card para **`Done`**. O agente nunca deve mover para `Done` automaticamente.
 
 ---
