@@ -1,6 +1,6 @@
 # Multi-Harness Lifecycle Commands Architecture & Reference
 
-This reference documents how Linear lifecycle commands (`fk-new-issue`, `fk-technical-analysis`, `fk-develop`) operate across multiple AI coding harnesses (Google Antigravity, Claude Code, Cursor, and GitHub Copilot) through APM primitives.
+This reference documents how Linear lifecycle commands (`fk-new-issue`, `fk-technical-analysis`, `fk-develop`, `fk-fix`) operate across multiple AI coding harnesses (Google Antigravity, Claude Code, Cursor, and GitHub Copilot) through APM primitives.
 
 ---
 
@@ -17,8 +17,8 @@ Different AI coding harnesses implement command discovery and user inputs with d
 
 Without harness-aware distribution:
 - Antigravity would miss `.claude/commands/` entirely and rely solely on LLM guessing from skill descriptions.
-- Users typing `/fk-dev` in CLI harnesses might collide with CLI-level parsing.
-- Syntactic friction (e.g., typing `fk-dev` without a slash) could prevent skill triggering.
+- Users typing `/fk-dev` or `/fk-fix` in CLI harnesses might collide with CLI-level parsing.
+- Syntactic friction (e.g., typing `fk-fix` without a slash) could prevent skill triggering.
 
 ---
 
@@ -66,9 +66,9 @@ flowchart TD
 
 ### 1. Primitives: `.apm/prompts/*.prompt.md`
 - Deployed by APM `CommandIntegrator` / `PromptIntegrator` to:
-  - Claude Code: `.claude/commands/fk-new-issue.md`, `fk-technical-analysis.md`, `fk-develop.md`
-  - Cursor: `.cursor/commands/fk-new-issue.md`, `fk-technical-analysis.md`, `fk-develop.md`
-  - Copilot: `.github/prompts/fk-new-issue.prompt.md`, `fk-technical-analysis.prompt.md`, `fk-develop.prompt.md`
+  - Claude Code: `.claude/commands/fk-new-issue.md`, `fk-technical-analysis.md`, `fk-develop.md`, `fk-fix.md`
+  - Cursor: `.cursor/commands/fk-new-issue.md`, `fk-technical-analysis.md`, `fk-develop.md`, `fk-fix.md`
+  - Copilot: `.github/prompts/fk-new-issue.prompt.md`, `fk-technical-analysis.prompt.md`, `fk-develop.prompt.md`, `fk-fix.prompt.md`
 - Preserves metadata: `description`, `argument-hint`, `allowed-tools`.
 
 ### 2. Primitives: `.apm/instructions/*.instructions.md`
@@ -90,20 +90,31 @@ Agents must recognize all syntax permutations interchangeably:
 | `/fk-new-issue` | `fk-new-issue` | `/fk-issue`, `fk-issue` | *"vamos planejar tarefas no Linear"*, *"crie os cards para..."* |
 | `/fk-technical-analysis` | `fk-technical-analysis` | `/fk-ta`, `fk-ta` | *"vamos analisar o card FAL-12"*, *"spike técnico do FAL-12"* |
 | `/fk-develop` | `fk-develop` | `/fk-dev`, `fk-dev` | *"vamos desenvolver a tarefa FAL-12"*, *"implementar o card FAL-12"* |
+| `/fk-fix` | `fk-fix` | — *(sem alias)* | *"aplicar correções do review no PR"*, *"resolver feedback de code review"* |
 
 No matter which syntax the user inputs:
 1. The agent intercepts the trigger immediately.
-2. The agent reads context (zero mutation in Linear).
-3. The agent passes through the mandatory **Consent Gate**.
-4. The agent executes atomically on Linear upon developer approval.
+2. For planning, analysis, and initial development (`/fk-new-issue`, `/fk-technical-analysis`, `/fk-develop`), it passes through the mandatory **Consent Gate**.
+3. For review fixes (`/fk-fix`), it executes autônomously without Consent Gate, ensuring rapid iteration on open PRs.
 
 ---
 
-## 4. Consent Gate Behavioral Guarantee
+## 4. Consent Gate Behavioral Guarantee & `/fk-fix` Exception
 
+### Standard Lifecycle Commands (`/fk-new-issue`, `/fk-technical-analysis`, `/fk-develop`)
 Regardless of whether a command was triggered via a native slash command (`/fk-develop FAL-25`) or a plain prompt (`fk-develop FAL-25` or natural language):
-
 - **No Premature Mutation**: Linear state updates, comment creation, and card creation are strictly forbidden before developer consent.
 - **Stage 1**: Query card, present plan or architecture, discuss trade-offs.
 - **Stage 2**: Ask explicit approval (*"O plano está aprovado? Posso mover o card para [Status]?"*).
 - **Stage 3**: On affirmative answer, update Linear state atomically and proceed.
+
+### Autonomous Fix Command (`/fk-fix`)
+- **Explicit Exception to Consent Gate**: Unlike initial development or planning, code review feedback already represents explicit developer intent.
+- Once invoked (`/fk-fix` or `fk-fix`), the agent executes the entire loop autonomously:
+  1. Gathers comments and reviews from GitHub PR;
+  2. Transitions Linear issue to `In Progress` with initial summary comment;
+  3. Implements corrections on the existing branch and runs tests;
+  4. Pushes commits to update the PR;
+  5. Comments on the GitHub PR detailing resolved items;
+  6. Transitions Linear issue to `In Review` with PR link;
+  7. Leaves `Done` strictly manual for developer completion.

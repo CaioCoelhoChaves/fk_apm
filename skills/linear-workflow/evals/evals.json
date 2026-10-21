@@ -18,6 +18,12 @@
       "prompt": "Desenvolva o componente de cálculo de amortização no projeto QuickLoan.",
       "expected_output": "Consulta o Linear pelo projeto QuickLoan. Caso não exista no Linear, prossegue com o desenvolvimento normalmente e notifica o usuário ao final que o projeto não possui Linear correspondente sem interromper a esteira.",
       "files": []
+    },
+    {
+      "id": 4,
+      "prompt": "/fk-fix FAL-24 aplicar ajustes pedidos no code review do PR",
+      "expected_output": "Localiza o PR correspondente à issue/branch, lê os comentários gerais, reviews e inline comments do PR, move o card para 'In Progress' no Linear sem Consent Gate, implementa as correções e testes na branch existente, faz git push atualizando o PR sem abrir novo PR, comenta no PR detalhando o que foi corrigido e move o card no Linear para 'In Review'.",
+      "files": []
     }
   ]
 }
