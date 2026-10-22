@@ -18,9 +18,10 @@ Alvo / Issue: $ARGUMENTS
 1. **Etapa 1 - Leitura & Apresentação (Zero Mutação)**:
    - Consulte o card via `get-issue $ARGUMENTS` ou MCP `linear_issue_search`, lendo requisitos, histórico e critérios de aceitação.
    - Apresente no chat o plano de implementação, arquivos afetados e a branch de trabalho proposta (`<type>/<key>-<slug>`). **Não altere o Linear nesta etapa.**
-2. **Etapa 2 - Consent Gate (Confirmação Explícita)**:
-   - Pergunte ao desenvolvedor: *"O plano de desenvolvimento está aprovado? Posso mover o card para **In Progress** e criar a branch de trabalho?"*
-   - Aguarde aprovação inequívoca antes de qualquer mutação.
+2. **Etapa 2 - Consent Gate Interativo (Confirmação Explícita)**:
+   - Apresente a confirmação via tool nativa de perguntas do harness (`ask_question`, `AskUserQuestion`, etc.) ou fallback textual com opções `(Recommended) Sim, aprovar` e `Editar...`.
+   - Se `Editar...`: receba apontamentos em texto livre, retorne à Etapa 1 para retificar o plano e reapresente o Consent Gate. Zero mutação no Linear até aprovação explícita.
+   - Aguarde `Sim, aprovar` antes de qualquer mutação.
 3. **Etapa 3 - Execução Atômica & Codificação**:
    - Transicione o card para `In Progress` com comentário inicial (`🤖 **AI Agent Update**: Início do desenvolvimento na branch <branch-name>...`).
    - Crie a branch Git e execute a codificação e testes.

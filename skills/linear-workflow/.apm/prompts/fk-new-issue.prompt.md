@@ -19,9 +19,10 @@ Contexto fornecido: $ARGUMENTS
    - Localize o projeto pai no Linear usando `find-project` ou MCP `linear_list_projects`.
    - Analise os requisitos e decomponha-os em tarefas atômicas no chat (título, descrição estruturada, critérios de aceitação e label `Front` ou `Back`).
    - Apresente a tabela proposta no chat. **Não crie nenhum card no Linear nesta etapa.**
-2. **Etapa 2 - Consent Gate (Confirmação Explícita)**:
-   - Pergunte ao desenvolvedor: *"O escopo e a divisão dos cards estão alinhados? Posso criá-los no Linear sob o status [Backlog/Todo]?"*
-   - Aguarde aprovação inequívoca antes de qualquer chamada de mutação.
+2. **Etapa 2 - Consent Gate Interativo (Confirmação Explícita)**:
+   - Apresente a confirmação via tool nativa de perguntas do harness (`ask_question`, `AskUserQuestion`, etc.) ou fallback textual com opções `(Recommended) Sim, aprovar` e `Editar...`.
+   - Se `Editar...`: receba ajustes de escopo em texto livre, retorne à Etapa 1 para atualizar a decomposição e reapresente o Consent Gate. Zero mutação no Linear até aprovação explícita.
+   - Aguarde `Sim, aprovar` antes de qualquer chamada de mutação.
 3. **Etapa 3 - Execução Atômica**:
    - Após aprovação, crie os cards no Linear via CLI (`create-issue`) ou MCP (`linear_create_issue`).
    - Apresente o sumário final com links diretos e identificadores (ex: `FAL-10`).

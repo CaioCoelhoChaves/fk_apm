@@ -39,10 +39,17 @@ A standardized workflow for AI coding agents to integrate Linear issue managemen
      - **Retorno para Correções**: Se o desenvolvedor encontrar falhas ou pedir ajustes durante o review, o card pode ser retornado para **`In Progress`** (manualmente ou via comando `/fk-fix`) para que o agente execute o ciclo corretivo.
 
 4. **Mandatory 3-Stage Protocol (*Consent Gate*) & Autonomous Fix Exception**:
-   - For standard lifecycle commands (`/fk-new-issue`, `/fk-technical-analysis`, `/fk-develop`), aliases (`/fk-dev`, `/fk-ta`, `/fk-issue`), and natural language triggers, the agent must strictly follow this protocol across all harnesses (Google Antigravity, Claude Code, Cursor, GitHub Copilot):
+   - For standard lifecycle commands (`/fk-new-issue`, `/fk-technical-analysis`, `/fk-develop`), aliases (`/fk-dev`, `/fk-ta`, `/fk-issue`), and natural language triggers, the agent must strictly follow this protocol across all harnesses (Google Antigravity, Claude Code, OpenCode, Cursor, GitHub Copilot):
      - **Stage 1 (Initial Presentation & Questions)**: The agent prepares the plan/analysis in chat/workspace, raising options and doubts with the developer. **Zero mutation**: No API calls altering Linear (`update-issue`, `create-issue`, `create-comment`) are permitted in this stage. Only read queries (`get-issue`, `search-issues`, `list-states`, `list-projects`) are allowed.
-     - **Stage 2 (Consent Gate - Explicit Confirmation)**: After resolving all questions, the agent explicitly asks the developer for permission to close or start the phase on Linear (e.g.: *"O direcionamento está aprovado? Posso mover o card para [Status] e registrar o comentário consolidado?"*).
-     - **Stage 3 (Atomic Execution - Move Card + Register Comment)**: Only after affirmative developer response, execute the closing actions atomically on Linear (advancing the status and registering the consolidated comment).
+     - **Stage 2 (Consent Gate - Interactive Prompt & Options)**: After resolving questions, the agent presents the consent confirmation using the **native question tool** of the active harness:
+       - **Google Antigravity**: tool nativa `ask_question`.
+       - **Claude Code**: tool nativa `AskUserQuestion`.
+       - **OpenCode v2**: tool nativa de perguntas (`ask`/`question`).
+       - **Fallback Textual (Cursor, Copilot, Gemini CLI ou sem tool nativa)**: Bloco formatado em Markdown no chat com opções estruturadas.
+       - **Opções Estruturadas**:
+         1. `(Recommended) Sim, aprovar`: Avança atomicamente para a Stage 3.
+         2. `Editar...`: Permite texto livre para o desenvolvedor informar o que deseja ajustar. O agente recebe o feedback, **retorna à Stage 1**, ajusta o plano/análise e apresenta novamente antes de acionar um novo Consent Gate.
+     - **Stage 3 (Atomic Execution - Move Card + Register Comment)**: Only after affirmative developer response (`Sim, aprovar`), execute the closing actions atomically on Linear (advancing the status, registering the consolidated comment, or creating cards/branches).
    - ⚠️ **Exceção de Consent Gate para `/fk-fix`**:
      - O comando `/fk-fix` roda **sem Consent Gate**. Por se tratar de um ciclo corretivo solicitado por revisores humanos em um PR existente, o agente executa diretamente a leitura do feedback, movimentação para `In Progress`, implementação na branch, comentário no PR e retorno para `In Review` sem requerer aprovação prévia.
 
@@ -106,14 +113,30 @@ flowchart TD
     B --> C["Zero Mutação: Apenas Leitura no Linear"]
     C --> D{"Dúvidas resolvidas e plano estruturado?"}
     D -- "Não" --> B
-    D -- "Sim" --> E["Etapa 2: Consent Gate"]
-    E --> F{"Desenvolvedor aprovou fechamento/início explicitamente?"}
-    F -- "Não / Ajustes solicitados" --> B
-    F -- "Sim" --> G["Etapa 3: Execução Atômica"]
-    H["Mover Card para Próximo Estado + Comentário Consolidado"]
+    D -- "Sim" --> E["Etapa 2: Consent Gate Interativo (Tool Nativa)"]
+    E --> F{"Opção Selecionada"}
+    F -- "Editar... (Texto Livre)" --> B
+    F -- "(Recommended) Sim, aprovar" --> G["Etapa 3: Execução Atômica"]
+    H["Mover Card / Criar Cards + Comentário Consolidado"]
     G --> H
-    H --> I["Prosseguir com próxima etapa técnica ou branch Git"]
+    H --> I["Prosseguir com implementação ou branch Git"]
 ```
+
+### Mecanismo de Pergunta Interativa por Harness:
+- **Google Antigravity**: Dispara a tool nativa `ask_question` com opções `["(Recommended) Sim, aprovar", "Editar..."]`.
+- **Claude Code**: Dispara a tool nativa `AskUserQuestion` com opções `["Sim, aprovar", "Editar..."]`.
+- **OpenCode v2**: Dispara a tool nativa de perguntas (`ask`/`question`) com opções `["Sim, aprovar", "Editar..."]`.
+- **Fallback Textual (Cursor, Copilot, Gemini CLI ou sem suporte a tool)**: Exibe a pergunta no chat em bloco Markdown destacado:
+  ```markdown
+  > [!IMPORTANT]
+  > **Consent Gate (Confirmação Explícita)**:
+  > <pergunta de consentimento>
+  > - **1. (Recomendado) Sim, aprovar**: Prosseguir com a execução atômica no Linear.
+  > - **2. Editar...**: Digite os ajustes desejados para revisarmos o plano na Etapa 1.
+  ```
+- **Semântica das Opções**:
+  - `(Recommended) Sim, aprovar`: Autoriza imediatamente a transição para a **Etapa 3: Execução Atômica**.
+  - `Editar...`: Permite texto livre para o desenvolvedor apontar ajustes no plano. O agente **retorna à Etapa 1**, reapresenta a proposta corrigida e aciona novo Consent Gate. **Zero mutação é mantida até aprovação explícita**.
 
 ---
 
@@ -125,10 +148,12 @@ Gatilhos: `/fk-new-issue`, `fk-new-issue`, `/fk-issue`, `fk-issue`, *"vamos plan
    - Localiza o projeto pai no Linear (`find-project`).
    - Decompõe os requisitos em tarefas atômicas no chat (título, descrição, critérios de aceitação e label `Front`/`Back`).
    - Apresenta a tabela proposta sem chamar `create-issue`.
-2. **Etapa 2 - Consent Gate**:
-   - Pergunta: *"O escopo e a divisão dos cards estão alinhados? Posso criá-los no Linear sob o status [Backlog/Todo]?"*
+2. **Etapa 2 - Consent Gate Interativo**:
+   - Aciona a ferramenta interativa de perguntas do harness (ex: `ask_question` / `AskUserQuestion`) ou fallback textual com as opções `(Recommended) Sim, aprovar` e `Editar...`:
+     - Pergunta: *"O escopo e a divisão dos cards estão alinhados? Posso criá-los no Linear sob o status [Backlog/Todo]?"*
+   - Se o usuário escolher `Editar...`: coleta as correções em texto livre, retorna à Etapa 1 para atualizar a decomposição e reapresenta o Consent Gate.
 3. **Etapa 3 - Execução Atômica**:
-   - Cria os cards no Linear via CLI/MCP.
+   - Somente após `Sim, aprovar`, cria os cards no Linear via CLI/MCP.
    - Apresenta o sumário final com links diretos e IDs.
 
 ---
@@ -142,10 +167,12 @@ Gatilhos: `/fk-technical-analysis`, `fk-technical-analysis`, `/fk-ta`, `fk-ta`, 
    - Se o card estava em `Backlog`, o início da análise é apresentado no chat.
    - Realiza a análise arquitetural, opções de implementação, trade-offs e impactos no workspace.
    - **Zero mutação prematura no card**: Nenhum comentário preliminar ou mudança de estado é postada enquanto houver dúvidas em aberto.
-2. **Etapa 2 - Consent Gate**:
-   - Pergunta: *"A análise técnica está aprovada? Posso registrar as decisões no Linear e mover o card para **Todo** (pronto para desenvolvimento)?"*
+2. **Etapa 2 - Consent Gate Interativo**:
+   - Aciona a ferramenta interativa de perguntas do harness (ex: `ask_question` / `AskUserQuestion`) ou fallback textual com as opções `(Recommended) Sim, aprovar` e `Editar...`:
+     - Pergunta: *"A análise técnica está aprovada? Posso registrar as decisões no Linear e mover o card para **Todo** (pronto para desenvolvimento)?"*
+   - Se o usuário escolher `Editar...`: recebe os direcionamentos técnicos adicionais, volta à Etapa 1 para refinar a análise e reapresenta o Consent Gate.
 3. **Etapa 3 - Execução Atômica**:
-   - Executa atomicamente:
+   - Somente após `Sim, aprovar`, executa atomicamente:
      ```bash
      python skills/linear-workflow/scripts/linear_api.py update-issue "<id>" --state "Todo" --comment "🤖 **AI Agent Update**: Análise Técnica Consolidada..."
      ```
@@ -160,10 +187,12 @@ Gatilhos: `/fk-develop`, `fk-develop`, `/fk-dev`, `fk-dev`, *"vamos desenvolver 
 1. **Etapa 1 - Apresentação & Dúvidas (Leitura)**:
    - Lê o card (`get-issue <id>`), requisitos, histórico de comentários e critérios de aceitação.
    - Apresenta o plano de implementação, arquivos afetados e a branch de trabalho proposta (`<type>/<key>-<slug>`).
-2. **Etapa 2 - Consent Gate**:
-   - Pergunta: *"O plano de desenvolvimento está aprovado? Posso mover o card para **In Progress** e criar a branch de trabalho?"*
+2. **Etapa 2 - Consent Gate Interativo**:
+   - Aciona a ferramenta interativa de perguntas do harness (ex: `ask_question` / `AskUserQuestion`) ou fallback textual com as opções `(Recommended) Sim, aprovar` e `Editar...`:
+     - Pergunta: *"O plano de desenvolvimento está aprovado? Posso mover o card para **In Progress** e criar a branch de trabalho?"*
+   - Se o usuário escolher `Editar...`: recebe observações sobre a estratégia de arquivos ou branch, volta à Etapa 1 para retificar o plano e reapresenta o Consent Gate.
 3. **Etapa 3 - Execução Atômica & Início de Codificação**:
-   - Transiciona o card para **`In Progress`** com comentário inicial:
+   - Somente após `Sim, aprovar`, transiciona o card para **`In Progress`** com comentário inicial:
      ```bash
      python skills/linear-workflow/scripts/linear_api.py update-issue "<id>" --state "In Progress" --comment "🤖 **AI Agent Update**: Início do desenvolvimento na branch <branch-name>..."
      ```
@@ -233,18 +262,26 @@ Gatilhos: `/fk-fix`, `fk-fix`, *"aplicar correções do review"*, *"resolver fee
 
 ## Concrete Interaction Examples
 
-### Example 1: Consent Gate em Análise Técnica
+### Example 1: Consent Gate em Análise Técnica (Tool Interativa)
 **Usuário**: `"/fk-ta FAL-24"`  
 **Agente (Etapa 1)**: Consulta `get-issue FAL-24`, estuda a arquitetura e responde no chat com a análise detalhada e trade-offs.  
-**Agente (Etapa 2)**: *"O direcionamento da análise técnica está aprovado? Posso registrar o sumário e avançar o card para **Todo**?"*  
-**Usuário**: *"Aprovado, pode registrar."*  
+**Agente (Etapa 2 - Consent Gate Interativo)**: Invoca tool nativa de perguntas (`ask_question` / `AskUserQuestion`):
+- Pergunta: *"A análise técnica está aprovada? Posso registrar as decisões no Linear e mover o card para **Todo**?"*
+- Opções: `["(Recommended) Sim, aprovar", "Editar..."]`
+**Usuário (Seleção)**: `"(Recommended) Sim, aprovar"`  
 **Agente (Etapa 3)**: Executa `update-issue FAL-24 --state "Todo" --comment "..."`. Comunica ao usuário a transição concluída.
 
-### Example 2: Ciclo de Desenvolvimento e Entrega em `In Review`
-**Usuário**: `"Vamos desenvolver a tarefa FAL-24"`  
-**Agente (Etapa 1 & 2)**: Lê os critérios do card, apresenta o plano de branch e arquivos a alterar, e pergunta: *"Podemos criar a branch `feat/FAL-24-...`, mover o card para **In Progress** e iniciar a implementação?"*  
-**Usuário**: *"Podemos."*  
-**Agente (Etapa 3 & 4)**: Executa `update-issue FAL-24 --state "In Progress" --comment "..."`, cria a branch, implementa código, roda os testes, abre o PR #5 no GitHub e executa:
+### Example 2: Consent Gate com Loopback ("Editar...") e Desenvolvimento
+**Usuário**: `"/fk-dev FAL-24"`  
+**Agente (Etapa 1)**: Lê os critérios do card, apresenta o plano de branch e arquivos a alterar.  
+**Agente (Etapa 2 - Consent Gate Interativo)**: Invoca `ask_question`:
+- Pergunta: *"O plano de desenvolvimento está aprovado? Posso mover o card para **In Progress** e iniciar a branch?"*
+- Opções: `["(Recommended) Sim, aprovar", "Editar..."]`  
+**Usuário (Seleção/Texto)**: `"Editar... adicionar testes de widget para tela de login"`  
+**Agente (Retorno à Etapa 1)**: Não altera o Linear (Zero Mutação). Ajusta o plano técnico incluindo a suíte de testes de widget e reapresenta o plano revisado.  
+**Agente (Etapa 2 - Novo Consent Gate)**: Invoca novamente a tool de pergunta interativa.  
+**Usuário**: `"(Recommended) Sim, aprovar"`  
+**Agente (Etapa 3 & 4)**: Executa `update-issue FAL-24 --state "In Progress" --comment "..."`, cria a branch, implementa código e testes, abre o PR #5 no GitHub e transiciona para `In Review`:
 ```bash
 python skills/linear-workflow/scripts/linear_api.py update-issue FAL-24 --state "In Review" --comment "🤖 **AI Agent Update**: PR #5 aberto no GitHub..."
 ```

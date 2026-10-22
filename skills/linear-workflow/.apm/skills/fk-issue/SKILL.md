@@ -9,7 +9,7 @@ allowed-tools: Read,Glob,Grep,Bash
 Alias rápido para o comando `/fk-new-issue`. Executa exatamente o mesmo rito com **Consent Gate em 3 etapas**:
 
 1. **Etapa 1 (Zero Mutação)**: Localizar projeto pai via MCP ou CLI, decompor tarefas no chat com label `Front` ou `Back`. Não criar nenhum card.
-2. **Etapa 2 (Consent Gate)**: Perguntar: *"O escopo e a divisão dos cards estão alinhados? Posso criá-los no Linear sob o status [Backlog/Todo]?"*
-3. **Etapa 3 (Execução Atômica)**: Criar os cards após confirmação explícita e notificar o usuário com links e identificadores.
+2. **Etapa 2 (Consent Gate Interativo)**: Invocar a tool nativa de perguntas (`ask_question`, `AskUserQuestion`, etc.) com opções `(Recommended) Sim, aprovar` e `Editar...`. Se o desenvolvedor escolher `Editar...`, coletar os ajustes em texto livre e retornar à Etapa 1 sem criar cards no Linear.
+3. **Etapa 3 (Execução Atômica)**: Criar os cards após `Sim, aprovar` e notificar o usuário com links e identificadores.
 
 Consulte a skill base para documentação completa: [linear-workflow](../linear-workflow/SKILL.md).
