@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Deprecated
 
 ### Removed
+- Remover aliases curtos (fk-dev, fk-ta e fk-issue) das sub-skills e documentação do linear-workflow (FAL-26)
 
 ### Fixed
 
