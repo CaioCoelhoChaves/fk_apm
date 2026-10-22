@@ -10,9 +10,9 @@ Esta regra intercepta comandos de ciclo de vida do Linear em todos os harnesses 
 
 Sempre que a mensagem do usuário contiver qualquer um dos seguintes gatilhos (com ou sem barra `/` inicial, maiúsculas ou minúsculas):
 
-- **Planejamento / Criação**: `/fk-new-issue`, `fk-new-issue`, `/fk-issue`, `fk-issue`, ou solicitações explícitas de planejar/decompor cards para o Linear.
-- **Análise Técnica**: `/fk-technical-analysis`, `fk-technical-analysis`, `/fk-ta`, `fk-ta`, ou solicitações de análise técnica/spike de um card do Linear.
-- **Desenvolvimento**: `/fk-develop`, `fk-develop`, `/fk-dev`, `fk-dev`, ou solicitações de desenvolver/implementar um card do Linear.
+- **Planejamento / Criação**: `/fk-new-issue`, `fk-new-issue`, ou solicitações explícitas de planejar/decompor cards para o Linear.
+- **Análise Técnica**: `/fk-technical-analysis`, `fk-technical-analysis`, ou solicitações de análise técnica/spike de um card do Linear.
+- **Desenvolvimento**: `/fk-develop`, `fk-develop`, ou solicitações de desenvolver/implementar um card do Linear.
 - **Correção de PR / Review Feedback**: `/fk-fix`, `fk-fix`, ou solicitações explícitas de aplicar feedback de code review em PR aberto.
 
 ## 2. Ações Mandatórias do Agente
@@ -21,7 +21,7 @@ Sempre que a mensagem do usuário contiver qualquer um dos seguintes gatilhos (c
    - Ative imediatamente as instruções e fluxos definidos em `skills/linear-workflow/SKILL.md`.
 
 2. **Protocolo Inviolável de 3 Etapas (*Consent Gate*) & Exceção Autônoma**:
-   - Para `fk-new-issue`, `fk-technical-analysis` e `fk-develop` (e seus aliases):
+   - Para `fk-new-issue`, `fk-technical-analysis` e `fk-develop`:
      - **Etapa 1 (Leitura & Alinhamento)**: Apenas operações de leitura no Linear (`get-issue`, `search-issues`, `list-projects`). Zero mutação no Linear antes da aprovação do desenvolvedor.
      - **Etapa 2 (Consent Gate Interativo)**: Apresente o plano ou análise e acione a **ferramenta nativa de perguntas** do harness (`ask_question` no Antigravity, `AskUserQuestion` no Claude Code, tool nativa no OpenCode, ou fallback em texto formatado para outros harnesses) com as opções:
        - `(Recommended) Sim, aprovar`: avança para a Etapa 3.
@@ -34,8 +34,8 @@ Sempre que a mensagem do usuário contiver qualquer um dos seguintes gatilhos (c
 
 3. **Mapeamento de Estados por Rito**:
    - `fk-new-issue` ➔ Criação sob `Backlog` ou `Todo`.
-   - `fk-technical-analysis` / `fk-ta` ➔ `Technical Analysis` ➔ **`Todo`** (com análise técnica registrada).
-   - `fk-develop` / `fk-dev` ➔ `Todo` ➔ **`In Progress`** (com branch criada) ➔ **`In Review`** (ao abrir PR no GitHub).
+   - `fk-technical-analysis` ➔ `Technical Analysis` ➔ **`Todo`** (com análise técnica registrada).
+   - `fk-develop` ➔ `Todo` ➔ **`In Progress`** (com branch criada) ➔ **`In Review`** (ao abrir PR no GitHub).
    - `fk-fix` ➔ `In Review` ➔ **`In Progress`** (ao iniciar correção) ➔ **`In Review`** (ao enviar push e comentar no PR).
    - **`Done`**: O agente **NUNCA** move cards para `Done`. A transição para `Done` é exclusiva do desenvolvedor após o merge do PR.
 

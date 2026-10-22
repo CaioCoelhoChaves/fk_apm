@@ -17,7 +17,7 @@ Different AI coding harnesses implement command discovery and user inputs with d
 
 Without harness-aware distribution:
 - Antigravity would miss `.claude/commands/` entirely and rely solely on LLM guessing from skill descriptions.
-- Users typing `/fk-dev` or `/fk-fix` in CLI harnesses might collide with CLI-level parsing.
+- Users typing `/fk-develop` or `/fk-fix` in CLI harnesses might collide with CLI-level parsing.
 - Syntactic friction (e.g., typing `fk-fix` without a slash) could prevent skill triggering.
 
 ---
@@ -85,12 +85,12 @@ flowchart TD
 
 Agents must recognize all syntax permutations interchangeably:
 
-| Canonical Command | Slash-Free Variant | Quick Alias | Natural Language Equivalent |
-| :--- | :--- | :--- | :--- |
-| `/fk-new-issue` | `fk-new-issue` | `/fk-issue`, `fk-issue` | *"vamos planejar tarefas no Linear"*, *"crie os cards para..."* |
-| `/fk-technical-analysis` | `fk-technical-analysis` | `/fk-ta`, `fk-ta` | *"vamos analisar o card FAL-12"*, *"spike técnico do FAL-12"* |
-| `/fk-develop` | `fk-develop` | `/fk-dev`, `fk-dev` | *"vamos desenvolver a tarefa FAL-12"*, *"implementar o card FAL-12"* |
-| `/fk-fix` | `fk-fix` | — *(sem alias)* | *"aplicar correções do review no PR"*, *"resolver feedback de code review"* |
+| Canonical Command | Slash-Free Variant | Natural Language Equivalent |
+| :--- | :--- | :--- |
+| `/fk-new-issue` | `fk-new-issue` | *"vamos planejar tarefas no Linear"*, *"crie os cards para..."* |
+| `/fk-technical-analysis` | `fk-technical-analysis` | *"vamos analisar o card FAL-12"*, *"spike técnico do FAL-12"* |
+| `/fk-develop` | `fk-develop` | *"vamos desenvolver a tarefa FAL-12"*, *"implementar o card FAL-12"* |
+| `/fk-fix` | `fk-fix` | *"aplicar correções do review no PR"*, *"resolver feedback de code review"* |
 
 No matter which syntax the user inputs:
 1. The agent intercepts the trigger immediately.
