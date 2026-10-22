@@ -1,66 +1,56 @@
 ---
 name: fk-develop
-description: Início do desenvolvimento, criação de branch Gitflow, implementação de código e testes, e avanço para In Review ao abrir PR, com Consent Gate. Use quando o usuário invocar /fk-develop ou solicitar implementação de um card.
+description: Início autônomo do desenvolvimento, criação de branch Gitflow, implementação de código e testes sem Consent Gate, e avanço para In Review ao abrir PR. Use quando o usuário invocar /fk-develop ou solicitar implementação de um card.
 allowed-tools: Read,Glob,Grep,Bash
 ---
 
-# /fk-develop: Ciclo de Desenvolvimento & Implementação no Linear
+# /fk-develop: Ciclo Autônomo de Desenvolvimento & Implementação no Linear
 
-Este comando orquestra o ciclo de desenvolvimento de uma tarefa no Linear, aplicando integralmente o protocolo de **Consent Gate em 3 etapas**, Gitflow e as diretrizes da skill `linear-workflow`.
+Este comando orquestra o ciclo completo de desenvolvimento de uma tarefa no Linear de forma **autônoma (sem Consent Gate)**, aplicando Gitflow e as diretrizes da skill `linear-workflow`.
+
+> [!IMPORTANT]
+> **Execução Autônoma (SEM Consent Gate)**:
+> Ao contrário de `/fk-new-issue` e `/fk-technical-analysis`, o comando `/fk-develop` roda **sem Consent Gate**. O desenvolvedor apenas invoca o comando e o agente assume a execução imediatamente: move o card para **`In Progress`**, cria a branch Gitflow, implementa código e testes, abre o Pull Request e transiciona o card para **`In Review`**.
+>
+> **Diretriz de Decisão em Caso de Dúvidas**:
+> - O agente **só deve fazer perguntas ao desenvolvedor em casos excepcionais de ambiguidade real e bloqueante** (ex.: ausência total de critérios, conflito insolúvel de requisitos ou credenciais ausentes).
+> - **Comportamento Padrão**: Se houver mais de uma alternativa técnica ou detalhe menor de especificação, **decida tecnicamente**, registre explicitamente a **premissa assumida** no comentário inicial do card e no PR, e siga em frente sem interromper o fluxo.
 
 ---
 
-## Ciclo de Desenvolvimento & Consent Gate
+## Ciclo de Desenvolvimento Autônomo
 
-### 1. Etapa 1: Leitura & Planejamento da Branch (Zero Mutação)
+### 1. Leitura & Identificação da Issue
 - **Consulta da Issue**: Consulte os detalhes da issue indicada via MCP `linear_issue_search` ou CLI:
   ```bash
   python .agents/skills/linear-workflow/scripts/linear_api.py get-issue "<issue-key>"
   ```
+- **Extração de Requisitos**: Leia descrição, critérios de aceitação, comentários e histórico técnico.
 - **Planejamento da Branch**: Formate o nome da branch Gitflow no padrão Linear `<type>/<issue-key>-<slug>` (ex: `feat/FAL-25-antigravity-slash-commands`).
-- **Apresentação em Chat**: Apresente no chat o plano de implementação, arquivos a modificar e a branch proposta.
-- ⚠️ **Zero Mutação**: **NÃO altere o Linear nesta etapa.**
 
-### 2. Etapa 2: Consent Gate Interativo (Confirmação Explícita)
-- Apresente a pergunta de consentimento invocando a **ferramenta nativa de perguntas** do harness:
-  - **Google Antigravity**: chame `ask_question`:
-    ```json
-    {
-      "questions": [
-        {
-          "question": "O plano de desenvolvimento está aprovado? Posso mover o card para In Progress e iniciar a branch de trabalho?",
-          "options": [
-            "(Recommended) Sim, aprovar",
-            "Editar..."
-          ],
-          "is_multi_select": false
-        }
-      ]
-    }
-    ```
-  - **Claude Code**: chame `AskUserQuestion` com opções `["Sim, aprovar", "Editar..."]`.
-  - **OpenCode v2**: chame a ferramenta nativa de pergunta com opções `["Sim, aprovar", "Editar..."]`.
-  - **Fallback Textual (Cursor, Copilot, Gemini CLI ou sem tool nativa)**: apresente em bloco Markdown destacado com opções numeradas (`1. (Recomendado) Sim, aprovar` e `2. Editar...`).
-- **Tratamento das Opções**:
-  - `(Recommended) Sim, aprovar`: avança imediatamente para a **Etapa 3 (Execução Atômica)**.
-  - `Editar...`: permite ao desenvolvedor digitar observações ou ajustes no plano em texto livre. O agente **retorna à Etapa 1**, refina o plano de desenvolvimento/arquivos/branch e apresenta novo Consent Gate. **Zero mutação é estritamente mantida**.
-
-### 3. Etapa 3: Execução Atômica & Codificação
-- Transicione o card no Linear para **`In Progress`** com comentário inicial:
+### 2. Transição Imediata para In Progress (Sem Confirmação)
+- Transicione o card no Linear para **`In Progress`** com comentário inicial informando a branch e premissas assumidas (se houver):
   ```bash
   python .agents/skills/linear-workflow/scripts/linear_api.py update-issue "<issue-id>" \
     --state "In Progress" \
-    --comment "🤖 **AI Agent Update**: Início do desenvolvimento na branch <branch-name>."
+    --comment "🤖 **AI Agent Update**: Início autônomo do desenvolvimento na branch <branch-name>."
   ```
-- Crie e mude para a branch de trabalho:
+  *(A idempotência de 10 minutos é garantida pelo CLI).*
+
+### 3. Criação da Branch Gitflow
+- Garanta que a branch base (ex: `main`) esteja atualizada e crie/mude para a branch de trabalho:
   ```bash
   git checkout -b <branch-name>
   ```
-- Execute o desenvolvimento, mantendo testes unitários e qualidade de código.
 
-### 4. Etapa 4: Conclusão do Desenvolvimento & Avanço para In Review
+### 4. Implementação de Código & Testes
+- Execute o desenvolvimento diretamente no workspace, mantendo testes unitários e qualidade de código.
+- Implemente sem pedir confirmações intermediárias nem pausar a esteira.
+
+### 5. Conclusão do Desenvolvimento & Avanço para In Review
 - Ao concluir a codificação e aprovação dos testes locais:
-  - Realize commit semântico seguindo a skill `git-workflow`.
+  - Realize commit semântico seguindo a skill `git-workflow` (Conventional Commits 1.0.0).
+  - Envie a branch para o repositório remoto (`git push -u origin <branch-name>`).
   - Abra o Pull Request no GitHub:
     ```bash
     gh pr create --title "..." --body "..."
@@ -71,6 +61,10 @@ Este comando orquestra o ciclo de desenvolvimento de uma tarefa no Linear, aplic
       --state "In Review" \
       --comment "🤖 **AI Agent Update**: Desenvolvimento concluído. PR aberto: <pr-url>"
     ```
-- ⚠️ **Regra Rito Exclusivamente Manual a partir de In Review**:
-  - O agente **NUNCA** move o card para `Done`. Apenas o desenvolvedor move para `Done` após revisar o PR no GitHub, validar testes e realizar o merge.
-  - **Retorno de Correção**: Se houver apontamentos no code review, o desenvolvedor ou o agente pode retornar o card para `In Progress` para novas correções.
+
+---
+
+## Regra Rito Exclusivamente Manual a partir de In Review
+
+- ⚠️ **`Done` é Exclusivo do Desenvolvedor**: O agente **NUNCA** move o card para `Done`. Apenas o desenvolvedor move para `Done` após revisar o PR no GitHub, validar testes e realizar o merge.
+- **Retorno de Correção**: Se houver apontamentos no code review, o desenvolvedor ou o comando `/fk-fix` retorna o card para `In Progress` para novas correções.

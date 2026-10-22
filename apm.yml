@@ -52,7 +52,7 @@ marketplace:
       version: 0.1.0
 
     - name: linear-workflow
-      description: Seamless Linear issue tracking, task lifecycle commands (/fk-* & fk-* multi-harness), 3-stage Consent Gate, autonomous PR review fixes (/fk-fix), and task sync
+      description: Seamless Linear issue tracking, task lifecycle commands (/fk-* & fk-* multi-harness), Consent Gates for planning/analysis, autonomous development (/fk-develop) and PR review fixes (/fk-fix), and task sync
       source: ./skills/linear-workflow
       version: 0.1.0
 

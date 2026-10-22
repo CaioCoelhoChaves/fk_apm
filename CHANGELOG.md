@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Adicionar skill semver-changelog para gerenciamento de CHANGELOG e SemVer 2.0.0 (FAL-23)
 
 ### Changed
+- Tornar /fk-develop autônomo sem Consent Gate, iniciando imediatamente em In Progress e avançando para In Review ao abrir o PR (FAL-29)
 
 ### Deprecated
 
