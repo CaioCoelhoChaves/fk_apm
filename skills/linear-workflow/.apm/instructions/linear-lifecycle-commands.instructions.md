@@ -20,22 +20,23 @@ Sempre que a mensagem do usuário contiver qualquer um dos seguintes gatilhos (c
 1. **Ativação da Skill**:
    - Ative imediatamente as instruções e fluxos definidos em `skills/linear-workflow/SKILL.md`.
 
-2. **Protocolo Inviolável de 3 Etapas (*Consent Gate*) & Exceção Autônoma**:
-   - Para `fk-new-issue`, `fk-technical-analysis` e `fk-develop`:
+2. **Protocolo Inviolável de 3 Etapas (*Consent Gate*) & Comandos Autônomos**:
+   - Para `fk-new-issue` e `fk-technical-analysis`:
      - **Etapa 1 (Leitura & Alinhamento)**: Apenas operações de leitura no Linear (`get-issue`, `search-issues`, `list-projects`). Zero mutação no Linear antes da aprovação do desenvolvedor.
      - **Etapa 2 (Consent Gate Interativo)**: Apresente o plano ou análise e acione a **ferramenta nativa de perguntas** do harness (`ask_question` no Antigravity, `AskUserQuestion` no Claude Code, tool nativa no OpenCode, ou fallback em texto formatado para outros harnesses) com as opções:
        - `(Recommended) Sim, aprovar`: avança para a Etapa 3.
        - `Editar...`: desenvolvedor informa ajustes em texto livre; o agente retorna à Etapa 1 sem qualquer mutação e reapresenta o Consent Gate após ajustar o plano.
      - **Etapa 3 (Execução Atômica)**: Somente após `Sim, aprovar`, realize a transição de estado no Linear acompanhada do comentário consolidado.
-   - ⚠️ **Exceção ao Consent Gate (`/fk-fix` / `fk-fix`)**:
-     - O comando `/fk-fix` roda **sem Consent Gate**.
-     - Ao ser invocado, o agente executa diretamente: leitura dos comentários/reviews do PR e texto extra ➔ transição para `In Progress` no Linear ➔ aplicação de correções e testes na branch ➔ push e comentário no PR ➔ transição final para `In Review` no Linear.
-     - Não solicite confirmação em nenhuma etapa do `/fk-fix`. Se não houver comentários/reviews nem texto extra, informe o usuário e finalize sem mutação.
+   - ⚠️ **Comandos de Execução Autônoma sem Consent Gate (`/fk-develop` e `/fk-fix`)**:
+     - Os comandos `/fk-develop` e `/fk-fix` rodam **sem Consent Gate**.
+     - **`/fk-develop`**: Leitura de requisitos/critérios ➔ transição imediata para `In Progress` com comentário informando branch e premissas assumidas ➔ criação de branch Gitflow ➔ implementação e testes sem confirmações intermediárias (perguntas ao desenvolvedor apenas em ambiguidade real e bloqueante; padrão: decidir, registrar premissa e seguir) ➔ abertura de PR no GitHub ➔ transição obrigatória para `In Review` no Linear.
+     - **`/fk-fix`**: Leitura dos comentários/reviews do PR e texto extra ➔ transição imediata para `In Progress` no Linear ➔ aplicação de correções e testes na branch ➔ push e comentário no PR ➔ transição final para `In Review` no Linear.
+     - Não solicite confirmação em nenhuma etapa do `/fk-develop` ou `/fk-fix`. Se no `/fk-fix` não houver comentários/reviews nem texto extra, informe o usuário e finalize sem mutação.
 
 3. **Mapeamento de Estados por Rito**:
-   - `fk-new-issue` ➔ Criação sob `Backlog` ou `Todo`.
-   - `fk-technical-analysis` ➔ `Technical Analysis` ➔ **`Todo`** (com análise técnica registrada).
-   - `fk-develop` ➔ `Todo` ➔ **`In Progress`** (com branch criada) ➔ **`In Review`** (ao abrir PR no GitHub).
+   - `fk-new-issue` ➔ Criação sob `Backlog` ou `Todo` (com Consent Gate).
+   - `fk-technical-analysis` ➔ `Technical Analysis` ➔ **`Todo`** (com Consent Gate e análise técnica registrada).
+   - `fk-develop` ➔ `Todo` ➔ **`In Progress`** (autônomo, com branch criada) ➔ **`In Review`** (ao abrir PR no GitHub).
    - `fk-fix` ➔ `In Review` ➔ **`In Progress`** (ao iniciar correção) ➔ **`In Review`** (ao enviar push e comentar no PR).
    - **`Done`**: O agente **NUNCA** move cards para `Done`. A transição para `Done` é exclusiva do desenvolvedor após o merge do PR.
 

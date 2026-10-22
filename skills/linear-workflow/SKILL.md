@@ -1,6 +1,6 @@
 ---
 name: linear-workflow
-description: Synchronize development and planning tasks with Linear issue tracking across any project and harness (Google Antigravity, Claude Code, Cursor, Copilot). Enforces lifecycle commands (/fk-new-issue, fk-new-issue, /fk-technical-analysis, fk-technical-analysis, /fk-develop, fk-develop, /fk-fix, fk-fix), the mandatory 3-stage Consent Gate protocol (zero mutation until user approval), autonomous code review fixes (/fk-fix), atomic state advancement (advancing to In Review upon PR opening), comment idempotency (10-minute deduplication window), manual-only developer transitions for 'Done', and review feedback loops returning to 'In Progress'. Checks Linear via MCP tools or bundled CLI (scripts/linear_api.py), tags monorepo subprojects with Front/Back labels, and notifies the user of all board actions.
+description: Synchronize development and planning tasks with Linear issue tracking across any project and harness (Google Antigravity, Claude Code, Cursor, Copilot). Enforces lifecycle commands (/fk-new-issue, fk-new-issue, /fk-technical-analysis, fk-technical-analysis, /fk-develop, fk-develop, /fk-fix, fk-fix), the mandatory 3-stage Consent Gate protocol for planning/analysis, autonomous development (/fk-develop) and PR review fixes (/fk-fix), atomic state advancement (advancing to In Review upon PR opening), comment idempotency (10-minute deduplication window), manual-only developer transitions for 'Done', and review feedback loops returning to 'In Progress'. Checks Linear via MCP tools or bundled CLI (scripts/linear_api.py), tags monorepo subprojects with Front/Back labels, and notifies the user of all board actions.
 allowed-tools: Read,Glob,Grep,Bash
 ---
 
@@ -38,8 +38,8 @@ A standardized workflow for AI coding agents to integrate Linear issue managemen
      - **`Done`**: O desenvolvedor move manualmente para **`Done`** após revisar o PR no GitHub, validar os testes e realizar o merge. O agente **NUNCA** move o card para `Done`.
      - **Retorno para Correções**: Se o desenvolvedor encontrar falhas ou pedir ajustes durante o review, o card pode ser retornado para **`In Progress`** (manualmente ou via comando `/fk-fix`) para que o agente execute o ciclo corretivo.
 
-4. **Mandatory 3-Stage Protocol (*Consent Gate*) & Autonomous Fix Exception**:
-   - For standard lifecycle commands (`/fk-new-issue`, `/fk-technical-analysis`, `/fk-develop`) and natural language triggers, the agent must strictly follow this protocol across all harnesses (Google Antigravity, Claude Code, OpenCode, Cursor, GitHub Copilot):
+4. **Mandatory 3-Stage Protocol (*Consent Gate*) for Planning/Analysis & Autonomous Execution Exception**:
+   - For planning and analysis lifecycle commands (`/fk-new-issue`, `/fk-technical-analysis`) and natural language triggers, the agent must strictly follow this protocol across all harnesses (Google Antigravity, Claude Code, OpenCode, Cursor, GitHub Copilot):
      - **Stage 1 (Initial Presentation & Questions)**: The agent prepares the plan/analysis in chat/workspace, raising options and doubts with the developer. **Zero mutation**: No API calls altering Linear (`update-issue`, `create-issue`, `create-comment`) are permitted in this stage. Only read queries (`get-issue`, `search-issues`, `list-states`, `list-projects`) are allowed.
      - **Stage 2 (Consent Gate - Interactive Prompt & Options)**: After resolving questions, the agent presents the consent confirmation using the **native question tool** of the active harness:
        - **Google Antigravity**: tool nativa `ask_question`.
@@ -49,9 +49,11 @@ A standardized workflow for AI coding agents to integrate Linear issue managemen
        - **Opções Estruturadas**:
          1. `(Recommended) Sim, aprovar`: Avança atomicamente para a Stage 3.
          2. `Editar...`: Permite texto livre para o desenvolvedor informar o que deseja ajustar. O agente recebe o feedback, **retorna à Stage 1**, ajusta o plano/análise e apresenta novamente antes de acionar um novo Consent Gate.
-     - **Stage 3 (Atomic Execution - Move Card + Register Comment)**: Only after affirmative developer response (`Sim, aprovar`), execute the closing actions atomically on Linear (advancing the status, registering the consolidated comment, or creating cards/branches).
-   - ⚠️ **Exceção de Consent Gate para `/fk-fix`**:
-     - O comando `/fk-fix` roda **sem Consent Gate**. Por se tratar de um ciclo corretivo solicitado por revisores humanos em um PR existente, o agente executa diretamente a leitura do feedback, movimentação para `In Progress`, implementação na branch, comentário no PR e retorno para `In Review` sem requerer aprovação prévia.
+     - **Stage 3 (Atomic Execution - Move Card + Register Comment)**: Only after affirmative developer response (`Sim, aprovar`), execute the closing actions atomically on Linear (advancing the status, registering the consolidated comment, or creating cards).
+   - ⚠️ **Execução Autônoma para `/fk-develop` e `/fk-fix` (Sem Consent Gate)**:
+     - Os comandos de ciclo de desenvolvimento (`/fk-develop`) e correção de review (`/fk-fix`) rodam **sem Consent Gate**.
+     - **`/fk-develop`**: Ao ser invocado, o agente lê os requisitos, transiciona imediatamente o card para `In Progress`, cria a branch Gitflow, implementa código e testes sem pedir confirmação prévia e avança para `In Review` ao abrir o PR no GitHub. Dúvidas devem ser levantadas ao desenvolvedor somente em casos excepcionais de bloqueio real; se não for bloqueante, o agente decide tecnicamente, registra a premissa assumida no comentário do card/PR e prossegue.
+     - **`/fk-fix`**: Executa diretamente a leitura do feedback do PR, move para `In Progress`, aplica ajustes na branch existente, comenta no PR e retorna para `In Review` sem requerer aprovação prévia.
 
 5. **Comment Idempotency & AIG Compliance**:
    - In accordance with Linear's official [Agent Interaction Guidelines (AIG)](https://linear.app/developers/agents):
@@ -81,7 +83,7 @@ A standardized workflow for AI coding agents to integrate Linear issue managemen
 | :--- | :--- | :--- | :--- | :--- |
 | **`/fk-new-issue`** | `fk-new-issue` | `Backlog` ou `Todo` | **Agente** (com Consent Gate) | Planejamento, decomposição e criação atômica de novos cards no Linear. |
 | **`/fk-technical-analysis`** | `fk-technical-analysis` | `Technical Analysis` ➔ `Todo` | **Agente** (com Consent Gate) | Investigação arquitetural, spikes técnicos, desenho de solução e avanço para `Todo` ao concluir. |
-| **`/fk-develop`** | `fk-develop` | `Todo` ➔ `In Progress` ➔ `In Review` | **Agente** (com Consent Gate) | Início do desenvolvimento (`In Progress`), implementação, testes e avanço para `In Review` ao abrir o PR. |
+| **`/fk-develop`** | `fk-develop` | `Todo` ➔ `In Progress` ➔ `In Review` | **Agente** (sem Consent Gate, autônomo) | Início imediato do desenvolvimento (`In Progress`), criação de branch Gitflow, implementação autônoma, testes e avanço para `In Review` ao abrir o PR. |
 | **`/fk-fix`** | `fk-fix` | `In Review` ➔ `In Progress` ➔ `In Review` | **Agente** (sem Consent Gate) | Aplica correções do review de um PR aberto (lê reviews, inline comments e texto extra), comita na branch, comenta no PR e devolve o card para `In Review`. |
 | *(Transição Manual)* | — | `In Review` ➔ `Done` | **Desenvolvedor** | **Exclusivamente manual pelo desenvolvedor** após merge e homologação da entrega. |
 
@@ -105,21 +107,21 @@ The agent dynamically uses whatever tool is available in the current environment
 
 ## Workflow 1: Protocolo Universal Consent Gate em 3 Etapas
 
-Para comandos de planejamento e início de desenvolvimento (`/fk-new-issue`, `/fk-technical-analysis`, `/fk-develop`), segue-se rigorosamente este fluxo:
+Para comandos de planejamento e análise técnica (`/fk-new-issue`, `/fk-technical-analysis`), segue-se rigorosamente este fluxo:
 
 ```mermaid
 flowchart TD
-    A["1. Comando de Rito (/fk-*) ou Linguagem Natural"] --> B["Etapa 1: Leitura, Apresentação & Alinhamento"]
+    A["1. Comando de Planejamento/Análise (/fk-new-issue, /fk-technical-analysis)"] --> B["Etapa 1: Leitura, Apresentação & Alinhamento"]
     B --> C["Zero Mutação: Apenas Leitura no Linear"]
-    C --> D{"Dúvidas resolvidas e plano estruturado?"}
+    C --> D{"Dúvidas resolvidas e proposta estruturada?"}
     D -- "Não" --> B
     D -- "Sim" --> E["Etapa 2: Consent Gate Interativo (Tool Nativa)"]
     E --> F{"Opção Selecionada"}
     F -- "Editar... (Texto Livre)" --> B
     F -- "(Recommended) Sim, aprovar" --> G["Etapa 3: Execução Atômica"]
-    H["Mover Card / Criar Cards + Comentário Consolidado"]
+    H["Criar Cards / Avançar para Todo + Comentário Consolidado"]
     G --> H
-    H --> I["Prosseguir com implementação ou branch Git"]
+    H --> I["Operação concluída com sucesso no Linear"]
 ```
 
 ### Mecanismo de Pergunta Interativa por Harness:
@@ -180,25 +182,32 @@ Gatilhos: `/fk-technical-analysis`, `fk-technical-analysis`, *"vamos analisar te
 
 ---
 
-## Workflow 4: Ciclo de Desenvolvimento & Implementação (`/fk-develop`)
+## Workflow 4: Ciclo Autônomo de Desenvolvimento & Implementação (`/fk-develop`)
 
 Gatilhos: `/fk-develop`, `fk-develop`, *"vamos desenvolver a tarefa X"*, *"quero implementar o card Y"*.
 
-1. **Etapa 1 - Apresentação & Dúvidas (Leitura)**:
+> [!IMPORTANT]
+> **Execução Autônoma (SEM Consent Gate)**:
+> O comando `/fk-develop` roda **sem Consent Gate**. A LLM transiciona o card imediatamente para **`In Progress`** e cria a branch de desenvolvimento sem solicitar confirmação prévia ao usuário.
+>
+> **Diretriz de Decisão**: A LLM **só deve perguntar ao desenvolvedor em casos excepcionais de ambiguidade real e bloqueante**. Comportamento padrão: decidir tecnicamente, registrar a premissa assumida no comentário do card/PR e seguir em frente.
+
+1. **Leitura do Card & Critérios**:
    - Lê o card (`get-issue <id>`), requisitos, histórico de comentários e critérios de aceitação.
-   - Apresenta o plano de implementação, arquivos afetados e a branch de trabalho proposta (`<type>/<key>-<slug>`).
-2. **Etapa 2 - Consent Gate Interativo**:
-   - Aciona a ferramenta interativa de perguntas do harness (ex: `ask_question` / `AskUserQuestion`) ou fallback textual com as opções `(Recommended) Sim, aprovar` e `Editar...`:
-     - Pergunta: *"O plano de desenvolvimento está aprovado? Posso mover o card para **In Progress** e criar a branch de trabalho?"*
-   - Se o usuário escolher `Editar...`: recebe observações sobre a estratégia de arquivos ou branch, volta à Etapa 1 para retificar o plano e reapresenta o Consent Gate.
-3. **Etapa 3 - Execução Atômica & Início de Codificação**:
-   - Somente após `Sim, aprovar`, transiciona o card para **`In Progress`** com comentário inicial:
+   - Formata a branch Gitflow no padrão Linear `<type>/<key>-<slug>`.
+2. **Transição Imediata para `In Progress` no Linear**:
+   - Move imediatamente o card para `In Progress` com comentário inicial informando a branch e premissas assumidas:
      ```bash
-     python skills/linear-workflow/scripts/linear_api.py update-issue "<id>" --state "In Progress" --comment "🤖 **AI Agent Update**: Início do desenvolvimento na branch <branch-name>..."
+     python skills/linear-workflow/scripts/linear_api.py update-issue "<id>" --state "In Progress" --comment "🤖 **AI Agent Update**: Início autônomo do desenvolvimento na branch <branch-name>."
      ```
-   - Cria a branch Git alinhada ao Gitflow e inicia a codificação e testes.
-4. **Etapa 4 - Finalização do Desenvolvimento & Movimentação para `In Review`**:
-   - Após implementar, rodar a suíte de testes e abrir o Pull Request no GitHub (`gh pr create`):
+3. **Criação da Branch Gitflow & Codificação Autônoma**:
+   - Garante base atualizada e cria/muda para a branch:
+     ```bash
+     git checkout -b <branch-name>
+     ```
+   - Implementa código e testes sem pedir confirmações intermediárias.
+4. **Finalização do Desenvolvimento & Movimentação para `In Review`**:
+   - Após implementar, validar os testes unitários e abrir o Pull Request no GitHub (`gh pr create`):
    - **O agente move obrigatoriamente o card para `In Review`**:
      ```bash
      python skills/linear-workflow/scripts/linear_api.py update-issue "<id>" --state "In Review" --comment "🤖 **AI Agent Update**: Desenvolvimento concluído e PR aberto no GitHub: <pr-url>..."
@@ -229,64 +238,65 @@ Gatilhos: `/fk-fix`, `fk-fix`, *"aplicar correções do review"*, *"resolver fee
 
 > [!IMPORTANT]
 > **Execução Autônoma (SEM Consent Gate)**:
-> O comando `/fk-fix` não solicita confirmação prévia antes de iniciar o fix ou mover o card para `In Progress`. O feedback deixado pelos revisores humanos no PR já expressa a intenção do desenvolvedor.
+> Ao contrário de `/fk-new-issue` e `/fk-technical-analysis`, o comando `/fk-fix` roda **sem Consent Gate**. O desenvolvedor apenas invoca o comando e o agente executa atomicamente todo o fluxo até o retorno para **`In Review`**.
 
-1. **Etapa 1 - Identificação do Card e do PR**:
-   - Identifica a chave da issue informada no argumento (ex.: `/fk-fix FAL-24`) ou deduz a issue pela branch atual (`<type>/<key>-<slug>`).
-   - Localiza o PR correspondente no GitHub via `gh pr view --json number,title,url,headRefName,state`.
-   - Se nenhum PR aberto for encontrado, alerta o desenvolvedor e finaliza sem modificações.
-2. **Etapa 2 - Leitura & Triagem do Feedback**:
-   - Coleta comentários gerais do PR (`gh pr view --comments`), reviews (`gh api repos/{owner}/{repo}/pulls/{n}/reviews`) e comentários inline no código (`gh api repos/{owner}/{repo}/pulls/{n}/comments`), além de eventuais instruções extras fornecidas pelo usuário.
-   - **Filtros Mandatórios**: Ignora comentários anteriores do próprio agente (`🤖 **AI Agent Update**:`) e threads/comentários já resolvidos ou out-of-date.
-   - **Validação de Feedback Vazio**: Se não houver comentários, reviews pendentes nem texto extra do usuário, o agente avisa o usuário no chat e encerra **sem realizar qualquer modificação** na branch ou no Linear.
-3. **Etapa 3 - Transição para `In Progress` no Linear (Sem Confirmação)**:
-   - Move o card no Linear para **`In Progress`** com comentário estruturado contendo o resumo dos apontamentos a tratar:
-     ```bash
-     python skills/linear-workflow/scripts/linear_api.py update-issue "<id>" --state "In Progress" --comment "🤖 **AI Agent Update**: Início da aplicação de feedback do PR #<pr-number>. Apontamentos em tratamento:
-- <resumo de cada apontamento identificado>"
-     ```
-   - Se o projeto/card não existir no Linear, avisa o usuário com transparência e prossegue com o fix no repositório.
-4. **Etapa 4 - Implementação & Testes na Branch Existente**:
-   - Implementa as correções solicitadas diretamente nos arquivos da branch atual.
-   - Executa a suíte de testes locais para assegurar que não haja regressão.
-   - Realiza commits semânticos (Conventional Commits 1.0.0) e push na branch atual (atualizando o PR existente, sem abrir novo PR).
-5. **Etapa 5 - Comentário Estruturado no PR do GitHub**:
-   - Registra um comentário no PR via `gh pr comment` com prefixo `🤖 **AI Agent Update**:`, discriminando com clareza:
-     - O que foi corrigido por cada apontamento/comentário;
-     - O que eventualmente não foi alterado, acompanhado de justificativa técnica.
-6. **Etapa 6 - Retorno do Card para `In Review` no Linear**:
-   - Transiciona atomicamente o card no Linear para **`In Review`** com comentário registrando a conclusão das correções e o link do PR atualizado.
-7. **Regra de Ouro**: O card **NUNCA** é movido para `Done` pelo agente (permanece manual pelo desenvolvedor após merge).
+1. **Identificação do Card e do PR**:
+   - Extrai a issue informada como argumento ou deduz pela branch Git atual (`<type>/<issue-key>-<slug>`).
+   - Localiza o PR aberto correspondente à branch no GitHub via `gh pr view`.
+2. **Leitura & Consolidação do Feedback**:
+   - Coleta comentários gerais do PR (`gh pr view --comments`), reviews (`gh api .../reviews`) e inline review comments (`gh api .../comments`), além de instruções passadas pelo usuário no chat.
+   - Filtra comentários de automação/agente (`🤖 **AI Agent Update**:`) e threads já resolvidas.
+   - Se não houver comentários/reviews nem texto extra do usuário, finaliza sem mutação alertando o desenvolvedor.
+3. **Movimentação do Card para In Progress (Sem Confirmação)**:
+   - Transiciona imediatamente o card no Linear para **`In Progress`** com sumário dos itens em tratamento.
+4. **Implementação & Testes na Branch Existente**:
+   - Realiza correções nos arquivos do projeto e executa suíte de testes.
+   - Cria commits semânticos e faz `git push origin <branch-name>` (atualizando o PR existente sem abrir um novo).
+5. **Registro de Feedback no PR**:
+   - Comenta no PR via `gh pr comment` destacando itens corrigidos e eventuais decisões técnicas.
+6. **Transição Final para In Review**:
+   - Transiciona atomicamente o card para **`In Review`** no Linear, notificando o desenvolvedor com sumário e link do PR.
 
 ---
 
-## Concrete Interaction Examples
+## Complete Workflow Scenarios
 
-### Example 1: Consent Gate em Análise Técnica (Tool Interativa)
-**Usuário**: `"/fk-technical-analysis FAL-24"`  
-**Agente (Etapa 1)**: Consulta `get-issue FAL-24`, estuda a arquitetura e responde no chat com a análise detalhada e trade-offs.  
-**Agente (Etapa 2 - Consent Gate Interativo)**: Invoca tool nativa de perguntas (`ask_question` / `AskUserQuestion`):
-- Pergunta: *"A análise técnica está aprovada? Posso registrar as decisões no Linear e mover o card para **Todo**?"*
-- Opções: `["(Recommended) Sim, aprovar", "Editar..."]`
-**Usuário (Seleção)**: `"(Recommended) Sim, aprovar"`  
-**Agente (Etapa 3)**: Executa `update-issue FAL-24 --state "Todo" --comment "..."`. Comunica ao usuário a transição concluída.
-
-### Example 2: Consent Gate com Loopback ("Editar...") e Desenvolvimento
-**Usuário**: `"/fk-develop FAL-24"`  
-**Agente (Etapa 1)**: Lê os critérios do card, apresenta o plano de branch e arquivos a alterar.  
+### Example 1: Criação e Decomposição de Tarefas com Consent Gate
+**Usuário**: `"/fk-new-issue planejar autenticação biométrica e recuperação de senha para Rent Easy"`  
+**Agente (Etapa 1)**: Localiza o projeto pai `Rent Easy`, analisa o escopo e apresenta a proposta de cards no chat:
+- `[FAL-30] feat(auth): implementar autenticação biométrica com LocalAuthentication (Label: Front)`
+- `[FAL-31] feat(auth): implementar fluxo de recuperação de senha por email (Label: Front)`  
 **Agente (Etapa 2 - Consent Gate Interativo)**: Invoca `ask_question`:
-- Pergunta: *"O plano de desenvolvimento está aprovado? Posso mover o card para **In Progress** e iniciar a branch?"*
+- Pergunta: *"O escopo e a divisão dos 2 cards estão aprovados para criação no Linear sob o status Todo?"*
 - Opções: `["(Recommended) Sim, aprovar", "Editar..."]`  
-**Usuário (Seleção/Texto)**: `"Editar... adicionar testes de widget para tela de login"`  
-**Agente (Retorno à Etapa 1)**: Não altera o Linear (Zero Mutação). Ajusta o plano técnico incluindo a suíte de testes de widget e reapresenta o plano revisado.  
+**Usuário (Seleção)**: `"(Recommended) Sim, aprovar"`  
+**Agente (Etapa 3)**: Cria atomicamente os cards no Linear e retorna links e IDs confirmados.
+
+### Example 2: Consent Gate com Loopback ("Editar...") na Análise Técnica
+**Usuário**: `"/fk-technical-analysis FAL-24"`  
+**Agente (Etapa 1)**: Investiga a arquitetura, apresenta opções de solução no chat sem alterar o Linear.  
+**Agente (Etapa 2 - Consent Gate Interativo)**: Invoca `ask_question`:
+- Pergunta: *"A análise técnica está aprovada? Posso registrar as decisões e mover o card para **Todo**?"*
+- Opções: `["(Recommended) Sim, aprovar", "Editar..."]`  
+**Usuário (Seleção/Texto)**: `"Editar... incluir alternativa usando WebSockets"`  
+**Agente (Retorno à Etapa 1)**: Não altera o Linear (Zero Mutação). Complementa a análise técnica incluindo trade-offs de WebSockets e reapresenta o estudo no chat.  
 **Agente (Etapa 2 - Novo Consent Gate)**: Invoca novamente a tool de pergunta interativa.  
 **Usuário**: `"(Recommended) Sim, aprovar"`  
-**Agente (Etapa 3 & 4)**: Executa `update-issue FAL-24 --state "In Progress" --comment "..."`, cria a branch, implementa código e testes, abre o PR #5 no GitHub e transiciona para `In Review`:
+**Agente (Etapa 3)**: Executa `update-issue FAL-24 --state "Todo" --comment "..."` e confirma a transição.
+
+### Example 3: Ciclo Autônomo de Desenvolvimento com `/fk-develop` (Sem Consent Gate)
+**Usuário**: `"/fk-develop FAL-24"`  
+**Agente**:
+1. Lê requisitos, critérios e comentários de FAL-24;
+2. Transiciona imediatamente FAL-24 para **`In Progress`** via CLI com comentário informando a branch `feat/FAL-24-biometric-auth`;
+3. Cria a branch Gitflow e implementa o código e os testes sem solicitar confirmação intermediária;
+4. Executa os testes unitários com sucesso, cria commit semântico e abre o Pull Request #5 no GitHub (`gh pr create`);
+5. Transiciona obrigatoriamente FAL-24 para **`In Review`** no Linear com o link do PR e sumário técnico:
 ```bash
 python skills/linear-workflow/scripts/linear_api.py update-issue FAL-24 --state "In Review" --comment "🤖 **AI Agent Update**: PR #5 aberto no GitHub..."
 ```
 
-### Example 3: Correções de Review com `/fk-fix` (Sem Consent Gate)
+### Example 4: Correções de Review com `/fk-fix` (Sem Consent Gate)
 **Usuário**: `"/fk-fix FAL-24 ajustar validação de email nulo"`  
 **Agente**:
 1. Localiza o PR #8 da branch `feat/FAL-24-auth` e lê comentários gerais, reviews e comentários inline;
