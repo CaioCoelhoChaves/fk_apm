@@ -81,7 +81,7 @@ A standardized workflow for AI coding agents to integrate Linear issue managemen
 
 | Canonical Trigger | Slash-Free Variant | Target State Transition | Executado Por | Scope & Purpose |
 | :--- | :--- | :--- | :--- | :--- |
-| **`/fk-new-issue`** | `fk-new-issue` | `Backlog` ou `Todo` | **Agente** (com Consent Gate) | Planejamento, decomposição e criação atômica de novos cards no Linear. |
+| **`/fk-new-issue`** | `fk-new-issue` | `Backlog` (padrão; `Todo` só em exceção explícita) | **Agente** (com Consent Gate) | Planejamento, decomposição e criação atômica de novos cards no Linear. |
 | **`/fk-technical-analysis`** | `fk-technical-analysis` | `Technical Analysis` ➔ `Todo` | **Agente** (com Consent Gate) | Investigação arquitetural, spikes técnicos, desenho de solução e avanço para `Todo` ao concluir. |
 | **`/fk-develop`** | `fk-develop` | `Todo` ➔ `In Progress` ➔ `In Review` | **Agente** (sem Consent Gate, autônomo) | Início imediato do desenvolvimento (`In Progress`), criação de branch Gitflow, implementação autônoma, testes e avanço para `In Review` ao abrir o PR. |
 | **`/fk-fix`** | `fk-fix` | `In Review` ➔ `In Progress` ➔ `In Review` | **Agente** (sem Consent Gate) | Aplica correções do review de um PR aberto (lê reviews, inline comments e texto extra), comita na branch, comenta no PR e devolve o card para `In Review`. |
@@ -152,7 +152,7 @@ Gatilhos: `/fk-new-issue`, `fk-new-issue`, *"vamos planejar tarefas"*, *"crie os
    - Apresenta a tabela proposta sem chamar `create-issue`.
 2. **Etapa 2 - Consent Gate Interativo**:
    - Aciona a ferramenta interativa de perguntas do harness (ex: `ask_question` / `AskUserQuestion`) ou fallback textual com as opções `(Recommended) Sim, aprovar` e `Editar...`:
-     - Pergunta: *"O escopo e a divisão dos cards estão alinhados? Posso criá-los no Linear sob o status [Backlog/Todo]?"*
+     - Pergunta: *"O escopo e a divisão dos cards estão alinhados? Posso criá-los no Linear sob o status Backlog (padrão)?"*
    - Se o usuário escolher `Editar...`: coleta as correções em texto livre, retorna à Etapa 1 para atualizar a decomposição e reapresenta o Consent Gate.
 3. **Etapa 3 - Execução Atômica**:
    - Somente após `Sim, aprovar`, cria os cards no Linear via CLI/MCP.
@@ -267,7 +267,7 @@ Gatilhos: `/fk-fix`, `fk-fix`, *"aplicar correções do review"*, *"resolver fee
 - `[FAL-30] feat(auth): implementar autenticação biométrica com LocalAuthentication (Label: Front)`
 - `[FAL-31] feat(auth): implementar fluxo de recuperação de senha por email (Label: Front)`  
 **Agente (Etapa 2 - Consent Gate Interativo)**: Invoca `ask_question`:
-- Pergunta: *"O escopo e a divisão dos 2 cards estão aprovados para criação no Linear sob o status Todo?"*
+- Pergunta: *"O escopo e a divisão dos 2 cards estão aprovados para criação no Linear sob o status Backlog (padrão)?"*
 - Opções: `["(Recommended) Sim, aprovar", "Editar..."]`  
 **Usuário (Seleção)**: `"(Recommended) Sim, aprovar"`  
 **Agente (Etapa 3)**: Cria atomicamente os cards no Linear e retorna links e IDs confirmados.

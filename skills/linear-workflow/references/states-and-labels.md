@@ -14,7 +14,7 @@ stateDiagram-v2
     Backlog --> Technical_Analysis: Architecture / Investigation
     Technical_Analysis --> Todo: Refined / Actionable (Agent move)
     Todo --> In_Progress: Active Coding (Agent move)
-    Backlog --> Todo: Direct Grooming without Analysis
+    Backlog --> Todo: Exception only (trivial or fully-planned card)
     In_Progress --> In_Review: PR Opened / Tests Passed (Agent move)
     In_Review --> In_Progress: Feedback / Request Corrections (Developer or Agent via /fk-fix)
     In_Review --> Done: Merged & Validated (Developer manual move)
@@ -27,7 +27,7 @@ stateDiagram-v2
 
 | State | Role & Description | When to Transition Here | Executado Por |
 | :--- | :--- | :--- | :--- |
-| **`Backlog`** | Unscheduled backlog items | When breaking down broad plans or brainstorming future features during planning sessions. | Desenvolvedor / Agente (`/fk-new-issue`) |
+| **`Backlog`** | Unscheduled backlog items | **Default initial state** for every new card created via `/fk-new-issue`; cards go through `Technical Analysis` before `Todo`. | Desenvolvedor / Agente (`/fk-new-issue`) |
 | **`Technical Analysis`** | Architecture design, spikes, research | When the agent is tasked with designing architecture, performing deep codebase analysis, or exploring technical alternatives before coding. | Agente (`/fk-technical-analysis`) |
 | **`Todo`** | Actionable tasks ready for development | When a card has been refined with clear acceptance criteria and is ready to be picked up. | **Agente** (ao fechar Análise Técnica com Consent Gate) |
 | **`In Progress`** | Active implementation | **As soon as coding begins** for a planned or newly created task, or when returned from review for corrections. | **Agente** (`/fk-develop`, `/fk-fix`) ou Desenvolvedor (para correções) |
