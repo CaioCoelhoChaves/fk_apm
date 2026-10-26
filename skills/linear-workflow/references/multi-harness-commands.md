@@ -105,8 +105,8 @@ No matter which syntax the user inputs:
 ### Behavioral Guarantee & Zero Mutation
 Regardless of whether a command was triggered via a native slash command (`/fk-new-issue`, `/fk-technical-analysis`) or a plain prompt (`fk-new-issue`, `fk-technical-analysis` or natural language):
 - **Zero Mutation**: Linear state updates (`update-issue`), comment creation, card creation (`create-issue`), and branch checkout are strictly forbidden prior to explicit developer confirmation in Stage 2.
-- **Stage 1 (Presentation & Reading)**: Query card/project, present implementation/architecture plan structured across the 5 mandatory sections (Diagnosis, Architecture, File Checklist, Test Strategy, Gitflow Plan).
-- **Stage 2 (Interactive Consent Gate)**: Invoke the native question tool of the active harness presenting structured choices:
+- **Stage 1 (Presentation, Reading & Pre-Render Gate)**: Query card/project and render the full proposal visibly in the chat message before calling any question tool — either the complete task table (with title, description, acceptance criteria, status, and label `Front`, `Back`, or `Feature`/no tag for tooling/skills repos) in `/fk-new-issue` or the complete 5-section technical specification in `/fk-technical-analysis`. Calling `ask_question` / `AskUserQuestion` without first rendering the full proposal in chat is strictly prohibited.
+- **Stage 2 (Interactive Consent Gate with Embedded Summary)**: Invoke the native question tool of the active harness, embedding a concise summary of the proposal inside the `question` string itself and presenting structured choices:
   - `(Recommended) Sim, aprovar`: Proceed immediately to Stage 3.
   - `Editar...`: Free-form text input allowing the developer to request changes. The agent **loops back to Stage 1**, adjusts the plan/analysis, and triggers a new Consent Gate.
 - **Stage 3 (Atomic Execution)**: On affirmative answer, update Linear state atomically, persisting the complete technical specification (all 5 sections) in the consolidated comment and optionally updating the card description via `--description` / `--description-file`, then advance the card to `Todo`.

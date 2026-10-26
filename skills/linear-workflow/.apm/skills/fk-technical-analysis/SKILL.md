@@ -28,14 +28,18 @@ Este comando orquestra o rito de análise técnica de uma tarefa no Linear, apli
   5. **Plano Gitflow**: Nome da branch (`<type>/<issue-key>-<slug>`), padrão de commit (Conventional Commits 1.0.0) e estado alvo `Todo`.
 - ⚠️ **Zero Mutação**: **NÃO altere o status do card e NÃO comente no Linear nesta etapa.**
 
+> [!IMPORTANT]
+> **Proibição de Consent Gate Cego (Renderização Prévia Obrigatória)**:
+> É **estritamente proibido** invocar `ask_question` / `AskUserQuestion` sem antes emitir integralmente no texto visível do chat a especificação técnica completa com todas as 5 seções obrigatórias. O desenvolvedor jamais deve receber a pergunta de aprovação sem que toda a análise técnica esteja renderizada de forma visível no chat.
+
 ### 2. Etapa 2: Consent Gate Interativo (Confirmação Explícita)
-- Apresente a pergunta de consentimento invocando a **ferramenta nativa de perguntas** do harness:
+- Certifique-se de que as 5 seções da especificação técnica já foram emitidas no corpo textual da resposta e apresente a pergunta de consentimento invocando a **ferramenta nativa de perguntas** do harness, incluindo obrigatoriamente um **resumo conciso da análise** no próprio texto de `question` como salvaguarda:
   - **Google Antigravity**: chame `ask_question`:
     ```json
     {
       "questions": [
         {
-          "question": "A análise técnica está aprovada? Posso registrar a especificação técnica no Linear e mover o card para Todo (pronto para desenvolvimento)?",
+          "question": "Resumo da análise (<issue-key>): <resumo-solucao> | Arquivos: <N> | Branch: <branch>. A análise técnica está aprovada? Posso registrar a especificação técnica no Linear e mover o card para Todo (pronto para desenvolvimento)?",
           "options": [
             "(Recommended) Sim, aprovar",
             "Editar..."
@@ -45,9 +49,9 @@ Este comando orquestra o rito de análise técnica de uma tarefa no Linear, apli
       ]
     }
     ```
-  - **Claude Code**: chame `AskUserQuestion` com opções `["Sim, aprovar", "Editar..."]`.
-  - **OpenCode v2**: chame a ferramenta nativa de pergunta com opções `["Sim, aprovar", "Editar..."]`.
-  - **Fallback Textual (Cursor, Copilot, Gemini CLI ou sem tool nativa)**: apresente em bloco Markdown destacado com opções numeradas (`1. (Recomendado) Sim, aprovar` e `2. Editar...`).
+  - **Claude Code**: chame `AskUserQuestion` com o resumo conciso na pergunta e opções `["Sim, aprovar", "Editar..."]`.
+  - **OpenCode v2**: chame a ferramenta nativa de pergunta com o resumo conciso na pergunta e opções `["Sim, aprovar", "Editar..."]`.
+  - **Fallback Textual (Cursor, Copilot, Gemini CLI ou sem tool nativa)**: apresente em bloco Markdown destacado com o resumo conciso e opções numeradas (`1. (Recomendado) Sim, aprovar` e `2. Editar...`).
 - **Tratamento das Opções**:
   - `(Recommended) Sim, aprovar`: avança imediatamente para a **Etapa 3 (Execução Atômica)**.
   - `Editar...`: permite ao desenvolvedor indicar alterações arquiteturais, trade-offs ou arquivos em texto livre. O agente **retorna à Etapa 1**, refina a análise no chat e apresenta novo Consent Gate. **Zero mutação é estritamente mantida**.

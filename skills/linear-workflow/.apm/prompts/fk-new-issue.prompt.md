@@ -17,10 +17,10 @@ Contexto fornecido: $ARGUMENTS
 ## Diretrizes de Execução
 1. **Etapa 1 - Leitura & Apresentação (Zero Mutação)**:
    - Localize o projeto pai no Linear usando `find-project` ou MCP `linear_list_projects`.
-   - Analise os requisitos e decomponha-os em tarefas atômicas no chat (título, descrição estruturada, critérios de aceitação e label `Front` ou `Back`).
-   - Apresente a tabela proposta no chat. **Não crie nenhum card no Linear nesta etapa.**
+   - Analise os requisitos e decomponha-os em tarefas atômicas no chat (título, descrição estruturada, critérios de aceitação, status inicial `Backlog` por padrão e label: `Front`, `Back`, ou `Feature`/sem tag para repositórios de tooling, skills e infraestrutura — nunca force `Back` apenas por scripts auxiliares em Python/Shell).
+   - **Renderização Prévia Obrigatória**: Emita integralmente no texto visível do chat a tabela/lista detalhada com todos os cards propostos antes de acionar a pergunta da Etapa 2. **Não crie nenhum card no Linear nesta etapa.**
 2. **Etapa 2 - Consent Gate Interativo (Confirmação Explícita)**:
-   - Apresente a confirmação via tool nativa de perguntas do harness (`ask_question`, `AskUserQuestion`, etc.) ou fallback textual com opções `(Recommended) Sim, aprovar` e `Editar...`.
+   - **Proibido Consent Gate Cego**: Só invoque `ask_question` / `AskUserQuestion` após renderizar toda a proposta no texto do chat, e inclua um resumo conciso dos cards (`Resumo do plano (N cards em Backlog): 1) <título> [<label>]...`) dentro do próprio campo `question` da ferramenta interativa ou fallback textual com opções `(Recommended) Sim, aprovar` e `Editar...`.
    - Se `Editar...`: receba ajustes de escopo em texto livre, retorne à Etapa 1 para atualizar a decomposição e reapresente o Consent Gate. Zero mutação no Linear até aprovação explícita.
    - Aguarde `Sim, aprovar` antes de qualquer chamada de mutação.
 3. **Etapa 3 - Execução Atômica**:

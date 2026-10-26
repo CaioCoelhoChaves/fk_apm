@@ -4,7 +4,7 @@
     {
       "id": 1,
       "prompt": "Vamos planejar o projeto Rent Easy: precisamos criar as tarefas de autenticação com biometria, listagem de imóveis e checkout de aluguel.",
-      "expected_output": "Identifica o projeto Rent Easy no Linear, categoriza o subprojeto (Front ou Back de acordo com a stack do repositório), cria os cards no status Backlog (padrão; Todo apenas como exceção explícita para cards triviais ou com planejamento técnico 100% resolvido) com descrições estruturadas e labels corretas, e reporta cada card criado (ID e título) ao usuário.",
+      "expected_output": "Identifica o projeto Rent Easy no Linear, classifica a label adequadamente (Front, Back, ou Feature/sem tag em projetos de tooling/skills), renderiza obrigatoriamente toda a tabela de decomposição de tarefas no chat ANTES de acionar o Consent Gate interativo (incluindo resumo conciso na própria pergunta de ask_question), e somente após aprovação cria os cards no status Backlog (padrão; Todo apenas como exceção explícita) e reporta cada card criado ao usuário.",
       "files": []
     },
     {
