@@ -16,8 +16,9 @@ Alvo / Issue: $ARGUMENTS
 
 ## Diretrizes de Execução
 1. **Leitura & Identificação da Issue**:
-   - Consulte o card via `get-issue $ARGUMENTS` ou MCP `linear_issue_search`, lendo requisitos, histórico e critérios de aceitação.
-   - Formate o nome da branch Gitflow no padrão `<type>/<key>-<slug>`.
+   - Consulte o card via `get-issue $ARGUMENTS` ou MCP `linear_issue_search`.
+   - **Consuma prioritariamente a especificação técnica completa** persistida no histórico de comentários (`🤖 **AI Agent Update**: Análise Técnica Concluída`) ou descrição do card, extraindo o diagnóstico, arquitetura, checklist de arquivos impactados, estratégia de testes e nome da branch planejado.
+   - Adote a branch planejada ou formate no padrão `<type>/<key>-<slug>`.
 2. **Transição Imediata para In Progress (Sem Confirmação)**:
    - Transicione imediatamente o card para `In Progress` com comentário inicial (`🤖 **AI Agent Update**: Início autônomo do desenvolvimento na branch <branch-name>...`).
 3. **Criação da Branch & Codificação Autônoma**:

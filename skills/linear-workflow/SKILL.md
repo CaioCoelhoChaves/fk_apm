@@ -100,7 +100,7 @@ The agent dynamically uses whatever tool is available in the current environment
 | **Get Issue** | `linear_issue_search` | `python <skill-dir>/scripts/linear_api.py get-issue "<key-or-id>"` |
 | **Search Issue** | `linear_issue_search` | `python <skill-dir>/scripts/linear_api.py search-issues "<term>" [--project-id "<id>"]` |
 | **Create Card** | `linear_create_issue` | `python <skill-dir>/scripts/linear_api.py create-issue --team-id "<tid>" --project-id "<pid>" --title "<title>" --description "<desc>" --state "<state>" --label "Front"` |
-| **Atomic Update** | `linear_update_issue` + `linear_create_comment` | `python <skill-dir>/scripts/linear_api.py update-issue "<id>" [--team-id "<tid>"] [--state "<state>"] [--comment "<summary>"]` |
+| **Atomic Update** | `linear_update_issue` + `linear_create_comment` | `python <skill-dir>/scripts/linear_api.py update-issue "<id>" [--team-id "<tid>"] [--state "<state>"] [--description "<desc>"] [--description-file "<path>"] [--comment "<summary>"]` |
 | **Add Comment** | `linear_create_comment` | `python <skill-dir>/scripts/linear_api.py update-issue "<id>" --comment "<summary>"` *(idempotente)* |
 
 ---
@@ -168,16 +168,25 @@ Gatilhos: `/fk-technical-analysis`, `fk-technical-analysis`, *"vamos analisar te
    - Consulta o card via `get-issue` ou `search-issues`.
    - Se o card estava em `Backlog`, o início da análise é apresentado no chat.
    - Realiza a análise arquitetural, opções de implementação, trade-offs e impactos no workspace.
+   - Apresenta no chat a especificação técnica estruturada sob **5 seções obrigatórias**:
+     1. **Diagnóstico e Contexto**: Causa-raiz ou motivação técnica refinada.
+     2. **Arquitetura da Solução & Desenho Técnico**: Decisões de design, contratos, trade-offs e dependências.
+     3. **Checklist de Arquivos Impactados**: Caminhos explícitos de arquivos a criar, modificar ou remover.
+     4. **Estratégia de Testes**: Validações automáticas, comandos e critérios técnicos.
+     5. **Plano Gitflow**: Nome da branch (`<type>/<key>-<slug>`), Conventional Commits 1.0.0 e estado `Todo`.
    - **Zero mutação prematura no card**: Nenhum comentário preliminar ou mudança de estado é postada enquanto houver dúvidas em aberto.
 2. **Etapa 2 - Consent Gate Interativo**:
    - Aciona a ferramenta interativa de perguntas do harness (ex: `ask_question` / `AskUserQuestion`) ou fallback textual com as opções `(Recommended) Sim, aprovar` e `Editar...`:
      - Pergunta: *"A análise técnica está aprovada? Posso registrar as decisões no Linear e mover o card para **Todo** (pronto para desenvolvimento)?"*
    - Se o usuário escolher `Editar...`: recebe os direcionamentos técnicos adicionais, volta à Etapa 1 para refinar a análise e reapresenta o Consent Gate.
-3. **Etapa 3 - Execução Atômica**:
-   - Somente após `Sim, aprovar`, executa atomicamente:
+3. **Etapa 3 - Execução Atômica & Persistência Integral da Especificação Técnica**:
+   - Somente após `Sim, aprovar`, executa atomicamente a transição de estado para `Todo` persistindo a **especificação técnica completa nas 5 seções** no comentário consolidado:
      ```bash
-     python skills/linear-workflow/scripts/linear_api.py update-issue "<id>" --state "Todo" --comment "🤖 **AI Agent Update**: Análise Técnica Consolidada..."
+     python skills/linear-workflow/scripts/linear_api.py update-issue "<id>" \
+       --state "Todo" \
+       --comment "🤖 **AI Agent Update**: Análise Técnica Concluída\n\n### 1. Diagnóstico e Contexto\n...\n### 2. Arquitetura da Solução & Desenho Técnico\n...\n### 3. Checklist de Arquivos Impactados\n...\n### 4. Estratégia de Testes\n...\n### 5. Plano Gitflow\n..."
      ```
+   - Opcionalmente, caso o escopo técnico tenha sido significativamente refinado, atualiza também a descrição do card via `--description` ou `--description-file`.
    - O card avança formalmente para **`Todo`** e não permanece em `Technical Analysis`.
 
 ---
@@ -193,8 +202,9 @@ Gatilhos: `/fk-develop`, `fk-develop`, *"vamos desenvolver a tarefa X"*, *"quero
 > **Diretriz de Decisão**: A LLM **só deve perguntar ao desenvolvedor em casos excepcionais de ambiguidade real e bloqueante**. Comportamento padrão: decidir tecnicamente, registrar a premissa assumida no comentário do card/PR e seguir em frente.
 
 1. **Leitura do Card & Critérios**:
-   - Lê o card (`get-issue <id>`), requisitos, histórico de comentários e critérios de aceitação.
-   - Formata a branch Gitflow no padrão Linear `<type>/<key>-<slug>`.
+   - Lê o card (`get-issue <id>`).
+   - **Consome prioritariamente a especificação técnica completa** persistida no comentário de Análise Técnica (`🤖 **AI Agent Update**: Análise Técnica Concluída`) ou na descrição do card, extraindo diretamente dela o diagnóstico, as decisões arquiteturais, o checklist de arquivos impactados, a estratégia de testes e o nome planejado da branch Gitflow.
+   - Formata a branch Gitflow no padrão Linear `<type>/<key>-<slug>` conforme especificado na análise técnica.
 2. **Transição Imediata para `In Progress` no Linear**:
    - Move imediatamente o card para `In Progress` com comentário inicial informando a branch e premissas assumidas:
      ```bash

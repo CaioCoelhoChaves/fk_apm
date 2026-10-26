@@ -8,11 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Persistir especificacao tecnica integral no Linear durante technical analysis e adicionar flags --description e --description-file no helper CLI (FAL-34)
 - Integrar perguntas interativas aos Consent Gates de /fk-new-issue, /fk-technical-analysis e /fk-develop com suporte a loopback ("Editar...") e fallback multi-harness (FAL-27)
 - Adicionar comando /fk-fix para aplicação autônoma de feedback de code review no PR e Linear (FAL-28)
 - Adicionar skill semver-changelog para gerenciamento de CHANGELOG e SemVer 2.0.0 (FAL-23)
 
 ### Changed
+- Priorizar leitura da especificacao tecnica completa persistida no /fk-develop garantindo transferencia de contexto sem degradacao (FAL-34)
 - Tornar /fk-develop autônomo sem Consent Gate, iniciando imediatamente em In Progress e avançando para In Review ao abrir o PR (FAL-29)
 - Padronizar criação de cards em Backlog por padrão no /fk-new-issue e linear-workflow, permitindo Todo apenas como exceção explícita (FAL-33)
 

@@ -105,11 +105,12 @@ No matter which syntax the user inputs:
 ### Behavioral Guarantee & Zero Mutation
 Regardless of whether a command was triggered via a native slash command (`/fk-new-issue`, `/fk-technical-analysis`) or a plain prompt (`fk-new-issue`, `fk-technical-analysis` or natural language):
 - **Zero Mutation**: Linear state updates (`update-issue`), comment creation, card creation (`create-issue`), and branch checkout are strictly forbidden prior to explicit developer confirmation in Stage 2.
-- **Stage 1 (Presentation & Reading)**: Query card/project, present implementation/architecture plan, list affected files and proposed branch.
+- **Stage 1 (Presentation & Reading)**: Query card/project, present implementation/architecture plan structured across the 5 mandatory sections (Diagnosis, Architecture, File Checklist, Test Strategy, Gitflow Plan).
 - **Stage 2 (Interactive Consent Gate)**: Invoke the native question tool of the active harness presenting structured choices:
   - `(Recommended) Sim, aprovar`: Proceed immediately to Stage 3.
   - `Editar...`: Free-form text input allowing the developer to request changes. The agent **loops back to Stage 1**, adjusts the plan/analysis, and triggers a new Consent Gate.
-- **Stage 3 (Atomic Execution)**: On affirmative answer, update Linear state atomically and proceed.
+- **Stage 3 (Atomic Execution)**: On affirmative answer, update Linear state atomically, persisting the complete technical specification (all 5 sections) in the consolidated comment and optionally updating the card description via `--description` / `--description-file`, then advance the card to `Todo`.
+- **Autonomous Execution in /fk-develop**: Consumes the full technical specification persisted from Stage 3 directly from the Linear card/comments, ensuring zero context degradation across clean agent sessions.
 
 ### Harness-to-Tool Mapping Matrix
 

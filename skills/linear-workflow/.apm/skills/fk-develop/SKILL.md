@@ -25,8 +25,16 @@ Este comando orquestra o ciclo completo de desenvolvimento de uma tarefa no Line
   ```bash
   python .agents/skills/linear-workflow/scripts/linear_api.py get-issue "<issue-key>"
   ```
-- **Extração de Requisitos**: Leia descrição, critérios de aceitação, comentários e histórico técnico.
-- **Planejamento da Branch**: Formate o nome da branch Gitflow no padrão Linear `<type>/<issue-key>-<slug>` (ex: `feat/FAL-25-antigravity-slash-commands`).
+- **Consumo Prioritário da Especificação Técnica**:
+  - Analise prioritariamente a especificação técnica completa registrada no histórico de comentários (comentário consolidado `🤖 **AI Agent Update**: Análise Técnica Concluída`) ou na descrição do card.
+  - Extraia diretamente da especificação persistida:
+    1. **Diagnóstico & Contexto**: causa-raiz ou motivação técnica.
+    2. **Arquitetura da Solução**: decisões de desenho técnico, trade-offs e dependências.
+    3. **Checklist de Arquivos Impactados**: arquivos a criar, modificar ou remover.
+    4. **Estratégia de Testes**: testes unitários, validações automáticas e comandos de execução.
+    5. **Plano Gitflow**: nome da branch planejado no padrão `<type>/<issue-key>-<slug>`.
+  - Se o card não contiver análise prévia consolidada, utilize os requisitos da descrição e critérios de aceitação.
+- **Planejamento da Branch**: Adote o nome da branch indicado na especificação técnica ou formate no padrão Linear `<type>/<issue-key>-<slug>` (ex: `feat/FAL-34-persistir-especificacao-tecnica-linear`).
 
 ### 2. Transição Imediata para In Progress (Sem Confirmação)
 - Transicione o card no Linear para **`In Progress`** com comentário inicial informando a branch e premissas assumidas (se houver):
