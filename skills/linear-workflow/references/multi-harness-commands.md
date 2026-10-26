@@ -1,83 +1,84 @@
-# Multi-Harness Lifecycle Commands Architecture & Reference
+# Multi-Harness Command Architecture & Routing Reference
 
 This reference documents how Linear lifecycle commands (`fk-new-issue`, `fk-technical-analysis`, `fk-develop`, `fk-fix`) operate across multiple AI coding harnesses (Google Antigravity, Claude Code, Cursor, and GitHub Copilot) through APM primitives.
 
 ---
 
-## 1. Architectural Challenge Across Harnesses
+## 1. Problem Statement: The Leading Slash Dilemma
 
-Different AI coding harnesses implement command discovery and user inputs with distinct paradigms:
+In modern AI coding assistants, user interfaces handle leading slashes (`/`) inconsistently:
 
-| Harness | Command Discovery Mechanism | Slash (`/`) Interception Behavior | Native Primitives Path |
-| :--- | :--- | :--- | :--- |
-| **Google Antigravity** (`agy` CLI / IDE) | Native slash commands via sub-skills (`.agents/skills/`) & rules (`.agents/rules/`) | Supports typeahead `/` commands via promoted sub-skills and progressive disclosure rules | Sub-skills: `.agents/skills/`<br>Rules: `.agents/rules/` |
-| **Claude Code** | Custom slash commands | Native support for project commands via Markdown files | Commands: `.claude/commands/`<br>Rules: `.claude/rules/` |
-| **Cursor** | Custom slash commands & Agent rules | Native commands & rules via MDC | Commands: `.cursor/commands/`<br>Rules: `.cursor/rules/` |
-| **GitHub Copilot** | Prompt files & Instruction sets | Discovers prompt files in project | Prompts: `.github/prompts/`<br>Instructions: `.github/instructions/` |
+1. **Google Antigravity (`agy`)**:
+   - Built-in slash commands (e.g. `/plan`, `/goal`, `/schedule`) are handled by the CLI client.
+   - User-defined slash commands are mapped directly from `.agents/skills/<name>/SKILL.md`.
+2. **Claude Code**:
+   - Intercepts leading slash commands via `.claude/commands/<name>.md`.
+3. **Cursor**:
+   - Uses slash commands in Chat mapped to `.cursor/commands/<name>.md` or prompt rules in `.cursor/rules/`.
+4. **GitHub Copilot**:
+   - Supports slash commands via prompt templates in `.github/prompts/<name>.prompt.md`.
+5. **Terminal / CLI Harnesses**:
+   - Users typing `/fk-develop` or `/fk-fix` in CLI harnesses might collide with CLI-level parsing.
 
-Without harness-aware distribution:
-- Antigravity would miss `.claude/commands/` entirely and rely solely on LLM guessing from skill descriptions.
-- Users typing `/fk-develop` or `/fk-fix` in CLI harnesses might collide with CLI-level parsing.
-- Syntactic friction (e.g., typing `fk-fix` without a slash) could prevent skill triggering.
+### Core Principle
+**Developers must be able to use whichever syntax feels natural, and the agent must honor the lifecycle flow seamlessly with zero friction.**
+
+```
++-----------------------------------------------------------+
+|                        User Input                         |
+|   "/fk-develop FAL-25"  OR  "fk-develop FAL-25"           |
+|   "/fk-fix FAL-25"      OR  "fk-fix FAL-25"               |
++-----------------------------+-----------------------------+
+                              |
+                              v
++-----------------------------------------------------------+
+|          Multi-Harness Interception & Tolerance           |
+|                                                           |
+|  [Antigravity]       [Claude Code]       [Cursor/Copilot] |
+|  .agents/skills/     .claude/commands/   .cursor/rules/   |
+|  .agents/rules/      .claude/rules/      .github/prompts/ |
++-----------------------------+-----------------------------+
+                              |
+                              v
++-----------------------------------------------------------+
+|             Canonical linear-workflow Skill               |
+|      (State machine, Consent Gate & Autonomous flow)      |
++-----------------------------------------------------------+
+```
 
 ---
 
-## 2. Multi-Harness Solution via APM Primitives
+## 2. APM Primitives Mapping
 
-`linear-workflow` uses APM dual primitives to guarantee seamless execution regardless of the user's active harness:
+To guarantee consistent behavior without vendor lock-in or duplicate documentation, the `linear-workflow` package organizes harness assets using APM primitives:
 
-```mermaid
-flowchart TD
-    subgraph Package ["Package: skills/linear-workflow"]
-        P1[".apm/prompts/fk-*.prompt.md"]
-        SK1[".apm/skills/fk-*/SKILL.md"]
-        I1[".apm/instructions/linear-lifecycle-commands.instructions.md"]
-        S1["SKILL.md (Parent Orchestrator)"]
-    end
-
-    subgraph APM ["APM Engine (install / compile)"]
-        CI["CommandIntegrator"]
-        SI["SkillIntegrator (Sub-Skill Promotion)"]
-        II["InstructionIntegrator"]
-        AC["AgentsCompiler"]
-    end
-
-    subgraph Targets ["Harness Deployments"]
-        Antigravity[".agents/rules/ + AGENTS.md (Antigravity)"]
-        Claude[".claude/commands/ + .claude/rules/ (Claude Code)"]
-        Cursor[".cursor/commands/ + .cursor/rules/ (Cursor)"]
-        Copilot[".github/prompts/ + .github/instructions/ (Copilot)"]
-    end
-
-    P1 --> CI
-    SK1 --> SI
-    I1 --> II
-    I1 --> AC
-    CI --> Claude
-    CI --> Cursor
-    CI --> Copilot
-    SI --> Antigravity
-    II --> Antigravity
-    II --> Claude
-    II --> Cursor
-    II --> Copilot
-    AC --> Antigravity
+```
+skills/linear-workflow/
+├── .apm/
+│   ├── instructions/
+│   │   └── linear-lifecycle-commands.instructions.md  # Global rule interceptor
+│   ├── prompts/
+│   │   ├── fk-new-issue.prompt.md                    # Slash prompt template
+│   │   ├── fk-technical-analysis.prompt.md           # Slash prompt template
+│   │   ├── fk-develop.prompt.md                      # Slash prompt template
+│   │   └── fk-fix.prompt.md                          # Slash prompt template
+│   └── skills/
+│       ├── fk-new-issue/SKILL.md                     # Antigravity promoted skill
+│       ├── fk-technical-analysis/SKILL.md            # Antigravity promoted skill
+│       ├── fk-develop/SKILL.md                       # Antigravity promoted skill
+│       └── fk-fix/SKILL.md                           # Antigravity promoted skill
+├── SKILL.md                                          # Core workflow engine
+└── scripts/
+    └── linear_api.py                                 # Zero-dependency API CLI
 ```
 
-### 1. Primitives: `.apm/prompts/*.prompt.md`
-- Deployed by APM `CommandIntegrator` / `PromptIntegrator` to:
-  - Claude Code: `.claude/commands/fk-new-issue.md`, `fk-technical-analysis.md`, `fk-develop.md`, `fk-fix.md`
-  - Cursor: `.cursor/commands/fk-new-issue.md`, `fk-technical-analysis.md`, `fk-develop.md`, `fk-fix.md`
-  - Copilot: `.github/prompts/fk-new-issue.prompt.md`, `fk-technical-analysis.prompt.md`, `fk-develop.prompt.md`, `fk-fix.prompt.md`
-- Preserves metadata: `description`, `argument-hint`, `allowed-tools`.
-
-### 2. Primitives: `.apm/instructions/*.instructions.md`
-- Deployed by APM `InstructionIntegrator` to:
-  - Antigravity: `.agents/rules/linear-lifecycle-commands.md` (unconditional rule)
-  - Claude Code: `.claude/rules/linear-lifecycle-commands.md` (unconditional rule)
-  - Cursor: `.cursor/rules/linear-lifecycle-commands.mdc`
-  - GitHub Copilot: `.github/instructions/linear-lifecycle-commands.instructions.md`
-- Injected by APM `AgentsCompiler` into `AGENTS.md` and `CLAUDE.md`.
+### Deployment Targets:
+- **Google Antigravity**:
+  - `skills/` promoted to `.agents/skills/fk-*/SKILL.md` (native slash commands).
+  - `instructions/` compiled to `.agents/rules/` and `AGENTS.md`.
+- **Claude Code**: `.claude/commands/` and rules in `.claude/rules/`.
+- **Cursor**: `.cursor/commands/` and rules in `.cursor/rules/`.
+- **Copilot**: `.github/prompts/` and instructions in `.github/instructions/`.
 
 ---
 
@@ -94,15 +95,15 @@ Agents must recognize all syntax permutations interchangeably:
 
 No matter which syntax the user inputs:
 1. The agent intercepts the trigger immediately.
-2. For planning, analysis, and initial development (`/fk-new-issue`, `/fk-technical-analysis`, `/fk-develop`), it passes through the mandatory **Consent Gate**.
-3. For review fixes (`/fk-fix`), it executes autônomously without Consent Gate, ensuring rapid iteration on open PRs.
+2. For planning and analysis (`/fk-new-issue`, `/fk-technical-analysis`), it passes through the mandatory **Consent Gate**.
+3. For development (`/fk-develop`) and review fixes (`/fk-fix`), it executes autonomously without Consent Gate, moving immediately to `In Progress` and advancing to `In Review` upon PR creation.
 
 ---
 
 ## 4. Multi-Harness Interactive Consent Gate Protocol
 
 ### Behavioral Guarantee & Zero Mutation
-Regardless of whether a command was triggered via a native slash command (`/fk-develop FAL-25`) or a plain prompt (`fk-develop FAL-25` or natural language):
+Regardless of whether a command was triggered via a native slash command (`/fk-new-issue`, `/fk-technical-analysis`) or a plain prompt (`fk-new-issue`, `fk-technical-analysis` or natural language):
 - **Zero Mutation**: Linear state updates (`update-issue`), comment creation, card creation (`create-issue`), and branch checkout are strictly forbidden prior to explicit developer confirmation in Stage 2.
 - **Stage 1 (Presentation & Reading)**: Query card/project, present implementation/architecture plan, list affected files and proposed branch.
 - **Stage 2 (Interactive Consent Gate)**: Invoke the native question tool of the active harness presenting structured choices:
@@ -130,17 +131,17 @@ sequenceDiagram
     participant Harness as Harness Tool / Chat
     participant Linear as Linear API / Git
 
-    Agent->>Dev: Etapa 1: Apresenta plano / analise tecnica no Chat
+    Agent->>Dev: Etapa 1: Apresenta proposta / analise tecnica no Chat
     Agent->>Harness: Etapa 2: Invoca tool nativa de perguntas
     Harness-->>Dev: Exibe opcoes: [Sim, aprovar] | [Editar...]
     alt Usuario seleciona Editar...
         Dev->>Agent: Fornece apontamentos / texto de ajuste
         Agent->>Agent: Permanece com Zero Mutacao (sem tocar Linear)
-        Agent->>Dev: Retorna a Etapa 1 com plano revisado
+        Agent->>Dev: Retorna a Etapa 1 com proposta revisada
         Agent->>Harness: Dispara novo Consent Gate interativo
     else Usuario seleciona Sim, aprovar
         Dev->>Agent: Confirmacao afirmativa recebida
-        Agent->>Linear: Etapa 3: Transiciona card + commit / branch Git
+        Agent->>Linear: Etapa 3: Executa criacao / atualizacao atomica
     end
 ```
 
@@ -157,13 +158,9 @@ When the active harness does not expose an interactive question tool:
 
 ---
 
-## 5. Autonomous Fix Command (`/fk-fix`) Exception
-- **Explicit Exception to Consent Gate**: Unlike initial development or planning, code review feedback already represents explicit developer intent.
-- Once invoked (`/fk-fix` or `fk-fix`), the agent executes the entire loop autonomously:
-  1. Gathers comments and reviews from GitHub PR;
-  2. Transitions Linear issue to `In Progress` with initial summary comment;
-  3. Implements corrections on the existing branch and runs tests;
-  4. Pushes commits to update the PR;
-  5. Comments on the GitHub PR detailing resolved items;
-  6. Transitions Linear issue to `In Review` with PR link;
-  7. Leaves `Done` strictly manual for developer completion.
+## 5. Autonomous Commands Exception (`/fk-develop` & `/fk-fix`)
+
+- **Explicit Exception to Consent Gate**: Execution commands operate autonomously without requiring upfront interactive confirmations:
+  - **`/fk-develop`**: Reads issue requirements, transitions the issue to `In Progress` immediately with an initial comment citing the Gitflow branch, creates the branch, implements code and tests autonomously without pause, opens the GitHub PR, and moves the issue to `In Review`. The agent only asks questions in cases of genuine, blocking ambiguity; otherwise it assumes a sound technical premise, records it in the card comment and PR, and proceeds.
+  - **`/fk-fix`**: Automatically parses open PR review feedback and comments, transitions the issue to `In Progress`, applies fixes directly on the PR branch, pushes commits, comments on the PR, and advances back to `In Review`.
+- **Gold Rule**: Transition to `Done` remains strictly manual for developer completion after merging the PR.

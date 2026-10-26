@@ -1,5 +1,5 @@
 ---
-description: Início do desenvolvimento, criação de branch Gitflow e implementação de tarefa Linear com consent gate em 3 etapas
+description: Início autônomo do desenvolvimento, criação de branch Gitflow e implementação de tarefa Linear sem Consent Gate
 argument-hint: "<issue-key>"
 allowed-tools:
   - Read
@@ -8,23 +8,23 @@ allowed-tools:
   - Bash
 ---
 
-# /fk-develop: Ciclo de Desenvolvimento & Implementação no Linear
+# /fk-develop: Ciclo Autônomo de Desenvolvimento & Implementação no Linear
 
-Execute o rito de desenvolvimento para a tarefa Linear indicada seguindo rigorosamente a skill `linear-workflow` e o protocolo de **Consent Gate em 3 etapas**:
+Execute o rito de desenvolvimento para a tarefa Linear indicada de forma **autônoma (sem Consent Gate)**, seguindo a skill `linear-workflow` e Gitflow:
 
 Alvo / Issue: $ARGUMENTS
 
 ## Diretrizes de Execução
-1. **Etapa 1 - Leitura & Apresentação (Zero Mutação)**:
+1. **Leitura & Identificação da Issue**:
    - Consulte o card via `get-issue $ARGUMENTS` ou MCP `linear_issue_search`, lendo requisitos, histórico e critérios de aceitação.
-   - Apresente no chat o plano de implementação, arquivos afetados e a branch de trabalho proposta (`<type>/<key>-<slug>`). **Não altere o Linear nesta etapa.**
-2. **Etapa 2 - Consent Gate Interativo (Confirmação Explícita)**:
-   - Apresente a confirmação via tool nativa de perguntas do harness (`ask_question`, `AskUserQuestion`, etc.) ou fallback textual com opções `(Recommended) Sim, aprovar` e `Editar...`.
-   - Se `Editar...`: receba apontamentos em texto livre, retorne à Etapa 1 para retificar o plano e reapresente o Consent Gate. Zero mutação no Linear até aprovação explícita.
-   - Aguarde `Sim, aprovar` antes de qualquer mutação.
-3. **Etapa 3 - Execução Atômica & Codificação**:
-   - Transicione o card para `In Progress` com comentário inicial (`🤖 **AI Agent Update**: Início do desenvolvimento na branch <branch-name>...`).
-   - Crie a branch Git e execute a codificação e testes.
-4. **Etapa 4 - Finalização & In Review**:
-   - Ao concluir a implementação e testes, abra o Pull Request no GitHub (`gh pr create`).
+   - Formate o nome da branch Gitflow no padrão `<type>/<key>-<slug>`.
+2. **Transição Imediata para In Progress (Sem Confirmação)**:
+   - Transicione imediatamente o card para `In Progress` com comentário inicial (`🤖 **AI Agent Update**: Início autônomo do desenvolvimento na branch <branch-name>...`).
+3. **Criação da Branch & Codificação Autônoma**:
+   - Crie a branch Git e execute a codificação e testes sem pedir confirmação prévia.
+   - **Diretriz de Decisão**: Só faça perguntas ao desenvolvedor se houver dúvida realmente bloqueante. Em caso de detalhes ou trade-offs menores, decida tecnicamente, documente a premissa assumida no comentário/PR e continue.
+4. **Finalização & In Review**:
+   - Ao concluir a implementação e testes locais, abra o Pull Request no GitHub (`gh pr create`).
    - Mova obrigatoriamente o card para `In Review` com comentário linkando o PR.
+5. **Done Proibido para o Agente**:
+   - A transição para `Done` é exclusivamente manual pelo desenvolvedor após o merge do PR. O agente nunca move para `Done`.

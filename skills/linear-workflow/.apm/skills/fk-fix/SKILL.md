@@ -10,7 +10,7 @@ Este comando automatiza o ciclo completo de resolução de apontamentos de code 
 
 > [!IMPORTANT]
 > **Execução Autônoma (SEM Consent Gate)**:
-> Ao contrário de `/fk-new-issue`, `/fk-technical-analysis` e `/fk-develop`, o comando `/fk-fix` roda **sem Consent Gate**. O desenvolvedor apenas invoca o comando e o agente executa atomicamente todo o fluxo até o retorno para **`In Review`**.
+> Ao contrário de `/fk-new-issue` e `/fk-technical-analysis`, os comandos de execução (`/fk-develop` e `/fk-fix`) rodam **sem Consent Gate**. O desenvolvedor apenas invoca o comando e o agente executa atomicamente todo o fluxo até o retorno para **`In Review`**.
 
 ---
 
