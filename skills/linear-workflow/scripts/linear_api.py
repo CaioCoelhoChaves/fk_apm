@@ -516,12 +516,14 @@ def cmd_update_issue(
     team_id: Optional[str] = None,
     state_name: Optional[str] = None,
     comment: Optional[str] = None,
-    force_comment: bool = False
+    force_comment: bool = False,
+    description: Optional[str] = None,
+    description_file: Optional[str] = None
 ):
     """
     Atomic update for Linear issue:
     1. Resolves issue UUID, team, and recent comments.
-    2. Updates state (if requested).
+    2. Updates state and/or description (if requested).
     3. Posts comment with idempotency protection (skips duplicates posted within 10 min).
     """
     # 1. Fetch current issue context
@@ -547,7 +549,21 @@ def cmd_update_issue(
         }
     }
 
-    # 2. Update state if requested
+    # Handle description resolution
+    resolved_description = description
+    if description_file:
+        try:
+            resolved_description = Path(description_file).read_text(encoding="utf-8")
+        except Exception as e:
+            output["description_update"] = {
+                "success": False,
+                "error": f"Failed to read description file '{description_file}': {e}"
+            }
+            print(json.dumps(output, indent=2, ensure_ascii=False))
+            return
+
+    # 2. Update state and/or description if requested
+    update_input: Dict[str, Any] = {}
     if state_name:
         if not resolved_team_id:
             output["state_update"] = {
@@ -562,18 +578,34 @@ def cmd_update_issue(
                     "error": f"State '{state_name}' not found for team '{resolved_team_id}'."
                 }
             else:
-                state_res = execute_graphql(api_key, UPDATE_ISSUE_MUTATION, {
-                    "id": real_uuid,
-                    "input": {"stateId": state_id}
-                })
-                if state_res.get("success"):
-                    output["state_update"] = {
-                        "success": True,
-                        "state": state_name,
-                        "stateId": state_id
-                    }
-                else:
-                    output["state_update"] = state_res
+                update_input["stateId"] = state_id
+
+    if resolved_description is not None:
+        update_input["description"] = resolved_description
+
+    if update_input:
+        update_res = execute_graphql(api_key, UPDATE_ISSUE_MUTATION, {
+            "id": real_uuid,
+            "input": update_input
+        })
+        if update_res.get("success"):
+            if "stateId" in update_input:
+                output["state_update"] = {
+                    "success": True,
+                    "state": state_name,
+                    "stateId": update_input["stateId"]
+                }
+            if "description" in update_input:
+                output["description_update"] = {
+                    "success": True,
+                    "updated": True,
+                    "length": len(resolved_description)
+                }
+        else:
+            if "stateId" in update_input:
+                output["state_update"] = update_res
+            if "description" in update_input:
+                output["description_update"] = update_res
 
     # 3. Add comment if requested with idempotency check
     if comment:
@@ -649,10 +681,12 @@ def main():
     c_issue.add_argument("--label", action="append", dest="labels", help="Labels to attach (e.g. Front, Back)")
 
     # update-issue
-    u_issue = subparsers.add_parser("update-issue", help="Update issue state and/or add comment with idempotency protection")
+    u_issue = subparsers.add_parser("update-issue", help="Update issue state, description, and/or add comment with idempotency protection")
     u_issue.add_argument("issue_id", help="Linear Issue ID or identifier")
     u_issue.add_argument("--team-id", help="Linear Team ID (optional, automatically resolved from issue if omitted)")
     u_issue.add_argument("--state", help="New state name (e.g., 'Technical Analysis', 'Todo', 'In Progress', 'In Review', 'Done')")
+    u_issue.add_argument("--description", help="New issue description markdown")
+    u_issue.add_argument("--description-file", help="Path to file containing new description markdown")
     u_issue.add_argument("--comment", help="Comment body to post")
     u_issue.add_argument("--force-comment", action="store_true", help="Force posting comment even if identical comment exists within 10 minutes")
 
@@ -690,7 +724,16 @@ def main():
     elif args.command == "create-issue":
         cmd_create_issue(api_key, args.team_id, args.title, args.description, args.project_id, args.state, args.labels)
     elif args.command == "update-issue":
-        cmd_update_issue(api_key, args.issue_id, args.team_id, args.state, args.comment, args.force_comment)
+        cmd_update_issue(
+            api_key,
+            args.issue_id,
+            team_id=args.team_id,
+            state_name=args.state,
+            comment=args.comment,
+            force_comment=args.force_comment,
+            description=args.description,
+            description_file=args.description_file
+        )
     elif args.command == "create-comment":
         cmd_create_comment(api_key, args.issue_id, args.comment, args.force)
 

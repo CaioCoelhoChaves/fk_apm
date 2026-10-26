@@ -52,18 +52,20 @@ dependencies:
   - .agents/skills/linear-workflow/references/multi-harness-commands.md
   - .agents/skills/linear-workflow/references/states-and-labels.md
   - .agents/skills/linear-workflow/scripts/linear_api.py
+  - .agents/skills/linear-workflow/tests/test_linear_api.py
   deployed_file_hashes:
-    .agents/rules/linear-lifecycle-commands.md: sha256:04484cb0de45f6a1dab23af0b44e07b75cc10410c5fc6d72935cdaeaa4a47c07
-    .agents/skills/fk-develop/SKILL.md: sha256:97645ccf0b237fa00064915c0b5a6a06a26c88f35e59fbc388a0497758f93e91
+    .agents/rules/linear-lifecycle-commands.md: sha256:86a81a963d52e464d6b4df3b14cad047328671890e6571dde376833bbd90a1c9
+    .agents/skills/fk-develop/SKILL.md: sha256:219092df3cff0a3de53656e203289a825c88290dba8d3e9f2826c366dca4f5d3
     .agents/skills/fk-fix/SKILL.md: sha256:96cb29d57e13a246a2c7d6b15dc22c311fbbf588ec3439d712787cecb34574a6
-    .agents/skills/fk-new-issue/SKILL.md: sha256:ba97f0a0df7e6850a91db8b168d2e95abeb15e7fc039865159409714cebb9888
-    .agents/skills/fk-technical-analysis/SKILL.md: sha256:50aff575675a0c65f70704a76d5b88826e4cdb025a00634db25ab1817bca6950
-    .agents/skills/linear-workflow/SKILL.md: sha256:d9fc70da11ad2e700344265735a53dc7ec9d62660391d32b7861233e56a0485f
-    .agents/skills/linear-workflow/evals/evals.json: sha256:c7af1dcf7fedf1dad59f23be675a92728202f18e405243b29431d7adb26c933a
+    .agents/skills/fk-new-issue/SKILL.md: sha256:37adef0541eea905d88c0e8744a0a9ead25e76fded70262f9c87baa0ff67bd7a
+    .agents/skills/fk-technical-analysis/SKILL.md: sha256:f0b61de70edf9fce18449271585904090e4e5ef41db3b3cb0e4941a5b7091388
+    .agents/skills/linear-workflow/SKILL.md: sha256:7c7f21f14201c6c46d3efa405ab1e48bab1964cf319acc2e6dc7d3ee900cafb7
+    .agents/skills/linear-workflow/evals/evals.json: sha256:d8a1112714e17ff5835c255cafe5ef7350d4ae66db20cb33b03730abed2188da
     .agents/skills/linear-workflow/references/configuration.md: sha256:cb1fcf7737aebeed7079664bdf794ffa9d7ec0771d9af16bcf03e6fe84d42d39
-    .agents/skills/linear-workflow/references/multi-harness-commands.md: sha256:10f845e12c0a4d97dac4126f71f17ed0e2bffd90a50281ccccdb56bbb7a20df6
-    .agents/skills/linear-workflow/references/states-and-labels.md: sha256:a74a5178e36619bcbeff75a1bee83aa6e26464e4a5057d42db00ce777ca2572f
-    .agents/skills/linear-workflow/scripts/linear_api.py: sha256:03d327ceeb4277a45badf2a2f5c2969f1bfc4b77c2915e9f2e76d91b08873371
+    .agents/skills/linear-workflow/references/multi-harness-commands.md: sha256:7d4a5f33e08a725e4b9d67022cca18437bd796a08828760f25b9312099eb0d93
+    .agents/skills/linear-workflow/references/states-and-labels.md: sha256:ccf9a2ffedb3394623546c6ac216287b03db4a5d6eed54e105db4defae1f521c
+    .agents/skills/linear-workflow/scripts/linear_api.py: sha256:5784fb4c4ad42a2dc9393ba9609f313c91282ddc0d2ab98dcc4dc753ce5bd05b
+    .agents/skills/linear-workflow/tests/test_linear_api.py: sha256:983eee77ead9c6f7751bace20df78883fe76c3383a76b1693e06c775a34055ab
   source: local
   local_path: ../../skills/linear-workflow
   declaring_parent: ./bundles/default
@@ -184,7 +186,7 @@ deployments:
   owners:
   - local:skills/linear-workflow
   active_owner: local:skills/linear-workflow
-  content_hash: sha256:04484cb0de45f6a1dab23af0b44e07b75cc10410c5fc6d72935cdaeaa4a47c07
+  content_hash: sha256:86a81a963d52e464d6b4df3b14cad047328671890e6571dde376833bbd90a1c9
 - kind: project-relative
   target: antigravity
   value: .agents/rules/semver-changelog.md
@@ -211,7 +213,7 @@ deployments:
   owners:
   - local:skills/linear-workflow
   active_owner: local:skills/linear-workflow
-  content_hash: sha256:97645ccf0b237fa00064915c0b5a6a06a26c88f35e59fbc388a0497758f93e91
+  content_hash: sha256:219092df3cff0a3de53656e203289a825c88290dba8d3e9f2826c366dca4f5d3
 - kind: project-relative
   target: antigravity
   value: .agents/skills/fk-fix
@@ -247,7 +249,7 @@ deployments:
   owners:
   - local:skills/linear-workflow
   active_owner: local:skills/linear-workflow
-  content_hash: sha256:ba97f0a0df7e6850a91db8b168d2e95abeb15e7fc039865159409714cebb9888
+  content_hash: sha256:37adef0541eea905d88c0e8744a0a9ead25e76fded70262f9c87baa0ff67bd7a
 - kind: project-relative
   target: antigravity
   value: .agents/skills/fk-semver-owner
@@ -283,7 +285,7 @@ deployments:
   owners:
   - local:skills/linear-workflow
   active_owner: local:skills/linear-workflow
-  content_hash: sha256:50aff575675a0c65f70704a76d5b88826e4cdb025a00634db25ab1817bca6950
+  content_hash: sha256:f0b61de70edf9fce18449271585904090e4e5ef41db3b3cb0e4941a5b7091388
 - kind: project-relative
   target: antigravity
   value: .agents/skills/git-workflow
@@ -346,7 +348,7 @@ deployments:
   owners:
   - local:skills/linear-workflow
   active_owner: local:skills/linear-workflow
-  content_hash: sha256:d9fc70da11ad2e700344265735a53dc7ec9d62660391d32b7861233e56a0485f
+  content_hash: sha256:7c7f21f14201c6c46d3efa405ab1e48bab1964cf319acc2e6dc7d3ee900cafb7
 - kind: project-relative
   target: antigravity
   value: .agents/skills/linear-workflow/evals/evals.json
@@ -355,7 +357,7 @@ deployments:
   owners:
   - local:skills/linear-workflow
   active_owner: local:skills/linear-workflow
-  content_hash: sha256:c7af1dcf7fedf1dad59f23be675a92728202f18e405243b29431d7adb26c933a
+  content_hash: sha256:d8a1112714e17ff5835c255cafe5ef7350d4ae66db20cb33b03730abed2188da
 - kind: project-relative
   target: antigravity
   value: .agents/skills/linear-workflow/references/configuration.md
@@ -373,7 +375,7 @@ deployments:
   owners:
   - local:skills/linear-workflow
   active_owner: local:skills/linear-workflow
-  content_hash: sha256:10f845e12c0a4d97dac4126f71f17ed0e2bffd90a50281ccccdb56bbb7a20df6
+  content_hash: sha256:7d4a5f33e08a725e4b9d67022cca18437bd796a08828760f25b9312099eb0d93
 - kind: project-relative
   target: antigravity
   value: .agents/skills/linear-workflow/references/states-and-labels.md
@@ -382,7 +384,7 @@ deployments:
   owners:
   - local:skills/linear-workflow
   active_owner: local:skills/linear-workflow
-  content_hash: sha256:a74a5178e36619bcbeff75a1bee83aa6e26464e4a5057d42db00ce777ca2572f
+  content_hash: sha256:ccf9a2ffedb3394623546c6ac216287b03db4a5d6eed54e105db4defae1f521c
 - kind: project-relative
   target: antigravity
   value: .agents/skills/linear-workflow/scripts/linear_api.py
@@ -391,7 +393,16 @@ deployments:
   owners:
   - local:skills/linear-workflow
   active_owner: local:skills/linear-workflow
-  content_hash: sha256:03d327ceeb4277a45badf2a2f5c2969f1bfc4b77c2915e9f2e76d91b08873371
+  content_hash: sha256:5784fb4c4ad42a2dc9393ba9609f313c91282ddc0d2ab98dcc4dc753ce5bd05b
+- kind: project-relative
+  target: antigravity
+  value: .agents/skills/linear-workflow/tests/test_linear_api.py
+  runtime: null
+  scope: project
+  owners:
+  - local:skills/linear-workflow
+  active_owner: local:skills/linear-workflow
+  content_hash: sha256:983eee77ead9c6f7751bace20df78883fe76c3383a76b1693e06c775a34055ab
 - kind: project-relative
   target: antigravity
   value: .agents/skills/semver
