@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Adicionar skill semver-changelog para gerenciamento de CHANGELOG e SemVer 2.0.0 (FAL-23)
 
 ### Changed
+- Padronizar criação de cards em Backlog por padrão no /fk-new-issue e linear-workflow, permitindo Todo apenas como exceção explícita (FAL-33)
 
 ### Deprecated
 

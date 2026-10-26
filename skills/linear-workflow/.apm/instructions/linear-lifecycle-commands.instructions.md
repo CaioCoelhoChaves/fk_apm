@@ -33,7 +33,7 @@ Sempre que a mensagem do usuário contiver qualquer um dos seguintes gatilhos (c
      - Não solicite confirmação em nenhuma etapa do `/fk-fix`. Se não houver comentários/reviews nem texto extra, informe o usuário e finalize sem mutação.
 
 3. **Mapeamento de Estados por Rito**:
-   - `fk-new-issue` ➔ Criação sob `Backlog` ou `Todo`.
+   - `fk-new-issue` ➔ Criação sob **`Backlog`** (padrão); `Todo` apenas como exceção explícita (card trivial ou com escopo técnico 100% resolvido).
    - `fk-technical-analysis` ➔ `Technical Analysis` ➔ **`Todo`** (com análise técnica registrada).
    - `fk-develop` ➔ `Todo` ➔ **`In Progress`** (com branch criada) ➔ **`In Review`** (ao abrir PR no GitHub).
    - `fk-fix` ➔ `In Review` ➔ **`In Progress`** (ao iniciar correção) ➔ **`In Review`** (ao enviar push e comentar no PR).

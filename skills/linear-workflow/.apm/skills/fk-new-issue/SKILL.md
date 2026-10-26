@@ -24,7 +24,7 @@ Este comando orquestra o rito de planejamento e decomposição de tarefas no Lin
   - Título objetivo no padrão `<tipo>(<escopo>): <descrição>`.
   - Descrição técnica com critérios de aceitação.
   - Label de componente (`Front` ou `Back`).
-  - Status inicial proposto (`Backlog` ou `Todo`).
+  - Status inicial proposto: **`Backlog` por padrão** (a demanda ainda passará por `/fk-technical-analysis`). Proponha `Todo` apenas como exceção explícita (card trivial ou com escopo técnico e planejamento 100% resolvidos desde a concepção), justificando a exceção na tabela de decomposição e no Consent Gate.
 - ⚠️ **Zero Mutação**: **NÃO crie nenhum card no Linear nesta etapa.**
 
 ### 2. Etapa 2: Consent Gate Interativo (Confirmação Explícita)
@@ -34,7 +34,7 @@ Este comando orquestra o rito de planejamento e decomposição de tarefas no Lin
     {
       "questions": [
         {
-          "question": "O escopo e a divisão dos cards estão alinhados? Posso criá-los no Linear sob o status [Backlog/Todo]?",
+          "question": "O escopo e a divisão dos cards estão alinhados? Posso criá-los no Linear sob o status Backlog (padrão)?",
           "options": [
             "(Recommended) Sim, aprovar",
             "Editar..."
@@ -59,7 +59,7 @@ Este comando orquestra o rito de planejamento e decomposição de tarefas no Lin
     --project-id "<project-id>" \
     --title "<título>" \
     --description "<descrição>" \
-    --state "<Backlog ou Todo>" \
+    --state "Backlog"   # use "Todo" somente na exceção explícita aprovada no Consent Gate \
     --label "<Front ou Back>"
   ```
 - Informe o desenvolvedor com links diretos e identificadores criados (ex: `FAL-10`).
