@@ -40,7 +40,7 @@ A standardized workflow for AI coding agents to integrate Linear issue managemen
 
 4. **Mandatory 3-Stage Protocol (*Consent Gate*) for Planning/Analysis & Autonomous Execution Exception**:
    - For planning and analysis lifecycle commands (`/fk-new-issue`, `/fk-technical-analysis`) and natural language triggers, the agent must strictly follow this protocol across all harnesses (Google Antigravity, Claude Code, OpenCode, Cursor, GitHub Copilot):
-     - **Stage 1 (Initial Presentation, Pre-Render Gate & Questions)**: The agent prepares the plan/analysis in chat/workspace, raising options and doubts with the developer. **Zero mutation**: No API calls altering Linear (`update-issue`, `create-issue`, `create-comment`) are permitted in this stage. Only read queries (`get-issue`, `search-issues`, `list-states`, `list-projects`) are allowed. **Pre-Render Gate (Proibição de Consent Gate Cego)**: It is **strictly forbidden** to invoke `ask_question` / `AskUserQuestion` without first rendering the complete proposal (full task decomposition table in `/fk-new-issue` or all 5 mandatory sections in `/fk-technical-analysis`) in the visible text of the chat message.
+     - **Stage 1 (Initial Presentation, Pre-Render Gate & Questions)**: The agent prepares the plan/analysis in chat/workspace, raising options and doubts with the developer. **Zero mutation**: No API calls altering Linear (`update-issue`, `create-issue`, `create-comment`) are permitted in this stage. Only read queries (`get-issue`, `search-issues`, `list-states`, `list-projects`) are allowed. **Pre-Render Gate (Proibição de Consent Gate Cego)**: It is **strictly forbidden** to invoke `ask_question` / `AskUserQuestion` without first rendering the complete proposal (full task decomposition table in `/fk-new-issue` or the revised card title, updated card description, and all 5 mandatory sections in `/fk-technical-analysis`) in the visible text of the chat message.
      - **Stage 2 (Consent Gate - Interactive Prompt with Concise Summary & Options)**: After rendering the full proposal visibly in chat and resolving questions, the agent presents the consent confirmation using the **native question tool** of the active harness, embedding a **concise summary of the plan/analysis directly inside the `question` field** as an additional safeguard:
        - **Google Antigravity**: tool nativa `ask_question`.
        - **Claude Code**: tool nativa `AskUserQuestion`.
@@ -49,7 +49,7 @@ A standardized workflow for AI coding agents to integrate Linear issue managemen
        - **Opções Estruturadas**:
          1. `(Recommended) Sim, aprovar`: Avança atomicamente para a Stage 3.
          2. `Editar...`: Permite texto livre para o desenvolvedor informar o que deseja ajustar. O agente recebe o feedback, **retorna à Stage 1**, ajusta o plano/análise e apresenta novamente antes de acionar um novo Consent Gate.
-     - **Stage 3 (Atomic Execution - Move Card + Register Comment)**: Only after affirmative developer response (`Sim, aprovar`), execute the closing actions atomically on Linear (advancing the status, registering the consolidated comment, or creating cards).
+     - **Stage 3 (Atomic Execution - Move Card + Update Title/Description + Register Comment)**: Only after affirmative developer response (`Sim, aprovar`), execute the closing actions atomically on Linear (advancing the status, updating the card title and description in `/fk-technical-analysis`, registering the consolidated comment, or creating cards).
    - ⚠️ **Execução Autônoma para `/fk-develop` e `/fk-fix` (Sem Consent Gate)**:
      - Os comandos de ciclo de desenvolvimento (`/fk-develop`) e correção de review (`/fk-fix`) rodam **sem Consent Gate**.
      - **`/fk-develop`**: Ao ser invocado, o agente lê os requisitos, transiciona imediatamente o card para `In Progress`, cria a branch Gitflow, implementa código e testes sem pedir confirmação prévia e avança para `In Review` ao abrir o PR no GitHub. Dúvidas devem ser levantadas ao desenvolvedor somente em casos excepcionais de bloqueio real; se não for bloqueante, o agente decide tecnicamente, registra a premissa assumida no comentário do card/PR e prossegue.
@@ -102,7 +102,7 @@ The agent dynamically uses whatever tool is available in the current environment
 | **Get Issue** | `linear_issue_search` | `python <skill-dir>/scripts/linear_api.py get-issue "<key-or-id>"` |
 | **Search Issue** | `linear_issue_search` | `python <skill-dir>/scripts/linear_api.py search-issues "<term>" [--project-id "<id>"]` |
 | **Create Card** | `linear_create_issue` | `python <skill-dir>/scripts/linear_api.py create-issue --team-id "<tid>" --project-id "<pid>" --title "<title>" --description "<desc>" --state "<state>" --label "Front"` |
-| **Atomic Update** | `linear_update_issue` + `linear_create_comment` | `python <skill-dir>/scripts/linear_api.py update-issue "<id>" [--team-id "<tid>"] [--state "<state>"] [--description "<desc>"] [--description-file "<path>"] [--comment "<summary>"]` |
+| **Atomic Update** | `linear_update_issue` + `linear_create_comment` | `python <skill-dir>/scripts/linear_api.py update-issue "<id>" [--team-id "<tid>"] [--state "<state>"] [--title "<title>"] [--description "<desc>"] [--description-file "<path>"] [--comment "<summary>"]` |
 | **Add Comment** | `linear_create_comment` | `python <skill-dir>/scripts/linear_api.py update-issue "<id>" --comment "<summary>"` *(idempotente)* |
 
 ---
@@ -170,7 +170,9 @@ Gatilhos: `/fk-technical-analysis`, `fk-technical-analysis`, *"vamos analisar te
    - Consulta o card via `get-issue` ou `search-issues`.
    - Se o card estava em `Backlog`, o início da análise é apresentado no chat.
    - Realiza a análise arquitetural, opções de implementação, trade-offs e impactos no workspace.
-   - **Proibição de Consent Gate Cego**: Apresenta integralmente no texto visível do chat a especificação técnica estruturada sob **5 seções obrigatórias** antes de invocar `ask_question` / `AskUserQuestion`:
+   - **Proibição de Consent Gate Cego**: Apresenta integralmente no texto visível do chat o **Título Revisado** e a **Descrição Atualizada** do card, além da especificação técnica estruturada sob **5 seções obrigatórias** antes de invocar `ask_question` / `AskUserQuestion`:
+     - **Título Revisado do Card**: `<type>(<scope>): <resumo-tecnico-refinado>`
+     - **Descrição Atualizada do Card**: Contexto, problema, escopo técnico refinado e critérios de aceitação atualizados.
      1. **Diagnóstico e Contexto**: Causa-raiz ou motivação técnica refinada.
      2. **Arquitetura da Solução & Desenho Técnico**: Decisões de design, contratos, trade-offs e dependências.
      3. **Checklist de Arquivos Impactados**: Caminhos explícitos de arquivos a criar, modificar ou remover.
@@ -182,13 +184,15 @@ Gatilhos: `/fk-technical-analysis`, `fk-technical-analysis`, *"vamos analisar te
      - Pergunta: *"Resumo da análise (<issue-key>): <resumo-solucao> | Arquivos: <N> | Branch: <branch>. A análise técnica está aprovada? Posso registrar as decisões no Linear e mover o card para **Todo** (pronto para desenvolvimento)?"*
    - Se o usuário escolher `Editar...`: recebe os direcionamentos técnicos adicionais, volta à Etapa 1 para refinar a análise e reapresenta o Consent Gate.
 3. **Etapa 3 - Execução Atômica & Persistência Integral da Especificação Técnica**:
-   - Somente após `Sim, aprovar`, executa atomicamente a transição de estado para `Todo` persistindo a **especificação técnica completa nas 5 seções** no comentário consolidado:
+   - Somente após `Sim, aprovar`, executa atomicamente a transição de estado para `Todo` acompanhada da **atualização obrigatória do título (`--title`) e da descrição do card (`--description` ou `--description-file`)** e persistindo a **especificação técnica completa nas 5 seções** no comentário consolidado:
      ```bash
      python skills/linear-workflow/scripts/linear_api.py update-issue "<id>" \
        --state "Todo" \
+       --title "<titulo-revisado>" \
+       --description "<nova-descricao-completa>" \
        --comment "🤖 **AI Agent Update**: Análise Técnica Concluída\n\n### 1. Diagnóstico e Contexto\n...\n### 2. Arquitetura da Solução & Desenho Técnico\n...\n### 3. Checklist de Arquivos Impactados\n...\n### 4. Estratégia de Testes\n...\n### 5. Plano Gitflow\n..."
      ```
-   - Opcionalmente, caso o escopo técnico tenha sido significativamente refinado, atualiza também a descrição do card via `--description` ou `--description-file`.
+   - Para descrições longas em Markdown, utilize `--description-file "<path>"` no mesmo comando atômico `update-issue` junto a `--state "Todo"`, `--title "<titulo-revisado>"` e `--comment`. Substitua sempre títulos ou descrições preliminares de `Backlog` pelo contexto técnico refinado.
    - O card avança formalmente para **`Todo`** e não permanece em `Technical Analysis`.
 
 ---
@@ -294,7 +298,7 @@ Gatilhos: `/fk-fix`, `fk-fix`, *"aplicar correções do review"*, *"resolver fee
 **Agente (Retorno à Etapa 1)**: Não altera o Linear (Zero Mutação). Complementa a análise técnica incluindo trade-offs de WebSockets e reapresenta o estudo no chat.  
 **Agente (Etapa 2 - Novo Consent Gate)**: Invoca novamente a tool de pergunta interativa.  
 **Usuário**: `"(Recommended) Sim, aprovar"`  
-**Agente (Etapa 3)**: Executa `update-issue FAL-24 --state "Todo" --comment "..."` e confirma a transição.
+**Agente (Etapa 3)**: Executa `update-issue FAL-24 --state "Todo" --title "..." --description "..." --comment "..."` e confirma a transição.
 
 ### Example 3: Ciclo Autônomo de Desenvolvimento com `/fk-develop` (Sem Consent Gate)
 **Usuário**: `"/fk-develop FAL-24"`  

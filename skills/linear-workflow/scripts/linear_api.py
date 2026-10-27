@@ -518,12 +518,13 @@ def cmd_update_issue(
     comment: Optional[str] = None,
     force_comment: bool = False,
     description: Optional[str] = None,
-    description_file: Optional[str] = None
+    description_file: Optional[str] = None,
+    title: Optional[str] = None
 ):
     """
     Atomic update for Linear issue:
     1. Resolves issue UUID, team, and recent comments.
-    2. Updates state and/or description (if requested).
+    2. Updates state, title, and/or description (if requested).
     3. Posts comment with idempotency protection (skips duplicates posted within 10 min).
     """
     # 1. Fetch current issue context
@@ -580,6 +581,9 @@ def cmd_update_issue(
             else:
                 update_input["stateId"] = state_id
 
+    if title is not None and title.strip():
+        update_input["title"] = title.strip()
+
     if resolved_description is not None:
         update_input["description"] = resolved_description
 
@@ -595,6 +599,13 @@ def cmd_update_issue(
                     "state": state_name,
                     "stateId": update_input["stateId"]
                 }
+            if "title" in update_input:
+                output["title_update"] = {
+                    "success": True,
+                    "updated": True,
+                    "title": update_input["title"]
+                }
+                output["issue"]["title"] = update_input["title"]
             if "description" in update_input:
                 output["description_update"] = {
                     "success": True,
@@ -604,6 +615,8 @@ def cmd_update_issue(
         else:
             if "stateId" in update_input:
                 output["state_update"] = update_res
+            if "title" in update_input:
+                output["title_update"] = update_res
             if "description" in update_input:
                 output["description_update"] = update_res
 
@@ -681,10 +694,11 @@ def main():
     c_issue.add_argument("--label", action="append", dest="labels", help="Labels to attach (e.g. Front, Back)")
 
     # update-issue
-    u_issue = subparsers.add_parser("update-issue", help="Update issue state, description, and/or add comment with idempotency protection")
+    u_issue = subparsers.add_parser("update-issue", help="Update issue state, title, description, and/or add comment with idempotency protection")
     u_issue.add_argument("issue_id", help="Linear Issue ID or identifier")
     u_issue.add_argument("--team-id", help="Linear Team ID (optional, automatically resolved from issue if omitted)")
     u_issue.add_argument("--state", help="New state name (e.g., 'Technical Analysis', 'Todo', 'In Progress', 'In Review', 'Done')")
+    u_issue.add_argument("--title", help="New issue title")
     u_issue.add_argument("--description", help="New issue description markdown")
     u_issue.add_argument("--description-file", help="Path to file containing new description markdown")
     u_issue.add_argument("--comment", help="Comment body to post")
@@ -732,7 +746,8 @@ def main():
             comment=args.comment,
             force_comment=args.force_comment,
             description=args.description,
-            description_file=args.description_file
+            description_file=args.description_file,
+            title=args.title
         )
     elif args.command == "create-comment":
         cmd_create_comment(api_key, args.issue_id, args.comment, args.force)
