@@ -118,23 +118,28 @@ git commit -m "feat(skills): add <skill-name> to fk_apm catalog"
 git push -u origin feat/add-<skill-name>
 ```
 
-Create the Pull Request using GitHub CLI:
+Create the Pull Request using GitHub CLI and `--body-file` (write the Markdown summary and verification checklist to a temporary UTF-8 file `<pr-body-utf8.md>` first to prevent shell backtick corruption):
 
 ```bash
 gh pr create \
   --repo CaioCoelhoChaves/fk_apm \
   --title "feat(skills): add <skill-name>" \
-  --body "## Summary
-Adds the \`<skill-name>\` skill to the fk_apm central repository.
+  --body-file "<pr-body-utf8.md>"
+```
+
+Example content for `<pr-body-utf8.md>`:
+```markdown
+## Summary
+Adds the `<skill-name>` skill to the fk_apm central repository.
 
 ### Verification Checklist
 - [x] Frontmatter validated (name matches directory, <500 lines)
-- [x] Registered in root \`apm.yml\` under \`marketplace.packages\`
-- [x] Added to \`README.md\` Individual Skills table
-- [x] \`verify_skills_and_bundles.py\` passed
-- [x] \`apm marketplace check --offline\` passed
-- [x] \`apm pack\` updated marketplace artifacts
-- [x] \`apm audit\` reported 0 drift"
+- [x] Registered in root `apm.yml` under `marketplace.packages`
+- [x] Added to `README.md` Individual Skills table
+- [x] `verify_skills_and_bundles.py` passed
+- [x] `apm marketplace check --offline` passed
+- [x] `apm pack` updated marketplace artifacts
+- [x] `apm audit` reported 0 drift
 ```
 
 The CLI will output the created PR URL. Provide this link to the user!

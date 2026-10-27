@@ -209,6 +209,7 @@ apm audit
 ```
 
 ### Step 6: Commit, Push & Create PR
+Write the PR body to a temporary UTF-8 file (`<pr-body-utf8.md>`) and pass `--body-file` (never pass inline `--body "..."` containing backticks, which get corrupted in PowerShell/Bash):
 ```bash
 git add .
 git commit -m "feat(skills): add <skill-name> to fk_apm catalog"
@@ -217,14 +218,7 @@ git push -u origin feat/add-<skill-name>
 gh pr create \
   --repo CaioCoelhoChaves/fk_apm \
   --title "feat(skills): add <skill-name>" \
-  --body "## Summary
-Adds the \`<skill-name>\` skill to the central fk_apm repository.
-
-### Changes
-- Scaffolding & Frontmatter configured in \`skills/<skill-name>/\`
-- Registered in root \`apm.yml\` under \`marketplace.packages\`
-- Updated \`README.md\` catalog tables
-- Executed \`verify_skills_and_bundles.py\` & \`apm audit\`"
+  --body-file "<pr-body-utf8.md>"
 ```
 Provide the resulting PR URL to the user.
 

@@ -24,5 +24,5 @@ Contexto fornecido: $ARGUMENTS
    - Se `Editar...`: receba ajustes de escopo em texto livre, retorne à Etapa 1 para atualizar a decomposição e reapresente o Consent Gate. Zero mutação no Linear até aprovação explícita.
    - Aguarde `Sim, aprovar` antes de qualquer chamada de mutação.
 3. **Etapa 3 - Execução Atômica**:
-   - Após aprovação, crie os cards no Linear via CLI (`create-issue`) ou MCP (`linear_create_issue`).
+   - Após aprovação, crie os cards no Linear via CLI (`create-issue --description-file "<path>"`) ou MCP (`linear_create_issue`), gravando a descrição em arquivo UTF-8 temporário para evitar corrupção de crases (`` ` ``) e aspas duplas no shell.
    - Apresente o sumário final com links diretos e identificadores (ex: `FAL-10`).

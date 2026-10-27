@@ -109,7 +109,7 @@ Regardless of whether a command was triggered via a native slash command (`/fk-n
 - **Stage 2 (Interactive Consent Gate with Embedded Summary)**: Invoke the native question tool of the active harness, embedding a concise summary of the proposal inside the `question` string itself and presenting structured choices:
   - `(Recommended) Sim, aprovar`: Proceed immediately to Stage 3.
   - `Editar...`: Free-form text input allowing the developer to request changes. The agent **loops back to Stage 1**, adjusts the plan/analysis, and triggers a new Consent Gate.
-- **Stage 3 (Atomic Execution)**: On affirmative answer, update Linear state atomically, mandatorily updating the card title (`--title`) and description (`--description` / `--description-file`) alongside persisting the complete technical specification (all 5 sections) in the consolidated comment (`--comment`), then advance the card to `Todo`.
+- **Stage 3 (Atomic Execution)**: On affirmative answer, update Linear state atomically, mandatorily updating the card title (`--title`) and description (`--description-file`) alongside persisting the complete technical specification (all 5 sections) in the consolidated comment (`--comment-file`), then advance the card to `Todo`. Always pass Markdown payloads via UTF-8 files (`--description-file`, `--comment-file`, and `gh pr create/comment --body-file`) to prevent PowerShell/Bash backtick and quote corruption.
 - **Autonomous Execution in /fk-develop**: Consumes the full technical specification persisted from Stage 3 directly from the Linear card/comments, ensuring zero context degradation across clean agent sessions.
 
 ### Harness-to-Tool Mapping Matrix

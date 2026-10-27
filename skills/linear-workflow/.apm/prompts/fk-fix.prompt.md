@@ -21,13 +21,13 @@ Entrada / Argumentos: $ARGUMENTS
    - Ignore comentários anteriores do agente (`🤖 **AI Agent Update**:`) e threads resolvidas.
    - Se não houver comentários nem instruções extras, alerte o desenvolvedor e interrompa a execução sem fazer alterações.
 3. **Mover para In Progress (Sem Confirmação)**:
-   - Avance o card para `In Progress` no Linear com comentário resumindo o início do fix.
+   - Avance o card para `In Progress` no Linear com comentário via `--comment-file "<path>"` resumindo o início do fix.
    - Se o projeto/card não existir no Linear, avise o usuário e continue a correção na branch existente.
 4. **Implementação na Branch Existente**:
    - Aplique as correções nos arquivos do projeto e valide com testes automatizados locais.
    - Crie commits semânticos (Conventional Commits 1.0.0) e faça push na branch existente para atualizar o PR (sem criar novo PR).
 5. **Comentar no PR**:
-   - Publique comentário no PR (`gh pr comment`) com prefixo `🤖 **AI Agent Update**:`, detalhando itens corrigidos e eventuais itens não alterados com justificativa.
+   - Publique comentário no PR (`gh pr comment <pr-number> --body-file "<pr-comment-utf8.md>"`, proibindo `--body "..."` inline com crases) com prefixo `🤖 **AI Agent Update**:`, detalhando itens corrigidos e eventuais itens não alterados com justificativa.
 6. **Mover para In Review**:
-   - Mova o card no Linear para `In Review` com comentário contendo o link do PR e resumo técnico.
+   - Mova o card no Linear para `In Review` com comentário via `--comment-file "<path>"` contendo o link do PR e resumo técnico.
 7. **Regra de Ouro**: O card nunca é movido para `Done` pelo agente (permanece manual pelo desenvolvedor).

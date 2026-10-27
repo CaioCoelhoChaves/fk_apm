@@ -77,6 +77,13 @@ A standardized workflow for AI coding agents to integrate Linear issue managemen
      - **Cursor**: Custom slash commands in `.cursor/commands/` and rules in `.cursor/rules/`.
      - **GitHub Copilot**: Prompt templates in `.github/prompts/` and instructions in `.github/instructions/`.
 
+9. **Shell Backtick & Markdown Payload Safety (`--description-file`, `--comment-file`, `--body-file`)**:
+   - Passing Markdown payloads inline via command-line arguments (`linear_api.py --description "..." --comment "..."` or `gh pr create/comment --body "..."`) suffers from critical OS/shell corruption before reaching the target process:
+     1. **Backtick Escape & Expansion**: In **Windows PowerShell**, double-quoted strings (`"..."`) treat the backtick (`` ` ``) as an escape character (`` `f `` ➔ Form Feed `\x0c`, `` `t `` ➔ Tab `\t`, `` `r `` ➔ Carriage Return `\r`, `` `b `` ➔ Backspace `\x08`, `` `n `` ➔ Newline `\n`, or strip standalone backticks), corrupting `` `feat` `` ➔ `eat`, `` `fix` `` ➔ `ix`, `` `test` `` ➔ `est`, `` `refactor` `` ➔ `efactor`, and `` `chore` `` ➔ `chore`. In **Bash/Zsh**, backticks inside `"..."` trigger command substitution.
+     2. **Win32 Double-Quote Stripping (`CommandLineToArgvW`)**: In Windows PowerShell 5.1, passing strings or variables with internal double quotes (`"`) to native binaries (`python`, `gh`) fails to escape quotes in `lpCommandLine`, causing `CommandLineToArgvW` to split arguments or strip quotes from Markdown payloads.
+   - **Mandatory File-First Standard**: Write Markdown descriptions, comments, and PR bodies to temporary UTF-8 files (using the agent's native file tool or `Set-Content -Path <file> -Encoding utf8` with `@' ... '@` in PowerShell / `cat <<'EOF' > <file>` in Bash) and pass `--description-file "<path>"`, `--comment-file "<path>"`, and `--body-file "<path>"`.
+   - **Explicit Prohibition**: **Never** pass Markdown containing backticks (`` ` ``), code blocks, or double quotes directly via inline `--description "..."`, `--comment "..."`, or `--body "..."`.
+
 ---
 
 ## Lifecycle Commands Reference
@@ -101,9 +108,9 @@ The agent dynamically uses whatever tool is available in the current environment
 | **Find Project** | `linear_list_projects` | `python <skill-dir>/scripts/linear_api.py find-project "<name>"` |
 | **Get Issue** | `linear_issue_search` | `python <skill-dir>/scripts/linear_api.py get-issue "<key-or-id>"` |
 | **Search Issue** | `linear_issue_search` | `python <skill-dir>/scripts/linear_api.py search-issues "<term>" [--project-id "<id>"]` |
-| **Create Card** | `linear_create_issue` | `python <skill-dir>/scripts/linear_api.py create-issue --team-id "<tid>" --project-id "<pid>" --title "<title>" --description "<desc>" --state "<state>" --label "Front"` |
-| **Atomic Update** | `linear_update_issue` + `linear_create_comment` | `python <skill-dir>/scripts/linear_api.py update-issue "<id>" [--team-id "<tid>"] [--state "<state>"] [--title "<title>"] [--description "<desc>"] [--description-file "<path>"] [--comment "<summary>"]` |
-| **Add Comment** | `linear_create_comment` | `python <skill-dir>/scripts/linear_api.py update-issue "<id>" --comment "<summary>"` *(idempotente)* |
+| **Create Card** | `linear_create_issue` | `python <skill-dir>/scripts/linear_api.py create-issue --team-id "<tid>" --project-id "<pid>" --title "<title>" --description-file "<path>" --state "<state>" --label "Front"` |
+| **Atomic Update** | `linear_update_issue` + `linear_create_comment` | `python <skill-dir>/scripts/linear_api.py update-issue "<id>" [--team-id "<tid>"] [--state "<state>"] [--title "<title>"] [--description-file "<path>"] [--comment-file "<path>"]` |
+| **Add Comment** | `linear_create_comment` | `python <skill-dir>/scripts/linear_api.py update-issue "<id>" --comment-file "<path>"` *(idempotente)* |
 
 ---
 
@@ -157,7 +164,7 @@ Gatilhos: `/fk-new-issue`, `fk-new-issue`, *"vamos planejar tarefas"*, *"crie os
      - Pergunta: *"Resumo do plano (N cards em Backlog): 1) <título-1> [<label>]; 2) <título-2> [<label>]. O escopo e a divisão dos cards estão alinhados? Posso criá-los no Linear sob o status Backlog (padrão)?"*
    - Se o usuário escolher `Editar...`: coleta as correções em texto livre, retorna à Etapa 1 para atualizar a decomposição e reapresenta o Consent Gate.
 3. **Etapa 3 - Execução Atômica**:
-   - Somente após `Sim, aprovar`, cria os cards no Linear via CLI/MCP.
+   - Somente após `Sim, aprovar`, cria os cards no Linear via CLI/MCP utilizando `--description-file "<path>"` (arquivo UTF-8 temporário para preservar crases e blocos de código sem corrupção de shell).
    - Apresenta o sumário final com links diretos e IDs.
 
 ---
@@ -184,15 +191,15 @@ Gatilhos: `/fk-technical-analysis`, `fk-technical-analysis`, *"vamos analisar te
      - Pergunta: *"Resumo da análise (<issue-key>): <resumo-solucao> | Arquivos: <N> | Branch: <branch>. A análise técnica está aprovada? Posso registrar as decisões no Linear e mover o card para **Todo** (pronto para desenvolvimento)?"*
    - Se o usuário escolher `Editar...`: recebe os direcionamentos técnicos adicionais, volta à Etapa 1 para refinar a análise e reapresenta o Consent Gate.
 3. **Etapa 3 - Execução Atômica & Persistência Integral da Especificação Técnica**:
-   - Somente após `Sim, aprovar`, executa atomicamente a transição de estado para `Todo` acompanhada da **atualização obrigatória do título (`--title`) e da descrição do card (`--description` ou `--description-file`)** e persistindo a **especificação técnica completa nas 5 seções** no comentário consolidado:
+   - Somente após `Sim, aprovar`, executa atomicamente a transição de estado para `Todo` acompanhada da **atualização obrigatória do título (`--title`) e da descrição do card (`--description-file`)** e persistindo a **especificação técnica completa nas 5 seções** no comentário consolidado (`--comment-file`):
      ```bash
      python skills/linear-workflow/scripts/linear_api.py update-issue "<id>" \
        --state "Todo" \
        --title "<titulo-revisado>" \
-       --description "<nova-descricao-completa>" \
-       --comment "🤖 **AI Agent Update**: Análise Técnica Concluída\n\n### 1. Diagnóstico e Contexto\n...\n### 2. Arquitetura da Solução & Desenho Técnico\n...\n### 3. Checklist de Arquivos Impactados\n...\n### 4. Estratégia de Testes\n...\n### 5. Plano Gitflow\n..."
+       --description-file "<descricao-utf8.md>" \
+       --comment-file "<comentario-5-secoes-utf8.md>"
      ```
-   - Para descrições longas em Markdown, utilize `--description-file "<path>"` no mesmo comando atômico `update-issue` junto a `--state "Todo"`, `--title "<titulo-revisado>"` e `--comment`. Substitua sempre títulos ou descrições preliminares de `Backlog` pelo contexto técnico refinado.
+   - Sempre utilize arquivos UTF-8 temporários (`--description-file "<path>"` e `--comment-file "<path>"`) no mesmo comando atômico `update-issue` junto a `--state "Todo"` e `--title "<titulo-revisado>"` para evitar corrupção de crases (`` `feat` ``, `` `fix` ``, etc.) e aspas duplas no PowerShell/Bash. Substitua sempre títulos ou descrições preliminares de `Backlog` pelo contexto técnico refinado.
    - O card avança formalmente para **`Todo`** e não permanece em `Technical Analysis`.
 
 ---
@@ -212,9 +219,9 @@ Gatilhos: `/fk-develop`, `fk-develop`, *"vamos desenvolver a tarefa X"*, *"quero
    - **Consome prioritariamente a especificação técnica completa** persistida no comentário de Análise Técnica (`🤖 **AI Agent Update**: Análise Técnica Concluída`) ou na descrição do card, extraindo diretamente dela o diagnóstico, as decisões arquiteturais, o checklist de arquivos impactados, a estratégia de testes e o nome planejado da branch Gitflow.
    - Formata a branch Gitflow no padrão Linear `<type>/<key>-<slug>` conforme especificado na análise técnica.
 2. **Transição Imediata para `In Progress` no Linear**:
-   - Move imediatamente o card para `In Progress` com comentário inicial informando a branch e premissas assumidas:
+   - Move imediatamente o card para `In Progress` com comentário inicial informando a branch e premissas assumidas (usando `--comment-file` para payloads Markdown com crases):
      ```bash
-     python skills/linear-workflow/scripts/linear_api.py update-issue "<id>" --state "In Progress" --comment "🤖 **AI Agent Update**: Início autônomo do desenvolvimento na branch <branch-name>."
+     python skills/linear-workflow/scripts/linear_api.py update-issue "<id>" --state "In Progress" --comment-file "<comentario-inicio-utf8.md>"
      ```
 3. **Criação da Branch Gitflow & Codificação Autônoma**:
    - Garante base atualizada e cria/muda para a branch:
@@ -223,10 +230,10 @@ Gatilhos: `/fk-develop`, `fk-develop`, *"vamos desenvolver a tarefa X"*, *"quero
      ```
    - Implementa código e testes sem pedir confirmações intermediárias.
 4. **Finalização do Desenvolvimento & Movimentação para `In Review`**:
-   - Após implementar, validar os testes unitários e abrir o Pull Request no GitHub (`gh pr create`):
+   - Após implementar, validar os testes unitários e abrir o Pull Request no GitHub (`gh pr create --body-file "<pr-body-utf8.md>"`):
    - **O agente move obrigatoriamente o card para `In Review`**:
      ```bash
-     python skills/linear-workflow/scripts/linear_api.py update-issue "<id>" --state "In Review" --comment "🤖 **AI Agent Update**: Desenvolvimento concluído e PR aberto no GitHub: <pr-url>..."
+     python skills/linear-workflow/scripts/linear_api.py update-issue "<id>" --state "In Review" --comment-file "<comentario-pr-utf8.md>"
      ```
    - Notifica o desenvolvedor de que a tarefa está pronta para sua revisão manual.
 
@@ -269,9 +276,9 @@ Gatilhos: `/fk-fix`, `fk-fix`, *"aplicar correções do review"*, *"resolver fee
    - Realiza correções nos arquivos do projeto e executa suíte de testes.
    - Cria commits semânticos e faz `git push origin <branch-name>` (atualizando o PR existente sem abrir um novo).
 5. **Registro de Feedback no PR**:
-   - Comenta no PR via `gh pr comment` destacando itens corrigidos e eventuais decisões técnicas.
+   - Comenta no PR via `gh pr comment <pr-number> --body-file "<pr-comment-utf8.md>"` destacando itens corrigidos e eventuais decisões técnicas.
 6. **Transição Final para In Review**:
-   - Transiciona atomicamente o card para **`In Review`** no Linear, notificando o desenvolvedor com sumário e link do PR.
+   - Transiciona atomicamente o card para **`In Review`** no Linear via `--comment-file "<comentario-utf8.md>"`, notificando o desenvolvedor com sumário e link do PR.
 
 ---
 
@@ -298,18 +305,18 @@ Gatilhos: `/fk-fix`, `fk-fix`, *"aplicar correções do review"*, *"resolver fee
 **Agente (Retorno à Etapa 1)**: Não altera o Linear (Zero Mutação). Complementa a análise técnica incluindo trade-offs de WebSockets e reapresenta o estudo no chat.  
 **Agente (Etapa 2 - Novo Consent Gate)**: Invoca novamente a tool de pergunta interativa.  
 **Usuário**: `"(Recommended) Sim, aprovar"`  
-**Agente (Etapa 3)**: Executa `update-issue FAL-24 --state "Todo" --title "..." --description "..." --comment "..."` e confirma a transição.
+**Agente (Etapa 3)**: Executa `update-issue FAL-24 --state "Todo" --title "..." --description-file "<desc-utf8.md>" --comment-file "<spec-utf8.md>"` e confirma a transição.
 
 ### Example 3: Ciclo Autônomo de Desenvolvimento com `/fk-develop` (Sem Consent Gate)
 **Usuário**: `"/fk-develop FAL-24"`  
 **Agente**:
 1. Lê requisitos, critérios e comentários de FAL-24;
-2. Transiciona imediatamente FAL-24 para **`In Progress`** via CLI com comentário informando a branch `feat/FAL-24-biometric-auth`;
+2. Transiciona imediatamente FAL-24 para **`In Progress`** via CLI com comentário (`--comment-file`) informando a branch `feat/FAL-24-biometric-auth`;
 3. Cria a branch Gitflow e implementa o código e os testes sem solicitar confirmação intermediária;
-4. Executa os testes unitários com sucesso, cria commit semântico e abre o Pull Request #5 no GitHub (`gh pr create`);
+4. Executa os testes unitários com sucesso, cria commit semântico e abre o Pull Request #5 no GitHub (`gh pr create --body-file "<pr-body-utf8.md>"`);
 5. Transiciona obrigatoriamente FAL-24 para **`In Review`** no Linear com o link do PR e sumário técnico:
 ```bash
-python skills/linear-workflow/scripts/linear_api.py update-issue FAL-24 --state "In Review" --comment "🤖 **AI Agent Update**: PR #5 aberto no GitHub..."
+python skills/linear-workflow/scripts/linear_api.py update-issue FAL-24 --state "In Review" --comment-file "<comentario-pr-utf8.md>"
 ```
 
 ### Example 4: Correções de Review com `/fk-fix` (Sem Consent Gate)

@@ -57,12 +57,11 @@ Este comando automatiza o ciclo completo de resolução de apontamentos de code 
   python .agents/skills/linear-workflow/scripts/linear_api.py get-issue "<issue-key>"
   ```
 - Se o projeto ou card não existir no Linear, alerte o usuário com transparência e prossiga com o fix técnico no repositório.
-- Se o card existir, transicione imediatamente para **`In Progress`** com comentário estruturado:
+- Se o card existir, transicione imediatamente para **`In Progress`** com comentário estruturado via `--comment-file` (arquivo UTF-8 temporário para evitar corrupção de crases e aspas no shell):
   ```bash
   python .agents/skills/linear-workflow/scripts/linear_api.py update-issue "<issue-id>" \
     --state "In Progress" \
-    --comment "🤖 **AI Agent Update**: Início da aplicação de feedback do PR #<pr-number>. Apontamentos em tratamento:
-- <resumo de cada apontamento identificado>"
+    --comment-file "<comentario-fix-inicio-utf8.md>"
   ```
   *(A idempotência de 10 minutos é garantida pelo CLI).*
 
@@ -75,23 +74,27 @@ Este comando automatiza o ciclo completo de resolução de apontamentos de code 
   - ⚠️ **NÃO crie um novo PR**. O push atualiza automaticamente o PR já existente.
 
 ### 5. Registro de Feedback no PR do GitHub
-- Comente diretamente no PR via GitHub CLI com prefixo de agente:
+- Grave o comentário em um arquivo UTF-8 temporário e publique no PR via GitHub CLI com `--body-file` (nunca use `--body "..."` inline com crases ou blocos de código):
   ```bash
-  gh pr comment <pr-number> --body "🤖 **AI Agent Update**: Correções de code review aplicadas nos commits recentes:
+  gh pr comment <pr-number> --body-file "<pr-comment-utf8.md>"
+  ```
+  Estrutura recomendada para `<pr-comment-utf8.md>`:
+  ```markdown
+  🤖 **AI Agent Update**: Correções de code review aplicadas nos commits recentes:
 
-### ✅ Itens Corrigidos
-- **<Arquivo/Contexto>**: <Descrição da correção realizada>.
+  ### ✅ Itens Corrigidos
+  - **<Arquivo/Contexto>**: <Descrição da correção realizada>.
 
-### ℹ️ Itens Não Alterados (se houver)
-- **<Contexto>**: <Motivo técnico justificado>."
+  ### ℹ️ Itens Não Alterados (se houver)
+  - **<Contexto>**: <Motivo técnico justificado>.
   ```
 
 ### 6. Transição Final do Card para In Review no Linear
-- Atualize atomicamente o card no Linear para **`In Review`**:
+- Atualize atomicamente o card no Linear para **`In Review`** usando `--comment-file`:
   ```bash
   python .agents/skills/linear-workflow/scripts/linear_api.py update-issue "<issue-id>" \
     --state "In Review" \
-    --comment "🤖 **AI Agent Update**: Correções de code review concluídas e enviadas para o PR #<pr-number>: <pr-url>. Card retornado para In Review para nova avaliação."
+    --comment-file "<comentario-fix-concluido-utf8.md>"
   ```
 - Notifique o usuário no chat com o resumo das alterações e link do PR atualizado.
 

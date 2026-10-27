@@ -59,31 +59,35 @@ Este comando orquestra o rito de análise técnica de uma tarefa no Linear, apli
   - `Editar...`: permite ao desenvolvedor indicar alterações arquiteturais, trade-offs, título/descrição ou arquivos em texto livre. O agente **retorna à Etapa 1**, refina a análise no chat e apresenta novo Consent Gate. **Zero mutação é estritamente mantida**.
 
 ### 3. Etapa 3: Execução Atômica & Persistência Integral da Especificação Técnica
-- **Persistência Obrigatória no Linear (Estado + Título + Descrição + Comentário de 5 Seções)**: Após aprovação, execute atomicamente a transição de estado para `Todo` acompanhada da **atualização obrigatória de `--title` e `--description` (ou `--description-file`)** e do registro da **especificação técnica completa com as 5 seções estruturadas** no comentário consolidado (não utilize sumários rasos ou vagos e não deixe título/descrição preliminares defasados):
+- **Persistência Obrigatória no Linear via Arquivos UTF-8 (Estado + Título + Descrição + Comentário de 5 Seções)**: Após aprovação, grave a descrição atualizada e o comentário consolidado de 5 seções em arquivos UTF-8 temporários e execute atomicamente a transição de estado para `Todo` acompanhada da **atualização obrigatória de `--title`, `--description-file` e `--comment-file`** (nunca passe Markdown contendo crases `` ` `` ou aspas duplas via `--description "..."` ou `--comment "..."` inline, evitando corrupção no PowerShell/Bash):
   ```bash
   python .agents/skills/linear-workflow/scripts/linear_api.py update-issue "<issue-id>" \
     --state "Todo" \
     --title "<titulo-revisado>" \
-    --description "<nova-descricao-completa>" \
-    --comment "🤖 **AI Agent Update**: Análise Técnica Concluída
-
-### 1. Diagnóstico e Contexto
-<diagnostico-detalhado>
-
-### 2. Arquitetura da Solução & Desenho Técnico
-<arquitetura-e-trade-offs>
-
-### 3. Checklist de Arquivos Impactados
-- <arquivo-1>
-- <arquivo-2>
-
-### 4. Estratégia de Testes
-<comandos-e-cenarios-de-teste>
-
-### 5. Plano Gitflow
-- Branch: <type>/<issue-key>-<slug>
-- Commits: Conventional Commits 1.0.0
-- Status: Todo"
+    --description-file "<descricao-atualizada-utf8.md>" \
+    --comment-file "<especificacao-5-secoes-utf8.md>"
   ```
-- **Alternativa via Arquivo para Descrições Extensas**: Para descrições longas em Markdown, utilize `--description-file "<path>"` no mesmo comando atômico `update-issue` junto a `--state "Todo"`, `--title "<titulo-revisado>"` e `--comment`.
+  Conteúdo estruturado obrigatório para `<especificacao-5-secoes-utf8.md>`:
+  ```markdown
+  🤖 **AI Agent Update**: Análise Técnica Concluída
+
+  ### 1. Diagnóstico e Contexto
+  <diagnostico-detalhado>
+
+  ### 2. Arquitetura da Solução & Desenho Técnico
+  <arquitetura-e-trade-offs>
+
+  ### 3. Checklist de Arquivos Impactados
+  - <arquivo-1>
+  - <arquivo-2>
+
+  ### 4. Estratégia de Testes
+  <comandos-e-cenarios-de-teste>
+
+  ### 5. Plano Gitflow
+  - Branch: <type>/<issue-key>-<slug>
+  - Commits: Conventional Commits 1.0.0
+  - Status: Todo
+  ```
+- **Proteção Anti-Corrupção de Shell**: Use sempre `--description-file "<path>"` e `--comment-file "<path>"` para preservar integralmente crases (como `` `feat` ``, `` `fix` ``, `` `test` ``, `` `refactor` ``, `` `chore` ``), blocos de código e aspas duplas em qualquer terminal.
 - Notifique o desenvolvedor com a chave do card (ex: `FAL-25`), o título e descrição atualizados, a confirmação da especificação técnica persistida e o novo status `Todo`.
