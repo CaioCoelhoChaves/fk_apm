@@ -1,0 +1,52 @@
+lockfile_version: '1'
+apm_version: 0.33.0
+dependencies:
+- repo_url: _local/bmad-advanced-elicitation
+  name: bmad-advanced-elicitation
+  version: unknown
+  package_type: claude_skill
+  source: local
+  local_path: ../../skills/bmad-advanced-elicitation
+- repo_url: _local/bmad-brainstorming
+  name: bmad-brainstorming
+  version: unknown
+  package_type: claude_skill
+  source: local
+  local_path: ../../skills/bmad-brainstorming
+- repo_url: _local/bmad-customize
+  name: bmad-customize
+  version: unknown
+  package_type: claude_skill
+  source: local
+  local_path: ../../skills/bmad-customize
+- repo_url: _local/bmad-deep-recon
+  name: bmad-deep-recon
+  version: unknown
+  package_type: claude_skill
+  source: local
+  local_path: ../../skills/bmad-deep-recon
+- repo_url: _local/bmad-forge-idea
+  name: bmad-forge-idea
+  version: unknown
+  package_type: claude_skill
+  source: local
+  local_path: ../../skills/bmad-forge-idea
+- repo_url: _local/bmad-help
+  name: bmad-help
+  version: unknown
+  package_type: claude_skill
+  source: local
+  local_path: ../../skills/bmad-help
+- repo_url: _local/bmad-party-mode
+  name: bmad-party-mode
+  version: unknown
+  package_type: claude_skill
+  source: local
+  local_path: ../../skills/bmad-party-mode
+- repo_url: _local/bmad-review
+  name: bmad-review
+  version: unknown
+  package_type: claude_skill
+  source: local
+  local_path: ../../skills/bmad-review
+deployments: []

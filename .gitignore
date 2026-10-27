@@ -39,3 +39,7 @@ __pycache__/
 # Skills folder
 .agents/
 session_export.txt
+
+# BMAD runtime outputs & personal configs
+_bmad-output/
+*.user.toml

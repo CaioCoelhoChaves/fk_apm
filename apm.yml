@@ -12,6 +12,7 @@ targets:
 dependencies:
   apm:
     - ./bundles/default
+    - ./bundles/bmad
   mcp: []
 
 includes: auto
@@ -125,4 +126,48 @@ marketplace:
       description: Testing strategies, testing pyramid, domain tests, test slices (@WebMvcTest, @DataJpaTest), Testcontainers, and Actuator observability
       source: ./skills/spring-boot-testing
       version: 0.1.0
+    - name: bmad
+      description: BMad Method v6 agile AI-driven development bundle (brainstorming, deep-recon, review, party-mode, and ideation)
+      source: ./bundles/bmad
+      version: 6.12.4
+
+    - name: bmad-advanced-elicitation
+      description: Push the LLM to reconsider, refine, and improve its recent output with deeper critique methods (socratic, first principles, pre-mortem, red team)
+      source: ./skills/bmad-advanced-elicitation
+      version: 6.12.4
+
+    - name: bmad-brainstorming
+      description: Facilitate a brainstorming session using diverse creative techniques
+      source: ./skills/bmad-brainstorming
+      version: 6.12.4
+
+    - name: bmad-customize
+      description: Authors and updates customization overrides for installed BMad skills
+      source: ./skills/bmad-customize
+      version: 6.12.4
+
+    - name: bmad-deep-recon
+      description: Research a topic to support a decision via market, domain, technical, competitive, user-voice, or academic literature analysis
+      source: ./skills/bmad-deep-recon
+      version: 6.12.4
+
+    - name: bmad-forge-idea
+      description: Test a half-formed idea in a questioning conversation with diverse personas to harden it or drop it with confidence
+      source: ./skills/bmad-forge-idea
+      version: 6.12.4
+
+    - name: bmad-help
+      description: Analyzes current state and user query to answer BMad questions or recommend the next skill(s) to use
+      source: ./skills/bmad-help
+      version: 6.12.4
+
+    - name: bmad-party-mode
+      description: Orchestrates lively group discussions between installed BMAD agents or custom personas
+      source: ./skills/bmad-party-mode
+      version: 6.12.4
+
+    - name: bmad-review
+      description: Runs one or more installed review lenses (adversarial, edge cases, verification gaps, structure, prose) and reports triaged findings
+      source: ./skills/bmad-review
+      version: 6.12.4
 

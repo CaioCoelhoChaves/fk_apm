@@ -48,6 +48,7 @@ With `fk_apm`:
 | **`default`** | Default essential skill bundle with Linear MCP server | `skill-creator`, `skill-bundle-manager`, `git-workflow`, `linear-workflow`, `semver-changelog` | [`bundles/default/`](bundles/default/apm.yml) |
 | **`flutter`** | Complete Flutter development bundle | `flutter-widgets`, `flutter-navigation`, `flutter-testing`, `flutter-accessibility`, `flutter-internationalization` | [`bundles/flutter/`](bundles/flutter/apm.yml) |
 | **`spring-boot`** | Complete enterprise Spring Boot 3.x development bundle | `spring-boot-architecture`, `spring-boot-persistence`, `spring-boot-api-resilience`, `spring-boot-testing` | [`bundles/spring-boot/`](bundles/spring-boot/apm.yml) |
+| **`bmad`** | BMad Method v6 agile AI-driven development bundle (brainstorming, deep-recon, review, party-mode, and ideation) | `bmad-advanced-elicitation`, `bmad-brainstorming`, `bmad-customize`, `bmad-deep-recon`, `bmad-forge-idea`, `bmad-help`, `bmad-party-mode`, `bmad-review` | [`bundles/bmad/`](bundles/bmad/apm.yml) |
 
 ### Individual Skills
 
@@ -67,6 +68,14 @@ With `fk_apm`:
 | **`spring-boot-persistence`** | High-performance persistence, sequential ULID primary keys, two-phase pagination, and Liquibase migrations | `Read`, `Glob`, `Grep`, `Write`, `Edit`, `Bash` | [`skills/spring-boot-persistence/`](skills/spring-boot-persistence/SKILL.md) |
 | **`spring-boot-api-resilience`** | REST API design with Java records, Bean Validation, RFC 7807 Problem Details, and distributed resilience with `X-Idempotency-Id` | `Read`, `Glob`, `Grep`, `Write`, `Edit`, `Bash` | [`skills/spring-boot-api-resilience/`](skills/spring-boot-api-resilience/SKILL.md) |
 | **`spring-boot-testing`** | Testing pyramid, domain tests, test slices (`@WebMvcTest`, `@DataJpaTest`), Testcontainers, and Actuator observability | `Read`, `Glob`, `Grep`, `Write`, `Edit`, `Bash` | [`skills/spring-boot-testing/`](skills/spring-boot-testing/SKILL.md) |
+| **`bmad-advanced-elicitation`** | Push the LLM to reconsider, refine, and improve its recent output with deeper critique methods | `Read`, `Glob`, `Grep`, `Bash` | [`skills/bmad-advanced-elicitation/`](skills/bmad-advanced-elicitation/SKILL.md) |
+| **`bmad-brainstorming`** | Facilitate a brainstorming session using diverse creative techniques | `Read`, `Glob`, `Grep`, `Bash` | [`skills/bmad-brainstorming/`](skills/bmad-brainstorming/SKILL.md) |
+| **`bmad-customize`** | Authors and updates customization overrides for installed BMad skills | `Read`, `Glob`, `Grep`, `Write`, `Edit`, `Bash` | [`skills/bmad-customize/`](skills/bmad-customize/SKILL.md) |
+| **`bmad-deep-recon`** | Research a topic to support a decision via market, domain, technical, competitive, user-voice, or academic literature analysis | `Read`, `Glob`, `Grep`, `Bash` | [`skills/bmad-deep-recon/`](skills/bmad-deep-recon/SKILL.md) |
+| **`bmad-forge-idea`** | Test a half-formed idea in a questioning conversation with diverse personas to harden it or drop it with confidence | `Read`, `Glob`, `Grep`, `Bash` | [`skills/bmad-forge-idea/`](skills/bmad-forge-idea/SKILL.md) |
+| **`bmad-help`** | Analyzes current state and user query to answer BMad questions or recommend the next skill(s) to use | `Read`, `Glob`, `Grep`, `Bash` | [`skills/bmad-help/`](skills/bmad-help/SKILL.md) |
+| **`bmad-party-mode`** | Orchestrates lively group discussions between installed BMAD agents or custom personas | `Read`, `Glob`, `Grep`, `Bash` | [`skills/bmad-party-mode/`](skills/bmad-party-mode/SKILL.md) |
+| **`bmad-review`** | Runs one or more installed review lenses (adversarial, edge cases, verification gaps, structure, prose) and reports triaged findings | `Read`, `Glob`, `Grep`, `Bash` | [`skills/bmad-review/`](skills/bmad-review/SKILL.md) |
 
 
 ---
@@ -222,15 +231,34 @@ fk_apm/
 │       └── apm-ci.yml                 # Automated CI workflow
 ├── .claude-plugin/
 │   └── marketplace.json               # Generated Claude plugin marketplace
+├── _bmad/                             # BMAD v6 framework configuration, scripts & shims
+│   ├── _config/                       # BMAD manifests & help catalog
+│   ├── custom/                        # Team customizations & config overrides
+│   ├── scripts/                       # BMAD python runtime scripts & utilities
+│   └── config.toml                    # BMAD core configuration
 ├── bundles/
+│   ├── bmad/                          # 'bmad' bundle manifest & lockfile (v6.12.4)
+│   │   ├── apm.yml
+│   │   └── apm.lock.yaml
 │   ├── default/                       # 'default' bundle manifest & lockfile
 │   │   ├── apm.yml
 │   │   └── apm.lock.yaml
-│   └── flutter/                       # 'flutter' bundle manifest & lockfile
+│   ├── flutter/                       # 'flutter' bundle manifest & lockfile
+│   │   ├── apm.yml
+│   │   └── apm.lock.yaml
+│   └── spring-boot/                   # 'spring-boot' bundle manifest & lockfile
 │       ├── apm.yml
 │       └── apm.lock.yaml
 ├── skills/
 │   ├── _template/                     # Starter template for new skills
+│   ├── bmad-advanced-elicitation/     # Socratic, first principles & critique elicitation
+│   ├── bmad-brainstorming/            # Diverse brainstorming & ideation techniques
+│   ├── bmad-customize/                # BMad customization overrides authoring
+│   ├── bmad-deep-recon/               # Deep recon & multi-type research skill
+│   ├── bmad-forge-idea/               # Multi-persona idea stress-testing & hardening
+│   ├── bmad-help/                     # BMad workflow guidance & catalog helper
+│   ├── bmad-party-mode/               # Multi-agent roundtables & party mode
+│   ├── bmad-review/                   # Adversarial, edge cases & prose review lenses
 │   ├── flutter-accessibility/         # Accessibility auditing skill & references
 │   ├── flutter-internationalization/  # i18n & l10n skill & references
 │   ├── flutter-navigation/            # GoRouter skill & references
@@ -238,9 +266,14 @@ fk_apm/
 │   ├── flutter-widgets/               # Flutter widget architecture skill
 │   ├── git-workflow/                  # Gitflow & Conventional Commits via GitHub CLI (gh)
 │   ├── linear-workflow/               # Linear issue lifecycle, Front/Back subproject tagging & task sync
+│   ├── semver-changelog/              # Keep a Changelog 1.1.0 & SemVer 2.0.0 manager
 │   ├── skill-bundle-manager/          # Repository skill & bundle registration manager
-│   └── skill-creator/                 # AI skill authoring & benchmarking
-├── .gitignore                         # Configured for APM caches & build artifacts
+│   ├── skill-creator/                 # AI skill authoring & benchmarking
+│   ├── spring-boot-api-resilience/    # REST API design & idempotency
+│   ├── spring-boot-architecture/      # Hexagonal / DDD architecture & ArchUnit
+│   ├── spring-boot-persistence/       # Spring Data JPA, ULIDs & Liquibase
+│   └── spring-boot-testing/           # Test slices, Testcontainers & Actuator observability
+├── .gitignore                         # Configured for APM caches, BMAD outputs & personal configs
 ├── apm.yml                            # Primary APM manifest & marketplace catalog
 ├── apm.lock.yaml                      # Root lockfile
 ├── CONTRIBUTING.md                    # Guidelines for authoring skills and bundles
