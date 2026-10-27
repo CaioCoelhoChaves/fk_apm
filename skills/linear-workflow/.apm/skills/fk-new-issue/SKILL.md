@@ -57,13 +57,13 @@ Este comando orquestra o rito de planejamento e decomposição de tarefas no Lin
   - `Editar...`: permite ao desenvolvedor indicar correções ou novos cards em texto livre. O agente **retorna à Etapa 1**, refina a divisão de tarefas no chat e apresenta novo Consent Gate. **Zero mutação é estritamente mantida**.
 
 ### 3. Etapa 3: Execução Atômica
-- Após aprovação, crie cada card no Linear via MCP (`linear_create_issue`) ou CLI (omita `--label` caso o card não possua tag em repositórios de tooling/skills):
+- Após aprovação, grave a descrição estruturada de cada card em um arquivo UTF-8 temporário e crie cada card no Linear via MCP (`linear_create_issue`) ou CLI usando `--description-file` (nunca passe Markdown com crases `` ` `` ou aspas duplas via `--description "..."` inline para evitar corrupção no PowerShell/Bash; omita `--label` caso o card não possua tag em repositórios de tooling/skills):
   ```bash
   python .agents/skills/linear-workflow/scripts/linear_api.py create-issue \
     --team-id "<team-id>" \
     --project-id "<project-id>" \
     --title "<título>" \
-    --description "<descrição>" \
+    --description-file "<descricao-card-utf8.md>" \
     --state "Backlog"   # use "Todo" somente na exceção explícita aprovada no Consent Gate \
     --label "<Front, Back ou Feature>"  # omita --label se optado por sem tag em projetos de tooling/skills
   ```

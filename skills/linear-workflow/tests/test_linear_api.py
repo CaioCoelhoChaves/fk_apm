@@ -304,7 +304,8 @@ class TestLinearApiUpdateIssue(unittest.TestCase):
             force_comment=False,
             description="Updated body",
             description_file=None,
-            title="feat(linear-workflow): new title"
+            title="feat(linear-workflow): new title",
+            comment_file=None
         )
 
     @patch("linear_api.resolve_or_create_label_id", return_value="label-feature-id")
@@ -413,6 +414,198 @@ class TestLinearApiUpdateIssue(unittest.TestCase):
         self.assertIn("mandatorily updating the card title (`--title`) and description", multi_harness)
         self.assertIn("--title", states_ref)
         self.assertIn("--description", states_ref)
+
+    @patch("linear_api.resolve_state_id", return_value="state-backlog-id")
+    @patch("linear_api.execute_graphql")
+    def test_create_issue_with_description_file(self, mock_execute, mock_resolve_state):
+        mock_execute.return_value = {
+            "success": True,
+            "data": {
+                "issueCreate": {
+                    "success": True,
+                    "issue": {
+                        "id": "uuid-new-40",
+                        "identifier": "FAL-40",
+                        "title": "fix(workflows): prevent shell backtick corruption"
+                    }
+                }
+            }
+        }
+
+        markdown_body = (
+            "### Type of Change\n"
+            "- [x] `feat`: New feature\n"
+            "- [ ] `fix`: Bug fix\n"
+            "- [ ] `test`: Test suite update\n"
+            "- [ ] `refactor`: Code refactoring\n"
+            "- [ ] `chore`: Maintenance\n"
+            'Example with "double quotes" and `backticks`.'
+        )
+        with tempfile.NamedTemporaryFile("w+", delete=False, encoding="utf-8") as tf:
+            tf.write(markdown_body)
+            tf_path = tf.name
+
+        try:
+            with patch("builtins.print"):
+                linear_api.cmd_create_issue(
+                    api_key="fake-key",
+                    team_id="team-1",
+                    title="fix(workflows): prevent shell backtick corruption",
+                    project_id="proj-1",
+                    state_name="Backlog",
+                    description_file=tf_path
+                )
+
+            variables = mock_execute.call_args[0][2]
+            self.assertEqual(variables["input"]["description"], markdown_body)
+            self.assertIn("`feat`", variables["input"]["description"])
+            self.assertIn("`fix`", variables["input"]["description"])
+            self.assertIn("`test`", variables["input"]["description"])
+            self.assertIn("`refactor`", variables["input"]["description"])
+            self.assertIn("`chore`", variables["input"]["description"])
+            self.assertIn('"double quotes"', variables["input"]["description"])
+        finally:
+            if os.path.exists(tf_path):
+                os.remove(tf_path)
+
+    @patch("linear_api.execute_graphql")
+    def test_update_issue_with_comment_file(self, mock_execute):
+        mock_execute.side_effect = [
+            {
+                "success": True,
+                "data": {
+                    "issue": {
+                        "id": "uuid-40",
+                        "identifier": "FAL-40",
+                        "title": "Test Issue",
+                        "team": {"id": "team-1"},
+                        "comments": {"nodes": []}
+                    }
+                }
+            },
+            {
+                "success": True,
+                "data": {
+                    "commentCreate": {
+                        "success": True,
+                        "comment": {
+                            "id": "comment-uuid-40",
+                            "body": "🤖 **AI Agent Update**: Tested `feat`, `fix`, `test`, `refactor`, `chore` with \"quotes\".",
+                            "createdAt": "2026-10-27T01:00:00Z"
+                        }
+                    }
+                }
+            }
+        ]
+
+        comment_markdown = '🤖 **AI Agent Update**: Tested `feat`, `fix`, `test`, `refactor`, `chore` with "quotes".'
+        with tempfile.NamedTemporaryFile("w+", delete=False, encoding="utf-8") as tf:
+            tf.write(comment_markdown)
+            tf_path = tf.name
+
+        try:
+            with patch("builtins.print") as mock_print:
+                linear_api.cmd_update_issue(
+                    api_key="fake-key",
+                    issue_id="FAL-40",
+                    comment_file=tf_path
+                )
+
+            self.assertEqual(mock_execute.call_count, 2)
+            comment_vars = mock_execute.call_args_list[1][0][2]
+            self.assertEqual(comment_vars["input"]["body"], comment_markdown)
+            printed_payload = json.loads(mock_print.call_args[0][0])
+            self.assertTrue(printed_payload["comment"]["created"])
+        finally:
+            if os.path.exists(tf_path):
+                os.remove(tf_path)
+
+    @patch("linear_api.cmd_update_issue")
+    def test_create_comment_with_comment_file(self, mock_cmd_update):
+        linear_api.cmd_create_comment(
+            api_key="fake-key",
+            issue_id="FAL-40",
+            comment=None,
+            force=True,
+            comment_file="comment.md"
+        )
+        mock_cmd_update.assert_called_once_with(
+            "fake-key",
+            issue_id="FAL-40",
+            comment=None,
+            comment_file="comment.md",
+            force_comment=True
+        )
+
+    @patch("linear_api.cmd_create_comment")
+    @patch("linear_api.cmd_update_issue")
+    @patch("linear_api.cmd_create_issue")
+    @patch("linear_api.resolve_api_key", return_value="fake-key")
+    def test_cli_parses_file_arguments(self, mock_resolve_key, mock_create_issue, mock_update_issue, mock_create_comment):
+        with patch.object(sys, "argv", [
+            "linear_api.py", "create-issue",
+            "--team-id", "team-1",
+            "--title", "fix(workflows): title",
+            "--description-file", "desc.md",
+            "--state", "Backlog"
+        ]):
+            linear_api.main()
+        mock_create_issue.assert_called_once_with(
+            "fake-key", "team-1", "fix(workflows): title", "", None, "Backlog", None, description_file="desc.md"
+        )
+
+        with patch.object(sys, "argv", [
+            "linear_api.py", "update-issue", "FAL-40",
+            "--state", "In Review",
+            "--description-file", "desc.md",
+            "--comment-file", "comment.md"
+        ]):
+            linear_api.main()
+        mock_update_issue.assert_called_once_with(
+            "fake-key", "FAL-40",
+            team_id=None,
+            state_name="In Review",
+            comment=None,
+            force_comment=False,
+            description=None,
+            description_file="desc.md",
+            title=None,
+            comment_file="comment.md"
+        )
+
+        with patch.object(sys, "argv", [
+            "linear_api.py", "create-comment", "FAL-40",
+            "--comment-file", "comment.md"
+        ]):
+            linear_api.main()
+        mock_create_comment.assert_called_once_with(
+            "fake-key", "FAL-40", None, False, comment_file="comment.md"
+        )
+
+    def test_skill_files_enforce_markdown_file_payloads(self):
+        skill_root = Path(__file__).resolve().parent.parent
+        repo_root = skill_root.parent.parent
+
+        git_skill = (repo_root / "skills" / "git-workflow" / "SKILL.md").read_text(encoding="utf-8")
+        gitflow_ref = (repo_root / "skills" / "git-workflow" / "references" / "gitflow.md").read_text(encoding="utf-8")
+        linear_skill = (skill_root / "SKILL.md").read_text(encoding="utf-8")
+        fk_new_issue = (skill_root / ".apm" / "skills" / "fk-new-issue" / "SKILL.md").read_text(encoding="utf-8")
+        fk_tech_analysis = (skill_root / ".apm" / "skills" / "fk-technical-analysis" / "SKILL.md").read_text(encoding="utf-8")
+        fk_develop = (skill_root / ".apm" / "skills" / "fk-develop" / "SKILL.md").read_text(encoding="utf-8")
+        fk_fix = (skill_root / ".apm" / "skills" / "fk-fix" / "SKILL.md").read_text(encoding="utf-8")
+
+        self.assertIn("--body-file", git_skill)
+        self.assertIn("--body-file", gitflow_ref)
+        self.assertIn("--description-file", linear_skill)
+        self.assertIn("--comment-file", linear_skill)
+        self.assertIn("--body-file", linear_skill)
+        self.assertIn("--description-file", fk_new_issue)
+        self.assertIn("--description-file", fk_tech_analysis)
+        self.assertIn("--comment-file", fk_tech_analysis)
+        self.assertIn("--comment-file", fk_develop)
+        self.assertIn("--body-file", fk_develop)
+        self.assertIn("--comment-file", fk_fix)
+        self.assertIn("--body-file", fk_fix)
 
 if __name__ == "__main__":
     unittest.main()

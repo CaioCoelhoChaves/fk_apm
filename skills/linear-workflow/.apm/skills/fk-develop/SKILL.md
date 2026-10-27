@@ -37,11 +37,11 @@ Este comando orquestra o ciclo completo de desenvolvimento de uma tarefa no Line
 - **Planejamento da Branch**: Adote o nome da branch indicado na especificação técnica ou formate no padrão Linear `<type>/<issue-key>-<slug>` (ex: `feat/FAL-34-persistir-especificacao-tecnica-linear`).
 
 ### 2. Transição Imediata para In Progress (Sem Confirmação)
-- Transicione o card no Linear para **`In Progress`** com comentário inicial informando a branch e premissas assumidas (se houver):
+- Transicione o card no Linear para **`In Progress`** com comentário inicial via `--comment-file` (arquivo UTF-8 temporário para evitar corrupção de crases e aspas no shell) informando a branch e premissas assumidas (se houver):
   ```bash
   python .agents/skills/linear-workflow/scripts/linear_api.py update-issue "<issue-id>" \
     --state "In Progress" \
-    --comment "🤖 **AI Agent Update**: Início autônomo do desenvolvimento na branch <branch-name>."
+    --comment-file "<comentario-inicio-utf8.md>"
   ```
   *(A idempotência de 10 minutos é garantida pelo CLI).*
 
@@ -59,15 +59,15 @@ Este comando orquestra o ciclo completo de desenvolvimento de uma tarefa no Line
 - Ao concluir a codificação e aprovação dos testes locais:
   - Realize commit semântico seguindo a skill `git-workflow` (Conventional Commits 1.0.0).
   - Envie a branch para o repositório remoto (`git push -u origin <branch-name>`).
-  - Abra o Pull Request no GitHub:
+  - Grave o corpo do Pull Request em um arquivo UTF-8 temporário e abra o PR no GitHub utilizando `--body-file` (proibido usar `--body "..."` inline com crases `` `feat` ``, `` `fix` ``, etc.):
     ```bash
-    gh pr create --title "..." --body "..."
+    gh pr create --title "<type>(<scope>): <description>" --body-file "<pr-body-utf8.md>"
     ```
-  - **Transicione obrigatoriamente o card para `In Review`** com o link do PR e sumário técnico:
+  - **Transicione obrigatoriamente o card para `In Review`** com o link do PR e sumário técnico via `--comment-file`:
     ```bash
     python .agents/skills/linear-workflow/scripts/linear_api.py update-issue "<issue-id>" \
       --state "In Review" \
-      --comment "🤖 **AI Agent Update**: Desenvolvimento concluído. PR aberto: <pr-url>"
+      --comment-file "<comentario-pr-utf8.md>"
     ```
 
 ---

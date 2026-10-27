@@ -486,11 +486,31 @@ def resolve_or_create_label_id(api_key: str, team_id: str, label_name: str) -> O
         return create_res["data"]["issueLabelCreate"]["issueLabel"]["id"]
     return None
 
-def cmd_create_issue(api_key: str, team_id: str, title: str, description: str, project_id: Optional[str] = None, state_name: Optional[str] = None, labels: Optional[List[str]] = None):
+def cmd_create_issue(
+    api_key: str,
+    team_id: str,
+    title: str,
+    description: str = "",
+    project_id: Optional[str] = None,
+    state_name: Optional[str] = None,
+    labels: Optional[List[str]] = None,
+    description_file: Optional[str] = None
+):
+    resolved_description = description
+    if description_file:
+        try:
+            resolved_description = Path(description_file).read_text(encoding="utf-8")
+        except Exception as e:
+            print(json.dumps({
+                "success": False,
+                "error": f"Failed to read description file '{description_file}': {e}"
+            }, indent=2, ensure_ascii=False))
+            return
+
     input_data: Dict[str, Any] = {
         "teamId": team_id,
         "title": title,
-        "description": description or ""
+        "description": resolved_description or ""
     }
     if project_id:
         input_data["projectId"] = project_id
@@ -519,7 +539,8 @@ def cmd_update_issue(
     force_comment: bool = False,
     description: Optional[str] = None,
     description_file: Optional[str] = None,
-    title: Optional[str] = None
+    title: Optional[str] = None,
+    comment_file: Optional[str] = None
 ):
     """
     Atomic update for Linear issue:
@@ -559,6 +580,19 @@ def cmd_update_issue(
             output["description_update"] = {
                 "success": False,
                 "error": f"Failed to read description file '{description_file}': {e}"
+            }
+            print(json.dumps(output, indent=2, ensure_ascii=False))
+            return
+
+    # Handle comment resolution
+    resolved_comment = comment
+    if comment_file:
+        try:
+            resolved_comment = Path(comment_file).read_text(encoding="utf-8")
+        except Exception as e:
+            output["comment"] = {
+                "success": False,
+                "error": f"Failed to read comment file '{comment_file}': {e}"
             }
             print(json.dumps(output, indent=2, ensure_ascii=False))
             return
@@ -621,9 +655,9 @@ def cmd_update_issue(
                 output["description_update"] = update_res
 
     # 3. Add comment if requested with idempotency check
-    if comment:
+    if resolved_comment:
         existing_comments = issue_data.get("comments", {}).get("nodes", [])
-        is_dup, dup_node = check_comment_idempotency(existing_comments, comment, window_minutes=10.0)
+        is_dup, dup_node = check_comment_idempotency(existing_comments, resolved_comment, window_minutes=10.0)
 
         if is_dup and not force_comment:
             output["comment"] = {
@@ -635,7 +669,7 @@ def cmd_update_issue(
             }
         else:
             c_res = execute_graphql(api_key, CREATE_COMMENT_MUTATION, {
-                "input": {"issueId": real_uuid, "body": comment}
+                "input": {"issueId": real_uuid, "body": resolved_comment}
             })
             if c_res.get("success"):
                 output["comment"] = {
@@ -648,9 +682,21 @@ def cmd_update_issue(
 
     print(json.dumps(output, indent=2, ensure_ascii=False))
 
-def cmd_create_comment(api_key: str, issue_id: str, comment: str, force: bool = False):
+def cmd_create_comment(
+    api_key: str,
+    issue_id: str,
+    comment: Optional[str] = None,
+    force: bool = False,
+    comment_file: Optional[str] = None
+):
     """Create comment on issue with idempotency protection."""
-    cmd_update_issue(api_key, issue_id=issue_id, comment=comment, force_comment=force)
+    if not comment and not comment_file:
+        print(json.dumps({
+            "success": False,
+            "error": "Either a comment argument or --comment-file must be provided."
+        }, indent=2, ensure_ascii=False))
+        return
+    cmd_update_issue(api_key, issue_id=issue_id, comment=comment, comment_file=comment_file, force_comment=force)
 
 def main():
     parser = argparse.ArgumentParser(description="Linear GraphQL API helper CLI")
@@ -689,6 +735,7 @@ def main():
     c_issue.add_argument("--team-id", required=True, help="Linear Team ID")
     c_issue.add_argument("--title", required=True, help="Issue title")
     c_issue.add_argument("--description", default="", help="Issue description")
+    c_issue.add_argument("--description-file", help="Path to UTF-8 file containing issue description markdown")
     c_issue.add_argument("--project-id", help="Linear Project ID")
     c_issue.add_argument("--state", help="State name (e.g., 'Backlog', 'Todo', 'In Progress')")
     c_issue.add_argument("--label", action="append", dest="labels", help="Labels to attach (e.g. Front, Back)")
@@ -700,14 +747,16 @@ def main():
     u_issue.add_argument("--state", help="New state name (e.g., 'Technical Analysis', 'Todo', 'In Progress', 'In Review', 'Done')")
     u_issue.add_argument("--title", help="New issue title")
     u_issue.add_argument("--description", help="New issue description markdown")
-    u_issue.add_argument("--description-file", help="Path to file containing new description markdown")
+    u_issue.add_argument("--description-file", help="Path to UTF-8 file containing new description markdown")
     u_issue.add_argument("--comment", help="Comment body to post")
+    u_issue.add_argument("--comment-file", help="Path to UTF-8 file containing comment markdown body to post")
     u_issue.add_argument("--force-comment", action="store_true", help="Force posting comment even if identical comment exists within 10 minutes")
 
     # create-comment
     c_comment = subparsers.add_parser("create-comment", help="Create comment on issue with idempotency protection")
     c_comment.add_argument("issue_id", help="Linear Issue ID or identifier")
-    c_comment.add_argument("comment", help="Comment body text")
+    c_comment.add_argument("comment", nargs="?", default=None, help="Comment body text")
+    c_comment.add_argument("--comment-file", help="Path to UTF-8 file containing comment markdown body to post")
     c_comment.add_argument("--force", action="store_true", help="Force posting comment even if identical comment exists within 10 minutes")
 
     args = parser.parse_args()
@@ -736,7 +785,16 @@ def main():
     elif args.command == "list-states":
         cmd_list_states(api_key, args.team_id)
     elif args.command == "create-issue":
-        cmd_create_issue(api_key, args.team_id, args.title, args.description, args.project_id, args.state, args.labels)
+        cmd_create_issue(
+            api_key,
+            args.team_id,
+            args.title,
+            args.description,
+            args.project_id,
+            args.state,
+            args.labels,
+            description_file=args.description_file
+        )
     elif args.command == "update-issue":
         cmd_update_issue(
             api_key,
@@ -747,10 +805,11 @@ def main():
             force_comment=args.force_comment,
             description=args.description,
             description_file=args.description_file,
-            title=args.title
+            title=args.title,
+            comment_file=args.comment_file
         )
     elif args.command == "create-comment":
-        cmd_create_comment(api_key, args.issue_id, args.comment, args.force)
+        cmd_create_comment(api_key, args.issue_id, args.comment, args.force, comment_file=args.comment_file)
 
 if __name__ == "__main__":
     main()

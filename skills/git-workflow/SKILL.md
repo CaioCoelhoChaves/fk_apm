@@ -38,6 +38,13 @@ A standardized workflow for AI coding agents to handle Git commits, branch lifec
    - Never stage secrets, credentials, or untracked temporary files.
    - Always ensure remote tracking is established before creating a PR (`git push -u origin <branch>`).
 
+5. **Shell Backtick & Markdown Payload Safety (`--body-file` Requirement)**:
+   - Passing Markdown payloads inline via CLI arguments (`gh pr create --body "..."` or `gh pr comment --body "..."`) causes severe corruption at the OS/shell layer before reaching `gh`:
+     1. **Backtick Escape & Expansion**: In **Windows PowerShell**, double-quoted strings (`"..."`) interpret the backtick (`` ` ``) as an escape character (`` `f `` ➔ Form Feed `\x0c`, `` `t `` ➔ Tab `\t`, `` `r `` ➔ Carriage Return `\r`, `` `b `` ➔ Backspace `\x08`, `` `n `` ➔ Newline `\n`, or strip standalone backticks), corrupting `` `feat` `` ➔ `eat`, `` `fix` `` ➔ `ix`, `` `test` `` ➔ `est`, `` `refactor` `` ➔ `efactor`, and `` `chore` `` ➔ `chore`. In **Bash/Zsh**, backticks inside `"..."` trigger command substitution.
+     2. **Win32 Double-Quote Stripping (`CommandLineToArgvW`)**: In Windows PowerShell 5.1, even single-quoted strings (`'...'` or `@' ... '@`) or variables (`$body`) passed to native binaries (`gh.exe`) fail to escape internal double quotes (`"`), causing `CommandLineToArgvW` to split arguments or strip quotes from Markdown payloads.
+   - **Mandatory File-First Standard**: Always write the PR description or comment Markdown to a UTF-8 file (preferring the agent's native file creation tool or `Set-Content -Path <file> -Encoding utf8` with a literal `@' ... '@` here-string in PowerShell / `cat <<'EOF' > <file>` in Bash) and pass `--body-file <path>` to `gh pr create` and `gh pr comment`.
+   - **Explicit Prohibition**: **Never** pass Markdown containing backticks (`` ` ``), code blocks, or double quotes directly via inline `--body "..."`.
+
 ---
 
 ## Workflow 1: Creating a Commit
@@ -158,11 +165,17 @@ Use this structured markdown PR body template:
 Closes #<issue-number>
 ```
 
-### Step 4: Execute via GitHub CLI (`gh pr create`)
-Create the PR using the `gh` command in the terminal:
+### Step 4: Execute via GitHub CLI (`gh pr create --body-file`)
+Write the Markdown body to a temporary UTF-8 file (e.g., in the scratch/temp directory) and create the PR using `--body-file` to prevent shell backtick and quote corruption:
 ```bash
-gh pr create --base <base-branch> --head <current-branch> --title "<type>(<scope>): <description>" --body "<body-content>"
+gh pr create --base <base-branch> --head <current-branch> --title "<type>(<scope>): <description>" --body-file "<pr-body-utf8.md>"
 ```
+When posting comments on an existing PR, also use `--body-file`:
+```bash
+gh pr comment <pr-number> --body-file "<pr-comment-utf8.md>"
+```
+> [!IMPORTANT]
+> Never use inline `--body "..."` when the Markdown payload contains backticks (such as `` `feat` ``, `` `fix` ``, `` `test` ``, `` `refactor` ``, `` `chore` ``), code blocks, or double quotes. Always use `--body-file`.
 
 ### Step 5: Verify PR Status
 Confirm the PR was created successfully:

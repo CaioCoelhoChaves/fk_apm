@@ -75,9 +75,9 @@ gitGraph
      ```bash
      git push -u origin feature/dark-mode
      ```
-  4. Open Pull Request targeting `develop` (never `main`):
+  4. Open Pull Request targeting `develop` (never `main`), passing the Markdown description via `--body-file` (UTF-8) to prevent shell backtick corruption:
      ```bash
-     gh pr create --base develop --head feature/dark-mode --title "feat(ui): add dark mode theme support"
+     gh pr create --base develop --head feature/dark-mode --title "feat(ui): add dark mode theme support" --body-file "<pr-body-utf8.md>"
      ```
   5. After PR review and merge, delete local and remote feature branch.
 
@@ -97,9 +97,9 @@ gitGraph
      - Documentation and CHANGELOG updates.
      - Minor bug fixes discovered during release validation (no new features!).
   3. When ready to ship:
-     - Open PR into `main`:
+     - Open PR into `main` using `--body-file`:
        ```bash
-       gh pr create --base main --head release/v1.2.0 --title "chore(release): prepare v1.2.0"
+       gh pr create --base main --head release/v1.2.0 --title "chore(release): prepare v1.2.0" --body-file "<pr-body-utf8.md>"
        ```
      - Merge into `main` and tag the release:
        ```bash
@@ -130,9 +130,9 @@ gitGraph
      ```
   2. Commit fix following Conventional Commits (`fix(auth): ...`).
   3. Bump patch version.
-  4. Open PR to merge into `main`:
+  4. Open PR to merge into `main` using `--body-file`:
      ```bash
-     gh pr create --base main --head hotfix/v1.2.1-login-crash --title "fix(auth): handle null token on startup"
+     gh pr create --base main --head hotfix/v1.2.1-login-crash --title "fix(auth): handle null token on startup" --body-file "<pr-body-utf8.md>"
      ```
   5. Merge into `main`, tag with new patch version (`v1.2.1`), and push tags.
   6. Merge back into `develop`:

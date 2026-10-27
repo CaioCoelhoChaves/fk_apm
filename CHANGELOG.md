@@ -26,5 +26,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Garantir exibição prévia do plano de tarefas/análise no chat antes do Consent Gate (ask_question) com resumo embutido na pergunta e suportar label Feature/sem tag em projetos de tooling/skills (FAL-32)
+- Prevent shell backtick and quote corruption in GitHub CLI and Linear Markdown payloads by enforcing UTF-8 file flags (--description-file, --comment-file, --body-file) (FAL-40)
 
 ### Security
