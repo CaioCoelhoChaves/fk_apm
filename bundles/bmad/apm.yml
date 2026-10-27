@@ -4,14 +4,9 @@ description: BMad Method v6 agile AI-driven development bundle (brainstorming, d
 author: Caio Coelho Chaves
 license: MIT
 
+targets:
+  - antigravity
+
 dependencies:
-  apm:
-    - ../../skills/bmad-advanced-elicitation
-    - ../../skills/bmad-brainstorming
-    - ../../skills/bmad-customize
-    - ../../skills/bmad-deep-recon
-    - ../../skills/bmad-forge-idea
-    - ../../skills/bmad-help
-    - ../../skills/bmad-party-mode
-    - ../../skills/bmad-review
+  apm: []
   mcp: []

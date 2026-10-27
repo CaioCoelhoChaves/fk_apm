@@ -237,9 +237,10 @@ fk_apm/
 │   ├── scripts/                       # BMAD python runtime scripts & utilities
 │   └── config.toml                    # BMAD core configuration
 ├── bundles/
-│   ├── bmad/                          # 'bmad' bundle manifest & lockfile (v6.12.4)
+│   ├── bmad/                          # 'bmad' bundle package & lockfile (v6.12.4)
 │   │   ├── apm.yml
-│   │   └── apm.lock.yaml
+│   │   ├── apm.lock.yaml
+│   │   └── skills/                    # 8 autonomous BMAD v6 workflow skills
 │   ├── default/                       # 'default' bundle manifest & lockfile
 │   │   ├── apm.yml
 │   │   └── apm.lock.yaml
@@ -251,14 +252,6 @@ fk_apm/
 │       └── apm.lock.yaml
 ├── skills/
 │   ├── _template/                     # Starter template for new skills
-│   ├── bmad-advanced-elicitation/     # Socratic, first principles & critique elicitation
-│   ├── bmad-brainstorming/            # Diverse brainstorming & ideation techniques
-│   ├── bmad-customize/                # BMad customization overrides authoring
-│   ├── bmad-deep-recon/               # Deep recon & multi-type research skill
-│   ├── bmad-forge-idea/               # Multi-persona idea stress-testing & hardening
-│   ├── bmad-help/                     # BMad workflow guidance & catalog helper
-│   ├── bmad-party-mode/               # Multi-agent roundtables & party mode
-│   ├── bmad-review/                   # Adversarial, edge cases & prose review lenses
 │   ├── flutter-accessibility/         # Accessibility auditing skill & references
 │   ├── flutter-internationalization/  # i18n & l10n skill & references
 │   ├── flutter-navigation/            # GoRouter skill & references
