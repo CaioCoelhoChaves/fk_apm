@@ -24,5 +24,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Remover aliases curtos (fk-dev, fk-ta e fk-issue) das sub-skills e documentação do linear-workflow (FAL-26)
 
 ### Fixed
+- Garantir exibição prévia do plano de tarefas/análise no chat antes do Consent Gate (ask_question) com resumo embutido na pergunta e suportar label Feature/sem tag em projetos de tooling/skills (FAL-32)
 
 ### Security

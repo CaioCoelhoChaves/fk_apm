@@ -40,8 +40,8 @@ A standardized workflow for AI coding agents to integrate Linear issue managemen
 
 4. **Mandatory 3-Stage Protocol (*Consent Gate*) for Planning/Analysis & Autonomous Execution Exception**:
    - For planning and analysis lifecycle commands (`/fk-new-issue`, `/fk-technical-analysis`) and natural language triggers, the agent must strictly follow this protocol across all harnesses (Google Antigravity, Claude Code, OpenCode, Cursor, GitHub Copilot):
-     - **Stage 1 (Initial Presentation & Questions)**: The agent prepares the plan/analysis in chat/workspace, raising options and doubts with the developer. **Zero mutation**: No API calls altering Linear (`update-issue`, `create-issue`, `create-comment`) are permitted in this stage. Only read queries (`get-issue`, `search-issues`, `list-states`, `list-projects`) are allowed.
-     - **Stage 2 (Consent Gate - Interactive Prompt & Options)**: After resolving questions, the agent presents the consent confirmation using the **native question tool** of the active harness:
+     - **Stage 1 (Initial Presentation, Pre-Render Gate & Questions)**: The agent prepares the plan/analysis in chat/workspace, raising options and doubts with the developer. **Zero mutation**: No API calls altering Linear (`update-issue`, `create-issue`, `create-comment`) are permitted in this stage. Only read queries (`get-issue`, `search-issues`, `list-states`, `list-projects`) are allowed. **Pre-Render Gate (Proibição de Consent Gate Cego)**: It is **strictly forbidden** to invoke `ask_question` / `AskUserQuestion` without first rendering the complete proposal (full task decomposition table in `/fk-new-issue` or all 5 mandatory sections in `/fk-technical-analysis`) in the visible text of the chat message.
+     - **Stage 2 (Consent Gate - Interactive Prompt with Concise Summary & Options)**: After rendering the full proposal visibly in chat and resolving questions, the agent presents the consent confirmation using the **native question tool** of the active harness, embedding a **concise summary of the plan/analysis directly inside the `question` field** as an additional safeguard:
        - **Google Antigravity**: tool nativa `ask_question`.
        - **Claude Code**: tool nativa `AskUserQuestion`.
        - **OpenCode v2**: tool nativa de perguntas (`ask`/`question`).
@@ -61,9 +61,11 @@ A standardized workflow for AI coding agents to integrate Linear issue managemen
      - Align with Linear Git automation: use the standard branch format `<type>/<identifier>-<slug>` (e.g. `feat/RENT-104-user-auth`).
      - **Idempotency Protection**: `scripts/linear_api.py` inspects recent card comments to prevent duplicate comments with identical body/payload within a 10-minute window.
 
-6. **Parent Project & Subproject Component Labeling**:
-   - Detect when a repository represents a subproject of a unified Linear project (e.g., local project `Rent Easy Frontend` or `Rent Easy Backend` mapping to parent Linear project `Rent Easy`).
-   - Automatically tag cards with **`Front`** (Flutter, React, Vue, Web, Mobile) or **`Back`** (Spring Boot, Node, Java, Python API) component labels.
+6. **Parent Project, Subproject & Tooling Component Labeling**:
+   - Detect when a repository represents a subproject of a unified Linear project (e.g., local project `Rent Easy Frontend` or `Rent Easy Backend` mapping to parent Linear project `Rent Easy`) or a standalone tooling/skills package:
+     - **`Front`**: Aplicações e pacotes de interface gráfica (Flutter, React, Vue, Angular, Next.js, Web, Mobile).
+     - **`Back`**: Serviços, APIs e servidores de backend (Spring Boot, Node.js API, Java, Python FastAPI/Django/Flask, Go, Rust).
+     - **`Feature` ou Sem Tag (Omissão de `--label`)**: Repositórios de tooling, pacotes de skills/prompts de IA (como `fk_apm`), CLIs, automações, bibliotecas agnósticas ou infraestrutura. Nesses repositórios, **não force `Back`** pela mera presença de scripts auxiliares em Python ou Shell; aplique `--label "Feature"` (para novas funcionalidades/melhorias de pacotes) ou omita o argumento `--label`.
 
 7. **100% Transparency & User Notification**:
    - Every Linear operation (issue queried, card created, state transitioned, or comment added) must be explicitly communicated in the response with issue keys (e.g. `LIN-42`) and status.
@@ -146,13 +148,13 @@ flowchart TD
 
 Gatilhos: `/fk-new-issue`, `fk-new-issue`, *"vamos planejar tarefas"*, *"crie os cards para..."*.
 
-1. **Etapa 1 - Apresentação & Dúvidas (Leitura)**:
+1. **Etapa 1 - Apresentação & Dúvidas (Leitura e Renderização Prévia Obrigatória)**:
    - Localiza o projeto pai no Linear (`find-project`).
-   - Decompõe os requisitos em tarefas atômicas no chat (título, descrição, critérios de aceitação e label `Front`/`Back`).
-   - Apresenta a tabela proposta sem chamar `create-issue`.
+   - Decompõe os requisitos em tarefas atômicas no chat (título, descrição, critérios de aceitação, status `Backlog` por padrão e label: `Front`, `Back`, ou `Feature`/sem tag para repositórios de tooling, pacotes de skills/prompts e infraestrutura).
+   - **Proibição de Consent Gate Cego**: Renderiza integralmente no texto visível do chat toda a tabela/lista de cards propostos antes de acionar a ferramenta de pergunta da Etapa 2, sem chamar `create-issue`.
 2. **Etapa 2 - Consent Gate Interativo**:
-   - Aciona a ferramenta interativa de perguntas do harness (ex: `ask_question` / `AskUserQuestion`) ou fallback textual com as opções `(Recommended) Sim, aprovar` e `Editar...`:
-     - Pergunta: *"O escopo e a divisão dos cards estão alinhados? Posso criá-los no Linear sob o status Backlog (padrão)?"*
+   - Aciona a ferramenta interativa de perguntas do harness (ex: `ask_question` / `AskUserQuestion`) ou fallback textual com as opções `(Recommended) Sim, aprovar` e `Editar...`, incluindo obrigatoriamente um **resumo conciso do plano na própria pergunta**:
+     - Pergunta: *"Resumo do plano (N cards em Backlog): 1) <título-1> [<label>]; 2) <título-2> [<label>]. O escopo e a divisão dos cards estão alinhados? Posso criá-los no Linear sob o status Backlog (padrão)?"*
    - Se o usuário escolher `Editar...`: coleta as correções em texto livre, retorna à Etapa 1 para atualizar a decomposição e reapresenta o Consent Gate.
 3. **Etapa 3 - Execução Atômica**:
    - Somente após `Sim, aprovar`, cria os cards no Linear via CLI/MCP.
@@ -164,11 +166,11 @@ Gatilhos: `/fk-new-issue`, `fk-new-issue`, *"vamos planejar tarefas"*, *"crie os
 
 Gatilhos: `/fk-technical-analysis`, `fk-technical-analysis`, *"vamos analisar tecnicamente o card X"*, *"faça um spike técnico sobre Y"*.
 
-1. **Etapa 1 - Apresentação & Dúvidas (Leitura)**:
+1. **Etapa 1 - Apresentação & Dúvidas (Leitura e Renderização Prévia Obrigatória)**:
    - Consulta o card via `get-issue` ou `search-issues`.
    - Se o card estava em `Backlog`, o início da análise é apresentado no chat.
    - Realiza a análise arquitetural, opções de implementação, trade-offs e impactos no workspace.
-   - Apresenta no chat a especificação técnica estruturada sob **5 seções obrigatórias**:
+   - **Proibição de Consent Gate Cego**: Apresenta integralmente no texto visível do chat a especificação técnica estruturada sob **5 seções obrigatórias** antes de invocar `ask_question` / `AskUserQuestion`:
      1. **Diagnóstico e Contexto**: Causa-raiz ou motivação técnica refinada.
      2. **Arquitetura da Solução & Desenho Técnico**: Decisões de design, contratos, trade-offs e dependências.
      3. **Checklist de Arquivos Impactados**: Caminhos explícitos de arquivos a criar, modificar ou remover.
@@ -176,8 +178,8 @@ Gatilhos: `/fk-technical-analysis`, `fk-technical-analysis`, *"vamos analisar te
      5. **Plano Gitflow**: Nome da branch (`<type>/<key>-<slug>`), Conventional Commits 1.0.0 e estado `Todo`.
    - **Zero mutação prematura no card**: Nenhum comentário preliminar ou mudança de estado é postada enquanto houver dúvidas em aberto.
 2. **Etapa 2 - Consent Gate Interativo**:
-   - Aciona a ferramenta interativa de perguntas do harness (ex: `ask_question` / `AskUserQuestion`) ou fallback textual com as opções `(Recommended) Sim, aprovar` e `Editar...`:
-     - Pergunta: *"A análise técnica está aprovada? Posso registrar as decisões no Linear e mover o card para **Todo** (pronto para desenvolvimento)?"*
+   - Aciona a ferramenta interativa de perguntas do harness (ex: `ask_question` / `AskUserQuestion`) ou fallback textual com as opções `(Recommended) Sim, aprovar` e `Editar...`, incluindo obrigatoriamente um **resumo conciso da análise na própria pergunta**:
+     - Pergunta: *"Resumo da análise (<issue-key>): <resumo-solucao> | Arquivos: <N> | Branch: <branch>. A análise técnica está aprovada? Posso registrar as decisões no Linear e mover o card para **Todo** (pronto para desenvolvimento)?"*
    - Se o usuário escolher `Editar...`: recebe os direcionamentos técnicos adicionais, volta à Etapa 1 para refinar a análise e reapresenta o Consent Gate.
 3. **Etapa 3 - Execução Atômica & Persistência Integral da Especificação Técnica**:
    - Somente após `Sim, aprovar`, executa atomicamente a transição de estado para `Todo` persistindo a **especificação técnica completa nas 5 seções** no comentário consolidado:

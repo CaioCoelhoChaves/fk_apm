@@ -153,5 +153,88 @@ class TestLinearApiUpdateIssue(unittest.TestCase):
         self.assertEqual(variables["input"]["stateId"], "state-todo-id")
         self.assertEqual(variables["input"]["description"], "Novo escopo atualizado")
 
+    @patch("linear_api.resolve_or_create_label_id", return_value="label-feature-id")
+    @patch("linear_api.resolve_state_id", return_value="state-backlog-id")
+    @patch("linear_api.execute_graphql")
+    def test_create_issue_with_feature_label(self, mock_execute, mock_resolve_state, mock_resolve_label):
+        mock_execute.return_value = {
+            "success": True,
+            "data": {
+                "issueCreate": {
+                    "success": True,
+                    "issue": {
+                        "id": "uuid-new-1",
+                        "identifier": "FAL-32",
+                        "title": "fix(skills): garantir exibicao do plano",
+                        "labels": {"nodes": [{"id": "label-feature-id", "name": "Feature"}]}
+                    }
+                }
+            }
+        }
+
+        with patch("builtins.print"):
+            linear_api.cmd_create_issue(
+                api_key="fake-key",
+                team_id="team-1",
+                title="fix(skills): garantir exibicao do plano",
+                description="Descricao detalhada",
+                project_id="proj-1",
+                state_name="Backlog",
+                labels=["Feature"]
+            )
+
+        mock_resolve_label.assert_called_once_with("fake-key", "team-1", "Feature")
+        variables = mock_execute.call_args[0][2]
+        self.assertEqual(variables["input"]["labelIds"], ["label-feature-id"])
+        self.assertEqual(variables["input"]["stateId"], "state-backlog-id")
+
+    @patch("linear_api.resolve_state_id", return_value="state-backlog-id")
+    @patch("linear_api.execute_graphql")
+    def test_create_issue_without_labels(self, mock_execute, mock_resolve_state):
+        mock_execute.return_value = {
+            "success": True,
+            "data": {
+                "issueCreate": {
+                    "success": True,
+                    "issue": {
+                        "id": "uuid-new-2",
+                        "identifier": "FAL-35",
+                        "title": "chore(skills): atualizar documentacao",
+                        "labels": {"nodes": []}
+                    }
+                }
+            }
+        }
+
+        with patch("builtins.print"):
+            linear_api.cmd_create_issue(
+                api_key="fake-key",
+                team_id="team-1",
+                title="chore(skills): atualizar documentacao",
+                description="Sem label de componente",
+                project_id="proj-1",
+                state_name="Backlog",
+                labels=None
+            )
+
+        variables = mock_execute.call_args[0][2]
+        self.assertNotIn("labelIds", variables["input"])
+        self.assertEqual(variables["input"]["stateId"], "state-backlog-id")
+
+    def test_skill_files_enforce_prerender_and_tooling_labels(self):
+        skill_root = Path(__file__).resolve().parent.parent
+        fk_new_issue = (skill_root / ".apm" / "skills" / "fk-new-issue" / "SKILL.md").read_text(encoding="utf-8")
+        fk_tech_analysis = (skill_root / ".apm" / "skills" / "fk-technical-analysis" / "SKILL.md").read_text(encoding="utf-8")
+        main_skill = (skill_root / "SKILL.md").read_text(encoding="utf-8")
+
+        for content in (fk_new_issue, fk_tech_analysis, main_skill):
+            self.assertIn("Proibição de Consent Gate Cego", content)
+            self.assertIn("Resumo", content)
+
+        self.assertIn("Feature", fk_new_issue)
+        self.assertIn("não force `Back`", fk_new_issue)
+        self.assertIn("Feature", main_skill)
+        self.assertIn("não force `Back`", main_skill)
+
 if __name__ == "__main__":
     unittest.main()

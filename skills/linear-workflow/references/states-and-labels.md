@@ -56,19 +56,23 @@ In many enterprise architectures, a single product in Linear spans multiple repo
    - Match against Linear projects: a query for "Rent Easy Frontend" matches parent project **"Rent Easy"**.
 
 2. **Automatic Label Application**:
-   When creating or updating an issue in a matched parent project, inspect the local workspace tech stack and apply component labels:
+   When creating or updating an issue in a matched project, inspect the local workspace nature and tech stack to apply the appropriate label:
 
    - **`Front`**:
      - Markers: Flutter (`pubspec.yaml`), React / Vue / Angular / Next.js / Svelte (`package.json` with frontend dependencies), iOS (`Podfile`), Android (`app/build.gradle`), HTML/CSS.
      - Folder/repo names containing: `frontend`, `web`, `mobile`, `ui`, `client`, `app`.
    
    - **`Back`**:
-     - Markers: Spring Boot / Java (`pom.xml`, `build.gradle.kts`), Node.js backend (NestJS, Express, Fastify), Python (FastAPI, Django, Flask), Go (`go.mod`), Rust (`Cargo.toml`), SQL migrations.
+     - Markers: Spring Boot / Java (`pom.xml`, `build.gradle.kts`), Node.js backend (NestJS, Express, Fastify), Python API/server (FastAPI, Django, Flask), Go (`go.mod`), Rust (`Cargo.toml`), SQL migrations.
      - Folder/repo names containing: `backend`, `api`, `service`, `server`, `core`.
 
+   - **`Feature` or No Component Label (Tooling, AI Skills & Infrastructure Repositories)**:
+     - Markers: AI skill/bundle repositories (`apm.yml`, `.apm/`, `skills/`, `.agents/`), standalone CLIs, automation scripts, DevOps/infrastructure repos, or agnostic libraries (such as `fk_apm`).
+     - **Rule**: Never force `Back` merely because a tooling or skills repository contains helper scripts in Python or Shell (`scripts/*.py`, `*.sh`). Use `--label "Feature"` (when creating feature/enhancement cards) or omit `--label` altogether.
+
 3. **Fallback & Override**:
-   - If `.linear.json` contains `"defaultLabels": ["Front"]` or `"defaultLabels": ["Back"]`, that explicit setting takes precedence.
-   - If Linear does not already have a `Front` or `Back` label, create it under the team.
+   - If `.linear.json` contains `"defaultLabels": ["Front"]`, `"defaultLabels": ["Back"]`, or `"defaultLabels": ["Feature"]`, that explicit setting takes precedence.
+   - If a requested label (`Front`, `Back`, `Feature`) does not yet exist in Linear, `linear_api.py` creates it under the team; if no label applies (e.g., tooling repository without tag), omit `--label`.
 
 ---
 
