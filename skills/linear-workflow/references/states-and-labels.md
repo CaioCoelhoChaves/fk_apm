@@ -86,7 +86,7 @@ Every Linear transition or query must be communicated explicitly in the AI agent
   > `📋 [Linear]: Task identificada no projeto Rent Easy: LIN-104 - "Implementar tela de listagem de imóveis". Status atualizado para 'In Progress'. Labels: ['Front'].`
 
 - **Task Transitioned to Todo (Post-Technical Analysis)**:
-  > `🔬 [Linear]: Análise técnica de LIN-104 concluída. Card avançado para 'Todo' com sumário técnico consolidado registrado.`
+  > `🔬 [Linear]: Análise técnica de LIN-104 concluída. Título e descrição do card atualizados e card avançado para 'Todo' com sumário técnico consolidado registrado.`
 
 - **Development Concluded & Moved to In Review**:
   > `🔍 [Linear]: Desenvolvimento concluído e PR #45 aberto no GitHub. Task LIN-104 movida para 'In Review' para sua validação.`
@@ -117,6 +117,6 @@ In accordance with official Linear guidelines ([linear.app/developers/agents](ht
 2. **Native Git Automation Integration**:
    - When creating Git branches (alongside `git-workflow`), use the standard Linear branch format `<type>/<identifier>-<slug>` (e.g., `feat/RENT-104-biometric-auth`).
    - Linear natively detects this branch name to automate issue tracking across Pull Requests.
-3. **Non-Destructive Context Enrichment**:
-   - Never overwrite or wipe existing issue descriptions provided by human product managers or developers.
-   - Append technical context or post new observations via comments.
+3. **Context Enrichment & Technical Analysis Refinement**:
+   - During general coding updates and PR reviews (`/fk-develop`, `/fk-fix`), never wipe human product notes arbitrarily; post progress updates via comments.
+   - Upon concluding `/fk-technical-analysis` (Stage 3 after explicit developer Consent Gate approval), the agent **must** atomically update the card title (`--title`) and description (`--description` or `--description-file`) alongside the 5-section technical comment (`--comment`) and state (`--state "Todo"`), replacing outdated preliminary `Backlog` drafts with the refined architectural scope and acceptance criteria.
