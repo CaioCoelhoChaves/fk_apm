@@ -10,6 +10,13 @@
 
 **Input**: User description: "Refatorar e modernizar integralmente a integração do github/spec-kit com o Linear e o Gitflow na skill linear-workflow, implementando o ciclo de vida com Draft PRs desde a concepção da spec, novo mapeamento de estados do Linear (Backlog -> Planned -> Todo -> In Progress -> In Review -> Done), ferramenta de provisionamento e sincronização de boards do Linear, e limpeza de todo o código legado."
 
+## Clarifications
+
+### Session 2026-10-29
+
+- Q: Como o Spec Kit deve gerenciar a execução isolada via Git Worktree ao receber um comando apontado para um card (ex: `/speckit-clarify FAL-58`)? → A: Worktree efêmero por comando: cria um worktree temporário isolado apontando para a branch do card, executa o ciclo de vida da etapa com push remoto e remove o worktree (`git worktree remove`) ao finalizar, preservando 100% a árvore local do desenvolvedor. No final de cada etapa, as mensagens de conclusão devem sempre sugerir o próximo comando parametrizado com o ID do card (ex: `/speckit-plan <CARD-ID>`).
+- Q: Como os comandos do Spec Kit devem se comportar quando invocados sem o argumento do card (ex: apenas `/speckit-clarify`)? → A: Argumento de card estritamente obrigatório: todos os comandos pós-especificação exigem `<CARD-ID>` (ex: `/speckit-<cmd> <CARD-ID>`). Se omitido, o comando aborta imediatamente com instrução clara de uso orientando o fornecimento do identificador.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Concepção da Spec com Draft PR Imediato e Card em Backlog (Priority: P1)
@@ -24,6 +31,7 @@ Como desenvolvedor ou arquiteto de software utilizando `/speckit-specify`, desej
 
 1. **Given** um repositório limpo configurado com GitHub CLI e credenciais do Linear, **When** o usuário executa `/speckit-specify` e aprova a proposta no Consent Gate (Estágio 2), **Then** o sistema cria a branch `feat/<issue-id>-<slug>`, versiona `specs/<feature>/spec.md` com Conventional Commit `docs(spec): add specification for <issue-id>`, realiza `git push -u origin <branch>`, abre o PR Draft via `gh pr create --draft` e cria o card no Linear em `Backlog` vinculado ao PR.
 2. **Given** um card já criado em `Backlog`, **When** o usuário aciona `/speckit-clarify` para dirimir dúvidas, **Then** as alterações em `spec.md` são commitadas e enviadas ao PR Draft existente, mantendo o card no Linear em `Backlog` sem duplicar issues.
+3. **Given** um desenvolvedor trabalhando localmente em outro card/branch com arquivos em edição na raiz, **When** executa um comando do Spec Kit parametrizado com card (ex: `/speckit-clarify FAL-58`), **Then** o sistema instancia um Git Worktree efêmero para a branch do card, comita e sincroniza com o remote, remove o worktree ao finalizar e sugere o próximo comando explicitamente com o card (ex: `/speckit-plan FAL-58`).
 
 ---
 
@@ -97,6 +105,10 @@ Como mantenedor da base de código do `fk_apm`, desejo que todos os resquícios 
   A criação do PR Draft é suspensa com mensagem clara instruindo a configuração de `git remote add origin ...`, operando em modo offline/local até que o remote esteja acessível.
 - E se o usuário fechar ou cancelar o PR no GitHub manualmente?
   Ao detectar o PR fechado sem merge durante `/speckit-converge` ou consulta de status, o agente orienta a transição do card para `Canceled` ou reabertura do PR.
+- O que acontece se a remoção do worktree efêmero falhar devido a arquivos bloqueados pelo sistema operacional?
+  O sistema executa `git worktree remove --force` e registra um aviso, executando `git worktree prune` para garantir que worktrees pendentes não fiquem órfãos.
+- O que acontece se um comando for executado sem informar o `<CARD-ID>` obrigatório?
+  O comando aborta imediatamente na etapa de pré-validação sem efetuar qualquer modificação, exibindo mensagem amigável com a sintaxe exigida: `Uso obrigatório: /speckit-<comando> <CARD-ID> (ex: /speckit-plan FAL-58)`.
 
 ## Requirements *(mandatory)*
 
@@ -115,6 +127,9 @@ Como mantenedor da base de código do `fk_apm`, desejo que todos os resquícios 
 - **FR-011**: O sistema DEVE aplicar sanitização determinística (`sanitize_markdown_payload`) em todas as comunicações com o Linear e GitHub, proibindo payloads markdown inline em argumentos de linha de comando.
 - **FR-012**: O Consent Gate em 3 etapas (Pre-Render Gate visual, confirmação via `ask_question`/`AskUserQuestion`, execução atômica) DEVE ser mantido como barreira inviolável nas etapas de especificação e planejamento (`/speckit-specify`, `/speckit-plan`, `/speckit-tasks`).
 - **FR-013**: Todo código legado, menções a scripts de pipeline legados (`/fk-*`) e regras defasadas DEVEM ser expurgados da skill `linear-workflow` e seus assets.
+- **FR-014**: Todos os comandos do ciclo Spec Kit (`/speckit-clarify`, `/speckit-plan`, `/speckit-tasks`, `/speckit-implement`, `/speckit-converge`) DEVEM aceitar o identificador do card do Linear (ex: `<CARD-ID>`, como `FAL-58`) como argumento e executar suas tarefas em um Git Worktree efêmero (`git worktree`), sincronizando com o remote e removendo o worktree ao concluir, garantindo isolamento total da árvore de trabalho e do editor do desenvolvedor.
+- **FR-015**: As mensagens de encerramento e orientações de próximos passos de todos os comandos do Spec Kit DEVEM exibir explicitamente os comandos subsequentes parametrizados com o identificador do card em foco (ex: `/speckit-plan FAL-58`), facilitando o trabalho concorrente em múltiplos cards.
+- **FR-016**: Todos os comandos pós-especificação (`/speckit-clarify`, `/speckit-plan`, `/speckit-tasks`, `/speckit-implement`, `/speckit-converge`) DEVEM exigir o argumento obrigatório `<CARD-ID>` (ex: `FAL-58`). Se omitido, a execução DEVE ser abortada preventivamente com instrução clara de sintaxe.
 
 ### Key Entities *(include if feature involves data)*
 
@@ -131,6 +146,7 @@ Como mantenedor da base de código do `fk_apm`, desejo que todos os resquícios 
 - **SC-003**: 100% de conformidade dos times inspecionados por `sync-boards` com a esteira padronizada de 6 estágios (`Backlog` -> `Planned` -> `Todo` -> `In Progress` -> `In Review` -> `Done`).
 - **SC-004**: Zero ocorrências de transições automatizadas indevidas para o estado `Done`, preservando a auditoria manual de merge.
 - **SC-005**: 100% dos testes unitários da suíte `test_linear_api.py` passando com validação completa dos novos subcomandos e estados.
+- **SC-006**: 100% de isolamento das árvores de trabalho locais em comandos executados com `<CARD-ID>`, garantindo zero interferência ou trocas de branch no workspace ativo do desenvolvedor.
 
 ## Assumptions
 
