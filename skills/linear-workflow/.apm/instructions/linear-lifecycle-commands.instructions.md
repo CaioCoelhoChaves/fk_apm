@@ -1,45 +1,38 @@
 ---
-description: Interceptação universal e roteamento multi-harness para comandos de ciclo de vida do Linear (/fk-* e fk-*)
+description: Interceptação universal e roteamento multi-harness para comandos Spec Kit acoplados ao Linear (/speckit-* e compatibilidade /fk-*)
 ---
 
-# Roteamento Universal de Comandos de Ciclo de Vida do Linear
+# Roteamento Universal de Comandos `/speckit-*` Acoplados ao Linear
 
-Esta regra intercepta comandos de ciclo de vida do Linear em todos os harnesses (Google Antigravity, Claude Code, Cursor, GitHub Copilot e terminais de chat), garantindo tolerância sintática (com ou sem barra) e acionamento rigoroso da skill `linear-workflow`.
+Esta regra intercepta os comandos oficiais do pacote `github/spec-kit` (`/speckit-*`) acoplados ao ciclo de vida do Linear em todos os harnesses (Google Antigravity, Claude Code, Cursor, GitHub Copilot, OpenCode), garantindo tolerância sintática e acionamento rigoroso da skill `linear-workflow`.
 
-## 1. Gatilhos de Interceptação
+## 1. Gatilhos de Interceptação (`/speckit-*` Oficial + Compatibilidade Legada)
 
-Sempre que a mensagem do usuário contiver qualquer um dos seguintes gatilhos (com ou sem barra `/` inicial, maiúsculas ou minúsculas):
+Sempre que a mensagem do usuário contiver qualquer um dos seguintes gatilhos (com ou sem barra `/` inicial):
 
-- **Planejamento / Criação**: `/fk-new-issue`, `fk-new-issue`, ou solicitações explícitas de planejar/decompor cards para o Linear.
-- **Análise Técnica**: `/fk-technical-analysis`, `fk-technical-analysis`, ou solicitações de análise técnica/spike de um card do Linear.
-- **Desenvolvimento**: `/fk-develop`, `fk-develop`, ou solicitações de desenvolver/implementar um card do Linear.
-- **Correção de PR / Review Feedback**: `/fk-fix`, `fk-fix`, ou solicitações explícitas de aplicar feedback de code review em PR aberto.
+- **Governança / Constituição**: `/speckit-constitution`, `speckit-constitution`.
+- **Especificação & Criação de Cards (`Backlog`)**: `/speckit-specify`, `speckit-specify`, `/speckit-taskstoissues`, `speckit-taskstoissues` (ou legado `/fk-new-issue`).
+- **Clarificação de Requisitos**: `/speckit-clarify`, `speckit-clarify`.
+- **Plano Técnico & Tasks (`Technical Analysis` ➔ `Todo`)**: `/speckit-plan`, `speckit-plan`, `/speckit-tasks`, `speckit-tasks` (ou legado `/fk-technical-analysis`).
+- **Auditoria & Checklists**: `/speckit-analyze`, `speckit-analyze`, `/speckit-checklist`, `speckit-checklist`.
+- **Implementação Autônoma (`Todo` ➔ `In Progress` ➔ `In Review`)**: `/speckit-implement`, `speckit-implement` (ou legado `/fk-develop`).
+- **Convergência & Correção Autônoma de Review (`In Review` ➔ `In Progress` ➔ `In Review`)**: `/speckit-converge`, `speckit-converge` (ou legado `/fk-fix`).
 
 ## 2. Ações Mandatórias do Agente
 
-1. **Ativação da Skill**:
-   - Ative imediatamente as instruções e fluxos definidos em `skills/linear-workflow/SKILL.md`.
+1. **Ativação da Skill & Bootstrap `.specify/`**:
+   - Ative imediatamente as instruções da sub-skill `/speckit-*` correspondente e os padrões de `skills/linear-workflow/SKILL.md`.
+   - Caso o diretório `.specify/` ainda não exista na raiz do repositório consumidor, execute `python skills/linear-workflow/scripts/linear_api.py bootstrap-specify`.
 
-2. **Protocolo Inviolável de 3 Etapas (*Consent Gate*), Spec-Driven Development (`spec-kit`) & Comandos Autônomos**:
-   - Para `fk-new-issue` e `fk-technical-analysis`:
-     - **Etapa 1 (Leitura, Cognitive Scaffolding, Artefatos `.specs/<issue-key>/` & Executive Briefing)**: Apenas operações de leitura no Linear (`get-issue`, `search-issues`, `list-projects`). Zero mutação no Linear antes da aprovação do desenvolvedor. No planejamento (`fk-new-issue`), classifique labels respeitando a natureza do repositório (`Front` para UI/web/mobile, `Back` para APIs/serviços de servidor, e `Feature` ou sem tag para repositórios de tooling, pacotes de skills/prompts como `fk_apm`, CLIs e infraestrutura — nunca force `Back` apenas por scripts Python/Shell) e suporte opcionalmente a geração de `.specs/<issue-key>/spec.md`. Na análise técnica (`fk-technical-analysis`), leia `.speckit/constitution.md`, gere localmente `.specs/<issue-key>/plan.md` (5 seções) e `.specs/<issue-key>/tasks.md` (checklist `- [ ]`), valide com `validate-plan <issue-key>` e apresente no chat um **Executive Briefing** conciso (10-15 linhas) contendo obrigatoriamente o **Título Revisado** e a **Descrição Atualizada** do card junto às 5 seções estruturadas: Diagnóstico, Arquitetura, Checklist de Arquivos, Testes e Plano Gitflow. **É estritamente proibido invocar `ask_question` / `AskUserQuestion` sem antes emitir integralmente no texto visível do chat toda a tabela de tarefas ou o título/descrição revisados e as 5 seções da análise técnica.**
-     - **Etapa 2 (Consent Gate Interativo com Resumo Embutido)**: Após renderizar a proposta completa no chat, acione a **ferramenta nativa de perguntas** do harness (`ask_question` no Antigravity, `AskUserQuestion` no Claude Code, tool nativa no OpenCode, ou fallback em texto formatado para outros harnesses) incluindo obrigatoriamente um **resumo conciso da proposta dentro do próprio campo `question`** (títulos/labels dos cards no `/fk-new-issue`, ou resumo da solução, total de arquivos, tasks e branch no `/fk-technical-analysis`), com as opções:
-       - `(Recommended) Sim, aprovar`: avança para a Etapa 3.
-       - `Editar...`: desenvolvedor informa ajustes em texto livre; o agente retorna à Etapa 1 sem qualquer mutação no Linear, atualiza `.specs/<issue-key>/`, revalida com `validate-plan` e reapresenta o Consent Gate.
-     - **Etapa 3 (Execução Atômica)**: Somente após `Sim, aprovar`, realize a transição de estado no Linear. Na criação de cards (`fk-new-issue`), utilize `--description-file "<path>"`. Na análise técnica (`fk-technical-analysis`), é **mandatório atualizar atomicamente o título (`--title`) e a descrição do card (`--description-file`)** juntamente com `--state "Todo"` e **persistir o Executive Briefing estruturado nas 5 seções** (com referência a `.specs/<issue-key>/`) no comentário consolidado (`--comment-file`).
-   - ⚠️ **Comandos de Execução Autônoma sem Consent Gate (`/fk-develop` e `/fk-fix`)**:
-     - Os comandos `/fk-develop` e `/fk-fix` rodam **sem Consent Gate**.
-     - **`/fk-develop`**: Leitura prioritária do contrato local `.specs/<issue-key>/tasks.md` e `.specs/<issue-key>/plan.md` (com fallback para a especificação técnica no Linear) ➔ transição imediata para `In Progress` com comentário (`--comment-file`) informando branch e premissas assumidas ➔ criação de branch Gitflow ➔ implementação e testes sem confirmações intermediárias, marcando progressivamente os itens (`- [x]`) em `.specs/<issue-key>/tasks.md` (perguntas ao desenvolvedor apenas em ambiguidade real e bloqueante; padrão: decidir, registrar premissa e seguir) ➔ abertura de PR no GitHub (`gh pr create --body-file`) ➔ transição obrigatória para `In Review` no Linear (`--comment-file`).
-     - **`/fk-fix`**: Leitura dos comentários/reviews do PR e texto extra ➔ transição imediata para `In Progress` no Linear (`--comment-file`) ➔ aplicação de correções e testes na branch ➔ push e comentário no PR (`gh pr comment --body-file`) ➔ transição final para `In Review` no Linear (`--comment-file`).
-     - Não solicite confirmação em nenhuma etapa do `/fk-develop` ou `/fk-fix`. Se no `/fk-fix` não houver comentários/reviews nem texto extra, informe o usuário e finalize sem mutação.
+2. **Protocolo Inviolável de 3 Etapas (*Consent Gate*) para Especificação e Planejamento (`/speckit-specify`, `/speckit-plan`, `/speckit-tasks`, `/speckit-taskstoissues`)**:
+   - **Etapa 1 (Pre-Render Gate — Zero Mutação no Linear)**: Gere/atualize os artefatos oficiais do Spec Kit em `specs/<feature>/` (`spec.md`, `plan.md` com as 5 seções obrigatórias, `tasks.md` com `- [ ] T001 ...`), valide com `python skills/linear-workflow/scripts/linear_api.py validate-plan` e **renderize obrigatoriamente no texto visível do chat** a tabela de cards propostos (em `/speckit-specify` / `/speckit-taskstoissues`) ou o **Executive Briefing** contendo o **Título Revisado**, a **Descrição Atualizada** e as **5 seções obrigatórias** (`1. Diagnóstico e Contexto`, `2. Arquitetura da Solução & Desenho Técnico`, `3. Checklist de Arquivos Impactados`, `4. Estratégia de Testes`, `5. Plano Gitflow`) **antes** de invocar qualquer ferramenta de pergunta.
+   - **Etapa 2 (Consent Gate Interativo com Resumo Embutido)**: Acione `ask_question` (Antigravity) ou `AskUserQuestion` (Claude Code / Cursor / Copilot) embutindo um resumo conciso no campo `question`, com as opções `["(Recommended) Sim, aprovar", "Editar..."]`.
+   - **Etapa 3 (Execução Atômica no Linear via Arquivos UTF-8)**: Somente após aprovação explícita, crie os cards em **`Backlog`** (`create-issue --state "Backlog" --description-file "<utf8.md>"`) ou mova o card para **`Todo`** (`update-issue "<id>" --state "Todo" --title "<titulo-revisado>" --description-file "<desc-utf8.md>" --comment-file "<briefing-utf8.md>"`).
 
-3. **Mapeamento de Estados por Rito**:
-   - `fk-new-issue` ➔ Criação sob **`Backlog`** (padrão, com Consent Gate); `Todo` apenas como exceção explícita (card trivial ou com escopo técnico 100% resolvido).
-   - `fk-technical-analysis` ➔ `Technical Analysis` ➔ **`Todo`** (com Consent Gate, validação `validate-plan` de `.specs/<issue-key>/`, atualização obrigatória de título e descrição do card e Executive Briefing persistido).
-   - `fk-develop` ➔ `Todo` ➔ **`In Progress`** (autônomo, com branch criada e leitura/atualização de `.specs/<issue-key>/tasks.md`) ➔ **`In Review`** (ao abrir PR no GitHub).
-   - `fk-fix` ➔ `In Review` ➔ **`In Progress`** (ao iniciar correção) ➔ **`In Review`** (ao enviar push e comentar no PR).
-   - **`Done`**: O agente **NUNCA** move cards para `Done`. A transição para `Done` é exclusiva do desenvolvedor após o merge do PR.
+3. **Execução Autônoma sem Consent Gate (`/speckit-implement` e `/speckit-converge`)**:
+   - **`/speckit-implement`**: Verifica pré-requisitos (`check_prerequisites.py --json --require-tasks --include-tasks` e `validate-plan`) ➔ move o card imediatamente para **`In Progress`** (`--comment-file`) ➔ cria branch Gitflow `<type>/<issue-key>-<slug>` ➔ executa todas as tasks de `tasks.md` marcando `- [X]` ➔ roda testes ➔ abre PR (`gh pr create --body-file`) ➔ move obrigatoriamente o card para **`In Review`** (`--comment-file`).
+   - **`/speckit-converge`**: Lê comentários/reviews do PR aberto e gaps da spec ➔ move o card para **`In Progress`** (`--comment-file`) ➔ registra e executa as tasks corretivas em `## Phase N: Convergence` no `tasks.md` ➔ faz push e comenta no PR (`gh pr comment --body-file`) ➔ retorna o card para **`In Review`** (`--comment-file`).
+   - **`Done`**: O agente **NUNCA** move cards para `Done` (transição exclusivamente manual pelo desenvolvedor após o merge do PR).
 
-4. **Identidade do Agente, Idempotência, Sanitização & Proteção Anti-Corrupção de Crases no Shell**:
-   - Todos os comentários no Linear devem ser prefixados com `🤖 **AI Agent Update**:`.
-   - **Proibição de Markdown Inline no Shell & Sanitizador Determinístico (`sanitize_markdown_payload`)**: Em Windows PowerShell e Bash, nunca passe Markdown contendo crases (`` ` ``), blocos de código ou aspas duplas via `--description "..."`, `--comment "..."` ou `gh pr create/comment --body "..."` (no PowerShell, `` `f ``, `` `t ``, `` `r ``, `` `b ``, `` `n `` corrompem `` `feat` `` ➔ `eat`, `` `fix` `` ➔ `ix`, `` `test` `` ➔ `est`, `` `refactor` `` ➔ `efactor`). Sempre grave o conteúdo em arquivo UTF-8 temporário e utilize `--description-file`, `--comment-file` e `--body-file` (o `linear_api.py` aplica `sanitize_markdown_payload` automaticamente para normalizar `\r\n`, remover caracteres de controle, fechar blocos de código órfãos e alinhar tabelas Markdown).
+4. **Proibição de Markdown Inline no Shell & Sanitização (`sanitize_markdown_payload`)**:
+   - Nunca passe Markdown contendo crases (`` ` ``), blocos de código ou aspas duplas via `--description "..."`, `--comment "..."` ou `--body "..."`. Sempre utilize arquivos UTF-8 temporários com `--description-file`, `--comment-file` e `--body-file`.

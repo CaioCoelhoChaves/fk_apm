@@ -8,6 +8,7 @@ import os
 import sys
 import json
 import re
+import shutil
 import argparse
 import urllib.request
 import urllib.error
@@ -478,34 +479,147 @@ def _extract_file_path_from_bullet(bullet_text: str) -> Optional[str]:
     return candidate or None
 
 
-def validate_spec_plan(
+def _resolve_spec_dir(
     target: str,
+    resolved_repo: Path,
+    specs_root: Optional[Path] = None
+) -> Path:
+    """Resolve feature specification directory across official Spec Kit (specs/ & .specify/feature.json) and legacy .specs/."""
+    target_clean = (target or "").strip()
+
+    if specs_root is not None:
+        resolved_specs = specs_root.resolve()
+        if not target_clean:
+            return resolved_specs
+        direct = resolved_specs / target_clean
+        if direct.is_dir():
+            return direct.resolve()
+        # Try matching substring/prefix in specs_root
+        if resolved_specs.is_dir():
+            lower_target = target_clean.lower()
+            for child in sorted(resolved_specs.iterdir()):
+                if child.is_dir() and lower_target in child.name.lower():
+                    return child.resolve()
+        return direct.resolve()
+
+    if target_clean:
+        candidate_dir = Path(target_clean)
+        if candidate_dir.is_dir():
+            return candidate_dir.resolve()
+        repo_rel = resolved_repo / target_clean
+        if repo_rel.is_dir() and ("/" in target_clean or "\\" in target_clean):
+            return repo_rel.resolve()
+
+    # Check .specify/feature.json
+    feature_json = resolved_repo / ".specify" / "feature.json"
+    active_feature_dir: Optional[Path] = None
+    if feature_json.is_file():
+        try:
+            fdata = json.loads(feature_json.read_text(encoding="utf-8"))
+            fdir_val = fdata.get("feature_directory") if isinstance(fdata, dict) else None
+            if isinstance(fdir_val, str) and fdir_val.strip():
+                fdir_path = Path(fdir_val.strip())
+                if not fdir_path.is_absolute():
+                    fdir_path = resolved_repo / fdir_path
+                active_feature_dir = fdir_path.resolve()
+        except Exception:
+            active_feature_dir = None
+
+    if not target_clean and active_feature_dir is not None:
+        return active_feature_dir
+
+    # Search in official specs/ directory first, then legacy .specs/
+    for candidate_root in (resolved_repo / "specs", resolved_repo / ".specs"):
+        if not candidate_root.is_dir():
+            continue
+        if target_clean:
+            exact = candidate_root / target_clean
+            if exact.is_dir():
+                return exact.resolve()
+            lower_target = target_clean.lower()
+            for child in sorted(candidate_root.iterdir()):
+                if child.is_dir() and lower_target in child.name.lower():
+                    return child.resolve()
+            # Match numeric issue key suffix (e.g. FAL-53 -> 053-)
+            num_match = re.search(r"(\d+)$", target_clean)
+            if num_match:
+                num_prefix = f"{int(num_match.group(1)):03d}-"
+                for child in sorted(candidate_root.iterdir()):
+                    if child.is_dir() and child.name.startswith(num_prefix):
+                        return child.resolve()
+
+    if active_feature_dir is not None and active_feature_dir.is_dir():
+        if not target_clean or target_clean.lower() in active_feature_dir.name.lower():
+            return active_feature_dir
+
+    default_root = (resolved_repo / "specs") if (resolved_repo / "specs").is_dir() else (resolved_repo / ".specs")
+    return (default_root / (target_clean or "unknown")).resolve()
+
+
+def bootstrap_specify(
+    repo_root: Optional[Path] = None,
+    force: bool = False
+) -> Dict[str, Any]:
+    """
+    Bootstrap the official github/spec-kit .specify/ runtime directory from bundled skill assets
+    into the target repository root. Preserves existing constitution.md and feature.json unless force=True.
+    """
+    resolved_repo = (repo_root or Path.cwd()).resolve()
+    assets_specify = Path(__file__).resolve().parent.parent / "assets" / ".specify"
+    if not assets_specify.is_dir():
+        return {
+            "success": False,
+            "error": f"Bundled .specify assets not found at '{assets_specify}'"
+        }
+
+    dest_specify = resolved_repo / ".specify"
+    copied_files: List[str] = []
+    skipped_files: List[str] = []
+
+    for src_path in sorted(assets_specify.rglob("*")):
+        rel = src_path.relative_to(assets_specify)
+        dest_path = dest_specify / rel
+        if src_path.is_dir():
+            dest_path.mkdir(parents=True, exist_ok=True)
+            continue
+
+        # Preserve existing constitution.md and feature.json unless force=True
+        if not force and dest_path.is_file() and rel.as_posix() in ("memory/constitution.md", "feature.json"):
+            skipped_files.append(rel.as_posix())
+            continue
+
+        dest_path.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(src_path, dest_path)
+        copied_files.append(rel.as_posix())
+
+    return {
+        "success": True,
+        "specify_dir": str(dest_specify),
+        "copied_count": len(copied_files),
+        "skipped_files": skipped_files,
+    }
+
+
+def validate_spec_plan(
+    target: str = "",
     specs_root: Optional[Path] = None,
     repo_root: Optional[Path] = None
 ) -> Dict[str, Any]:
     """
-    Validate local Spec-Driven Development artifacts (.specs/<issue-key>/plan.md and tasks.md).
+    Validate local Spec-Driven Development artifacts (specs/<feature>/plan.md or .specs/<issue-key>/plan.md and tasks.md).
     Checks mandatory sections, file path integrity, and actionable tasks checklist.
     """
     resolved_repo = (repo_root or Path.cwd()).resolve()
-    resolved_specs = (specs_root or (resolved_repo / ".specs")).resolve()
-
-    target_clean = target.strip()
-    candidate_dir = Path(target_clean)
-    if candidate_dir.is_dir():
-        spec_dir = candidate_dir.resolve()
-    elif (resolved_repo / target_clean).is_dir() and ("/" in target_clean or "\\" in target_clean):
-        spec_dir = (resolved_repo / target_clean).resolve()
-    else:
-        spec_dir = (resolved_specs / target_clean).resolve()
+    spec_dir = _resolve_spec_dir(target=target, resolved_repo=resolved_repo, specs_root=specs_root)
 
     errors: List[str] = []
     warnings: List[str] = []
 
-    constitution_path = resolved_repo / ".speckit" / "constitution.md"
-    constitution_exists = constitution_path.is_file()
+    specify_constitution = resolved_repo / ".specify" / "memory" / "constitution.md"
+    legacy_constitution = resolved_repo / ".speckit" / "constitution.md"
+    constitution_exists = specify_constitution.is_file() or legacy_constitution.is_file()
     if not constitution_exists:
-        warnings.append("File '.speckit/constitution.md' not found in repository root.")
+        warnings.append("File '.specify/memory/constitution.md' not found in repository root.")
 
     if not spec_dir.is_dir():
         return {
@@ -575,13 +689,16 @@ def validate_spec_plan(
                 if not extracted_path:
                     continue
 
-                # Check for placeholders or illegal characters
-                if re.search(r"[<>?*\"|]", extracted_path) or extracted_path in ("...", "TODO", "path/to/file"):
+                # Normalize wildcard globs like dir/* or file-*.md when checking parent/target existence
+                normalized_check_path = re.sub(r"[\*\?].*$", "", extracted_path).rstrip("/\\") or "."
+
+                # Check for placeholders or illegal characters (excluding glob *)
+                if re.search(r"[<>?\"|]", extracted_path) or extracted_path in ("...", "TODO", "path/to/file"):
                     errors.append(f"Invalid placeholder or file path in plan.md checklist: '{extracted_path}'")
                     continue
 
                 impacted_files.append(extracted_path)
-                full_target = (resolved_repo / extracted_path).resolve()
+                full_target = (resolved_repo / normalized_check_path).resolve()
                 try:
                     full_target.relative_to(resolved_repo)
                 except ValueError:
@@ -999,15 +1116,26 @@ def cmd_create_comment(
     cmd_update_issue(api_key, issue_id=issue_id, comment=comment, comment_file=comment_file, force_comment=force)
 
 
-def cmd_validate_plan(target: str, specs_root: Optional[str] = None, repo_root: Optional[str] = None):
+def cmd_validate_plan(target: str = "", specs_root: Optional[str] = None, repo_root: Optional[str] = None):
     """Validate local Spec-Driven Development plan.md and tasks.md artifacts."""
     result = validate_spec_plan(
-        target=target,
+        target=target or "",
         specs_root=Path(specs_root) if specs_root else None,
         repo_root=Path(repo_root) if repo_root else None,
     )
     print(json.dumps(result, indent=2, ensure_ascii=False))
     if not result.get("valid", False):
+        sys.exit(1)
+
+
+def cmd_bootstrap_specify(repo_root: Optional[str] = None, force: bool = False):
+    """Bootstrap official .specify/ runtime directory from bundled assets into target repository."""
+    result = bootstrap_specify(
+        repo_root=Path(repo_root) if repo_root else None,
+        force=force,
+    )
+    print(json.dumps(result, indent=2, ensure_ascii=False))
+    if not result.get("success", False):
         sys.exit(1)
 
 
@@ -1098,10 +1226,16 @@ def main():
     c_comment.add_argument("--force", action="store_true", help="Force posting comment even if identical comment exists within 10 minutes")
 
     # validate-plan (local static validation, no API key required)
-    v_plan = subparsers.add_parser("validate-plan", help="Validate local .specs/<issue-key>/plan.md and tasks.md integrity")
-    v_plan.add_argument("target", help="Issue key (e.g. FAL-53) or path to spec directory")
-    v_plan.add_argument("--specs-root", help="Custom .specs root directory (defaults to <repo-root>/.specs)")
+    v_plan = subparsers.add_parser("validate-plan", help="Validate local specs/<feature>/plan.md and tasks.md integrity")
+    v_plan.add_argument("target", nargs="?", default="", help="Issue key (e.g. FAL-53) or path to spec directory (optional, defaults to .specify/feature.json)")
+    v_plan.add_argument("--issue-key", dest="issue_key", help="Issue key (e.g. FAL-53) or feature directory name")
+    v_plan.add_argument("--specs-root", help="Custom specs root directory (defaults to <repo-root>/specs or .specs)")
     v_plan.add_argument("--repo-root", help="Repository root directory (defaults to current working directory)")
+
+    # bootstrap-specify (local .specify/ bootstrapper, no API key required)
+    b_spec = subparsers.add_parser("bootstrap-specify", help="Bootstrap official .specify/ runtime directory from bundled skill assets")
+    b_spec.add_argument("--repo-root", help="Target repository root directory (defaults to current working directory)")
+    b_spec.add_argument("--force", action="store_true", help="Overwrite existing .specify/memory/constitution.md and feature.json")
 
     # sanitize-markdown (local markdown sanitizer, no API key required)
     s_md = subparsers.add_parser("sanitize-markdown", help="Sanitize a Markdown file deterministically")
@@ -1112,7 +1246,11 @@ def main():
     args = parser.parse_args()
 
     if args.command == "validate-plan":
-        cmd_validate_plan(args.target, specs_root=args.specs_root, repo_root=args.repo_root)
+        resolved_target = args.issue_key or args.target or ""
+        cmd_validate_plan(resolved_target, specs_root=args.specs_root, repo_root=args.repo_root)
+        return
+    elif args.command == "bootstrap-specify":
+        cmd_bootstrap_specify(repo_root=args.repo_root, force=args.force)
         return
     elif args.command == "sanitize-markdown":
         cmd_sanitize_markdown(args.input_file, output_file=args.output_file, in_place=args.in_place)
