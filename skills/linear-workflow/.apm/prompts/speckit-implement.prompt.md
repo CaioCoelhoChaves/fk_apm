@@ -1,6 +1,6 @@
 ﻿---
 name: "speckit-implement"
-description: "Autonomously execute the Spec Kit implementation plan (tasks.md) without Consent Gate: move Linear card to In Progress, create Gitflow branch, implement code and tests, open Pull Request, and advance Linear card to In Review. Replaces /fk-develop."
+description: "Autonomously execute the Spec Kit implementation plan (tasks.md) without Consent Gate: move Linear card to In Progress, create Gitflow branch, implement code and tests, open Pull Request, and advance Linear card to In Review. Autonomous Implementation & Ready Promotion."
 compatibility: "Requires spec-kit project structure with .specify/ directory and linear-workflow CLI"
 metadata:
   author: "github-spec-kit + fk_apm"
@@ -53,6 +53,12 @@ You **MUST** consider the user input before proceeding (if not empty).
 - If no hooks are registered or `.specify/extensions.yml` does not exist, skip silently
 
 ## Outline
+
+### Mandatory `<CARD-ID>` Validation & Ephemeral Worktree Isolation
+- The user **MUST** provide `<CARD-ID>` (e.g. `/speckit-implement FAL-58`).
+- If `<CARD-ID>` is missing or invalid (`^[A-Z]{2,10}-\d+$`), **ABORT** immediately:
+  `Uso obrigatório: /speckit-implement <CARD-ID>`
+- If current workspace is not on the card's branch (`feat/<CARD-ID>-*`), execute in ephemeral worktree `.worktrees/<CARD-ID>`.
 
 1. Run `python3 .specify/scripts/python/check_prerequisites.py --json --require-tasks --include-tasks` from repo root and parse FEATURE_DIR and AVAILABLE_DOCS list. All paths must be absolute. For single quotes in args like "I'm Groot", use escape syntax: e.g 'I'\''m Groot' (or double-quote if possible: "I'm Groot").
 
@@ -216,7 +222,7 @@ Check if `.specify/extensions.yml` exists in the project root.
 
 ## Linear Autonomous Development & Gitflow PR Workflow (`In Progress` ➔ `In Review`)
 
-> **NO CONSENT GATE**: `/speckit-implement` (which replaces `/fk-develop`) operates with **100% autonomous execution**. Do **NOT** ask for user confirmation before moving the Linear card to `In Progress`, creating the branch, implementing tasks, or opening the PR. Only ask the user (`ask_question` / `AskUserQuestion`) if there is a genuine blocking ambiguity in `spec.md` / `plan.md`; otherwise make a sound technical decision and document the assumption.
+> **NO CONSENT GATE**: `/speckit-implement` operates with **100% autonomous execution**. Do **NOT** ask for user confirmation before moving the Linear card to `In Progress`, creating the branch, implementing tasks, or opening the PR. Only ask the user (`ask_question` / `AskUserQuestion`) if there is a genuine blocking ambiguity in `spec.md` / `plan.md`; otherwise make a sound technical decision and document the assumption.
 
 ### 1. Pre-Implementation Linear & Spec Kit Gate
 1. Query the Linear card (`python skills/linear-workflow/scripts/linear_api.py get-issue "<issue-key>"`).

@@ -25,8 +25,8 @@ description: "Task list for modernizing linear-workflow with draft PRs lifecycle
 
 **Purpose**: Project initialization, test fixtures, and environment prerequisites
 
-- [ ] T001 Configure test fixtures and GraphQL mock helpers for Linear teams and workflow states in skills/linear-workflow/tests/test_linear_api.py
-- [ ] T002 [P] Update repository gitignore to ignore ephemeral worktrees per EphemeralWorktreeContext constraint "Padrão: `.worktrees/<CARD-ID>` (ignorado no `.gitignore`)" in .gitignore
+- [X] T001 Configure test fixtures and GraphQL mock helpers for Linear teams and workflow states in skills/linear-workflow/tests/test_linear_api.py
+- [X] T002 [P] Update repository gitignore to ignore ephemeral worktrees per EphemeralWorktreeContext constraint "Padrão: `.worktrees/<CARD-ID>` (ignorado no `.gitignore`)" in .gitignore
 
 ---
 
@@ -36,10 +36,10 @@ description: "Task list for modernizing linear-workflow with draft PRs lifecycle
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T003 Define canonical 6-stage LinearWorkflowState constants and validator quoting constraints verbatim (name: "Um de: `Backlog`, `Planned`, `Todo`, `In Progress`, `In Review`, `Done`, `Canceled`", type: "Um de: `backlog`, `unstarted`, `started`, `completed`, `canceled`", position: "Valores de 0.0 a 6.0 com incrementos regulares", color: "Regex: `^#[0-9A-Fa-f]{6}$`") in skills/linear-workflow/scripts/linear_api.py
-- [ ] T004 [P] Implement EphemeralWorktreeContext manager and helper functions (`create_ephemeral_worktree`, `cleanup_ephemeral_worktree`) quoting constraints verbatim (cardId: "Padrão: `^[A-Z]{2,10}-\\d+$` (obrigatório em todos os comandos)", worktreePath: "Padrão: `.worktrees/<CARD-ID>`", status: "`created`, `active`, `syncing`, `cleaned_up`, `failed`") in skills/linear-workflow/scripts/linear_api.py
-- [ ] T005 [P] Implement strict transition blocker in `cmd_update_issue` returning error `{"success": false, "error": "Transição para 'Done' é restrita a humanos após merge manual de Pull Request."}` when `--state "Done"` is requested in skills/linear-workflow/scripts/linear_api.py
-- [ ] T006 Add unit tests covering EphemeralWorktreeContext lifecycle and Done transition rejection in skills/linear-workflow/tests/test_linear_api.py
+- [X] T003 Define canonical 6-stage LinearWorkflowState constants and validator quoting constraints verbatim (name: "Um de: `Backlog`, `Planned`, `Todo`, `In Progress`, `In Review`, `Done`, `Canceled`", type: "Um de: `backlog`, `unstarted`, `started`, `completed`, `canceled`", position: "Valores de 0.0 a 6.0 com incrementos regulares", color: "Regex: `^#[0-9A-Fa-f]{6}$`") in skills/linear-workflow/scripts/linear_api.py
+- [X] T004 [P] Implement EphemeralWorktreeContext manager and helper functions (`create_ephemeral_worktree`, `cleanup_ephemeral_worktree`) quoting constraints verbatim (cardId: "Padrão: `^[A-Z]{2,10}-\\d+$` (obrigatório em todos os comandos)", worktreePath: "Padrão: `.worktrees/<CARD-ID>`", status: "`created`, `active`, `syncing`, `cleaned_up`, `failed`") in skills/linear-workflow/scripts/linear_api.py
+- [X] T005 [P] Implement strict transition blocker in `cmd_update_issue` returning error `{"success": false, "error": "Transição para 'Done' é restrita a humanos após merge manual de Pull Request."}` when `--state "Done"` is requested in skills/linear-workflow/scripts/linear_api.py
+- [X] T006 Add unit tests covering EphemeralWorktreeContext lifecycle and Done transition rejection in skills/linear-workflow/tests/test_linear_api.py
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -53,16 +53,16 @@ description: "Task list for modernizing linear-workflow with draft PRs lifecycle
 
 ### Tests for User Story 1 ⚠️
 
-- [ ] T007 [P] [US1] Add unit tests for LivingSpecDraftPR URL parsing and Draft PR linking in skills/linear-workflow/tests/test_linear_api.py
-- [ ] T008 [P] [US1] Add unit tests verifying mandatory `<CARD-ID>` validation aborts execution with explicit syntax hint when omitted in skills/linear-workflow/tests/test_linear_api.py
+- [X] T007 [P] [US1] Add unit tests for LivingSpecDraftPR URL parsing and Draft PR linking in skills/linear-workflow/tests/test_linear_api.py
+- [X] T008 [P] [US1] Add unit tests verifying mandatory `<CARD-ID>` validation aborts execution with explicit syntax hint when omitted in skills/linear-workflow/tests/test_linear_api.py
 
 ### Implementation for User Story 1
 
-- [ ] T009 [US1] Implement `create_draft_pr` helper and card body draft PR linking complying with LivingSpecDraftPR constraints (branchName: "Padrão: `<type>/<CARD-ID>-<slug>`", title: "Padrão: `<type>(<CARD-ID>): <descricao-curta>`", isDraft: "`true` durante `specify`, `clarify`, `plan`, `tasks`; `false` após `implement`", htmlUrl: "Padrão: `https://github.com/<owner>/<repo>/pull/<number>`") in skills/linear-workflow/scripts/linear_api.py
-- [ ] T010 [US1] Update `/speckit-specify` prompt to create Gitflow branch, push to remote, open Draft PR via `gh pr create --draft`, and link PR to Linear Backlog card in skills/linear-workflow/.apm/prompts/speckit-specify.prompt.md
-- [ ] T011 [US1] Update `/speckit-specify` skill definition to match Living Spec Draft PR lifecycle in skills/linear-workflow/.apm/skills/speckit-specify/SKILL.md
-- [ ] T012 [US1] Update `/speckit-clarify` prompt to require mandatory `<CARD-ID>` argument, execute in ephemeral worktree, commit spec updates to Draft PR, and suggest `/speckit-plan <CARD-ID>` in skills/linear-workflow/.apm/prompts/speckit-clarify.prompt.md
-- [ ] T013 [US1] Update `/speckit-clarify` skill definition with mandatory `<CARD-ID>` validation and next-step prompting in skills/linear-workflow/.apm/skills/speckit-clarify/SKILL.md
+- [X] T009 [US1] Implement `create_draft_pr` helper and card body draft PR linking complying with LivingSpecDraftPR constraints (branchName: "Padrão: `<type>/<CARD-ID>-<slug>`", title: "Padrão: `<type>(<CARD-ID>): <descricao-curta>`", isDraft: "`true` durante `specify`, `clarify`, `plan`, `tasks`; `false` após `implement`", htmlUrl: "Padrão: `https://github.com/<owner>/<repo>/pull/<number>`") in skills/linear-workflow/scripts/linear_api.py
+- [X] T010 [US1] Update `/speckit-specify` prompt to create Gitflow branch, push to remote, open Draft PR via `gh pr create --draft`, and link PR to Linear Backlog card in skills/linear-workflow/.apm/prompts/speckit-specify.prompt.md
+- [X] T011 [US1] Update `/speckit-specify` skill definition to match Living Spec Draft PR lifecycle in skills/linear-workflow/.apm/skills/speckit-specify/SKILL.md
+- [X] T012 [US1] Update `/speckit-clarify` prompt to require mandatory `<CARD-ID>` argument, execute in ephemeral worktree, commit spec updates to Draft PR, and suggest `/speckit-plan <CARD-ID>` in skills/linear-workflow/.apm/prompts/speckit-clarify.prompt.md
+- [X] T013 [US1] Update `/speckit-clarify` skill definition with mandatory `<CARD-ID>` validation and next-step prompting in skills/linear-workflow/.apm/skills/speckit-clarify/SKILL.md
 
 **Checkpoint**: User Story 1 fully functional and testable independently (MVP Complete)
 
@@ -76,19 +76,19 @@ description: "Task list for modernizing linear-workflow with draft PRs lifecycle
 
 ### Tests for User Story 2 ⚠️
 
-- [ ] T014 [P] [US2] Add unit tests for `Planned` state resolution and 6-stage transition flow in skills/linear-workflow/tests/test_linear_api.py
-- [ ] T015 [P] [US2] Add unit tests verifying `validate-plan` succeeds for `Planned` state spec directories in skills/linear-workflow/tests/test_linear_api.py
+- [X] T014 [P] [US2] Add unit tests for `Planned` state resolution and 6-stage transition flow in skills/linear-workflow/tests/test_linear_api.py
+- [X] T015 [P] [US2] Add unit tests verifying `validate-plan` succeeds for `Planned` state spec directories in skills/linear-workflow/tests/test_linear_api.py
 
 ### Implementation for User Story 2
 
-- [ ] T016 [US2] Update `resolve_team_states` and `validate_spec_plan` in skills/linear-workflow/scripts/linear_api.py to support `Planned` (unstarted, pos 1.0) and resolve spec dirs matching card ID
-- [ ] T017 [US2] Update `/speckit-plan` prompt to require `<CARD-ID>`, execute in ephemeral worktree, commit `plan.md` to Draft PR (`docs(plan): ...`), advance card to `Planned` via 3-Stage Consent Gate, and suggest `/speckit-tasks <CARD-ID>` in skills/linear-workflow/.apm/prompts/speckit-plan.prompt.md
-- [ ] T018 [US2] Update `/speckit-plan` skill definition with `Planned` state transition rules in skills/linear-workflow/.apm/skills/speckit-plan/SKILL.md
-- [ ] T019 [US2] Update `/speckit-tasks` prompt to require `<CARD-ID>`, execute in ephemeral worktree, commit `tasks.md` to Draft PR (`docs(tasks): ...`), validate with `validate-plan`, advance card to `Todo` via 3-Stage Consent Gate, and suggest `/speckit-implement <CARD-ID>` in skills/linear-workflow/.apm/prompts/speckit-tasks.prompt.md
-- [ ] T020 [US2] Update `/speckit-tasks` skill definition with `Todo` transition rules in skills/linear-workflow/.apm/skills/speckit-tasks/SKILL.md
-- [ ] T021 [US2] Update `/speckit-implement` prompt to require `<CARD-ID>`, move card to `In Progress`, execute in ephemeral worktree, mark PR ready via `gh pr ready`, advance card to `In Review`, and suggest `/speckit-converge <CARD-ID>` in skills/linear-workflow/.apm/prompts/speckit-implement.prompt.md
-- [ ] T022 [US2] Update `/speckit-implement` skill definition with autonomous implementation and PR ready promotion rules in skills/linear-workflow/.apm/skills/speckit-implement/SKILL.md
-- [ ] T023 [US2] Update references table with 6 official states, positions, and colors in skills/linear-workflow/references/states-and-labels.md
+- [X] T016 [US2] Update `resolve_team_states` and `validate_spec_plan` in skills/linear-workflow/scripts/linear_api.py to support `Planned` (unstarted, pos 1.0) and resolve spec dirs matching card ID
+- [X] T017 [US2] Update `/speckit-plan` prompt to require `<CARD-ID>`, execute in ephemeral worktree, commit `plan.md` to Draft PR (`docs(plan): ...`), advance card to `Planned` via 3-Stage Consent Gate, and suggest `/speckit-tasks <CARD-ID>` in skills/linear-workflow/.apm/prompts/speckit-plan.prompt.md
+- [X] T018 [US2] Update `/speckit-plan` skill definition with `Planned` state transition rules in skills/linear-workflow/.apm/skills/speckit-plan/SKILL.md
+- [X] T019 [US2] Update `/speckit-tasks` prompt to require `<CARD-ID>`, execute in ephemeral worktree, commit `tasks.md` to Draft PR (`docs(tasks): ...`), validate with `validate-plan`, advance card to `Todo` via 3-Stage Consent Gate, and suggest `/speckit-implement <CARD-ID>` in skills/linear-workflow/.apm/prompts/speckit-tasks.prompt.md
+- [X] T020 [US2] Update `/speckit-tasks` skill definition with `Todo` transition rules in skills/linear-workflow/.apm/skills/speckit-tasks/SKILL.md
+- [X] T021 [US2] Update `/speckit-implement` prompt to require `<CARD-ID>`, move card to `In Progress`, execute in ephemeral worktree, mark PR ready via `gh pr ready`, advance card to `In Review`, and suggest `/speckit-converge <CARD-ID>` in skills/linear-workflow/.apm/prompts/speckit-implement.prompt.md
+- [X] T022 [US2] Update `/speckit-implement` skill definition with autonomous implementation and PR ready promotion rules in skills/linear-workflow/.apm/skills/speckit-implement/SKILL.md
+- [X] T023 [US2] Update references table with 6 official states, positions, and colors in skills/linear-workflow/references/states-and-labels.md
 
 **Checkpoint**: User Stories 1 and 2 functional and testable independently
 
@@ -102,15 +102,15 @@ description: "Task list for modernizing linear-workflow with draft PRs lifecycle
 
 ### Tests for User Story 3 ⚠️
 
-- [ ] T024 [P] [US3] Add unit tests for `cmd_sync_boards` verifying team inspection, `--dry-run` safety, and `Technical Analysis` renaming in skills/linear-workflow/tests/test_linear_api.py
-- [ ] T025 [P] [US3] Add unit tests for `cmd_setup_board` verifying idempotent creation of missing workflow states in skills/linear-workflow/tests/test_linear_api.py
+- [X] T024 [P] [US3] Add unit tests for `cmd_sync_boards` verifying team inspection, `--dry-run` safety, and `Technical Analysis` renaming in skills/linear-workflow/tests/test_linear_api.py
+- [X] T025 [P] [US3] Add unit tests for `cmd_setup_board` verifying idempotent creation of missing workflow states in skills/linear-workflow/tests/test_linear_api.py
 
 ### Implementation for User Story 3
 
-- [ ] T026 [US3] Implement Linear GraphQL queries (`WorkspaceTeamsAndStates`) and mutations (`WorkflowStateCreate`, `WorkflowStateUpdate`) in skills/linear-workflow/scripts/linear_api.py
-- [ ] T027 [US3] Implement `cmd_sync_boards` supporting `--team-id` and `--dry-run` to inspect teams, rename legacy states to `Planned`, and enforce positions/colors per contract in skills/linear-workflow/scripts/linear_api.py
-- [ ] T028 [US3] Implement `cmd_setup_board` supporting `--team-id` and `--force` to idempotently provision canonical 6 states (+ Canceled) in skills/linear-workflow/scripts/linear_api.py
-- [ ] T029 [US3] Register `sync-boards` and `setup-board` subcommands in CLI argument parser in skills/linear-workflow/scripts/linear_api.py
+- [X] T026 [US3] Implement Linear GraphQL queries (`WorkspaceTeamsAndStates`) and mutations (`WorkflowStateCreate`, `WorkflowStateUpdate`) in skills/linear-workflow/scripts/linear_api.py
+- [X] T027 [US3] Implement `cmd_sync_boards` supporting `--team-id` and `--dry-run` to inspect teams, rename legacy states to `Planned`, and enforce positions/colors per contract in skills/linear-workflow/scripts/linear_api.py
+- [X] T028 [US3] Implement `cmd_setup_board` supporting `--team-id` and `--force` to idempotently provision canonical 6 states (+ Canceled) in skills/linear-workflow/scripts/linear_api.py
+- [X] T029 [US3] Register `sync-boards` and `setup-board` subcommands in CLI argument parser in skills/linear-workflow/scripts/linear_api.py
 
 **Checkpoint**: Board synchronization and provisioning operational and testable independently
 
@@ -124,12 +124,12 @@ description: "Task list for modernizing linear-workflow with draft PRs lifecycle
 
 ### Tests for User Story 4 ⚠️
 
-- [ ] T030 [P] [US4] Add unit tests for review resolution cycle and PR comment deduplication in skills/linear-workflow/tests/test_linear_api.py
+- [X] T030 [P] [US4] Add unit tests for review resolution cycle and PR comment deduplication in skills/linear-workflow/tests/test_linear_api.py
 
 ### Implementation for User Story 4
 
-- [ ] T031 [US4] Update `/speckit-converge` prompt to require `<CARD-ID>`, move card to `In Progress`, execute in ephemeral worktree, apply review fixes, push commits, post PR completion comment, and advance card to `In Review` in skills/linear-workflow/.apm/prompts/speckit-converge.prompt.md
-- [ ] T032 [US4] Update `/speckit-converge` skill definition with autonomous PR convergence workflow in skills/linear-workflow/.apm/skills/speckit-converge/SKILL.md
+- [X] T031 [US4] Update `/speckit-converge` prompt to require `<CARD-ID>`, move card to `In Progress`, execute in ephemeral worktree, apply review fixes, push commits, post PR completion comment, and advance card to `In Review` in skills/linear-workflow/.apm/prompts/speckit-converge.prompt.md
+- [X] T032 [US4] Update `/speckit-converge` skill definition with autonomous PR convergence workflow in skills/linear-workflow/.apm/skills/speckit-converge/SKILL.md
 
 **Checkpoint**: Autonomous convergence operational and testable independently
 
@@ -143,12 +143,12 @@ description: "Task list for modernizing linear-workflow with draft PRs lifecycle
 
 ### Implementation for User Story 5
 
-- [ ] T033 [P] [US5] Expunge legacy `/fk-*` references and update lifecycle instructions in skills/linear-workflow/.apm/instructions/linear-lifecycle-commands.instructions.md
-- [ ] T034 [P] [US5] Update multi-harness command reference with parameterized `<CARD-ID>` syntax and remove legacy aliases in skills/linear-workflow/references/multi-harness-commands.md
-- [ ] T035 [P] [US5] Update main skill guide removing legacy references and documenting 6-stage lifecycle in skills/linear-workflow/SKILL.md
-- [ ] T036 [P] [US5] Update remaining prompt templates (`speckit-taskstoissues.prompt.md`, `speckit-constitution.prompt.md`, `speckit-analyze.prompt.md`, `speckit-checklist.prompt.md`) in skills/linear-workflow/.apm/prompts/
-- [ ] T037 [P] [US5] Update remaining skill definitions (`speckit-taskstoissues/SKILL.md`, `speckit-constitution/SKILL.md`, `speckit-analyze/SKILL.md`, `speckit-checklist/SKILL.md`) in skills/linear-workflow/.apm/skills/
-- [ ] T038 [US5] Sync bundled assets in `skills/linear-workflow/assets/.specify/` with root `.specify/` templates and scripts
+- [X] T033 [P] [US5] Expunge legacy `/fk-*` references and update lifecycle instructions in skills/linear-workflow/.apm/instructions/linear-lifecycle-commands.instructions.md
+- [X] T034 [P] [US5] Update multi-harness command reference with parameterized `<CARD-ID>` syntax and remove legacy aliases in skills/linear-workflow/references/multi-harness-commands.md
+- [X] T035 [P] [US5] Update main skill guide removing legacy references and documenting 6-stage lifecycle in skills/linear-workflow/SKILL.md
+- [X] T036 [P] [US5] Update remaining prompt templates (`speckit-taskstoissues.prompt.md`, `speckit-constitution.prompt.md`, `speckit-analyze.prompt.md`, `speckit-checklist.prompt.md`) in skills/linear-workflow/.apm/prompts/
+- [X] T037 [P] [US5] Update remaining skill definitions (`speckit-taskstoissues/SKILL.md`, `speckit-constitution/SKILL.md`, `speckit-analyze/SKILL.md`, `speckit-checklist/SKILL.md`) in skills/linear-workflow/.apm/skills/
+- [X] T038 [US5] Sync bundled assets in `skills/linear-workflow/assets/.specify/` with root `.specify/` templates and scripts
 
 **Checkpoint**: Legacy code and references completely expunged
 
@@ -158,11 +158,11 @@ description: "Task list for modernizing linear-workflow with draft PRs lifecycle
 
 **Purpose**: Improvements, validations, and documentation updates that affect multiple user stories
 
-- [ ] T039 [P] Update Constitution in .specify/memory/constitution.md ratifying Living Specs, 6-stage state machine, and ephemeral worktree isolation
-- [ ] T040 [P] Execute full unit test suite via `python -m unittest skills/linear-workflow/tests/test_linear_api.py` and ensure 100% pass
-- [ ] T041 Run static plan validation via `python skills/linear-workflow/scripts/linear_api.py validate-plan specs/054-linear-draft-prs-lifecycle`
-- [ ] T042 Run quickstart verification scenarios per specs/054-linear-draft-prs-lifecycle/quickstart.md
-- [ ] T043 Document changes under `## [Unreleased]` following Keep a Changelog and Conventional Commits in CHANGELOG.md
+- [X] T039 [P] Update Constitution in .specify/memory/constitution.md ratifying Living Specs, 6-stage state machine, and ephemeral worktree isolation
+- [X] T040 [P] Execute full unit test suite via `python -m unittest skills/linear-workflow/tests/test_linear_api.py` and ensure 100% pass
+- [X] T041 Run static plan validation via `python skills/linear-workflow/scripts/linear_api.py validate-plan specs/054-linear-draft-prs-lifecycle`
+- [X] T042 Run quickstart verification scenarios per specs/054-linear-draft-prs-lifecycle/quickstart.md
+- [X] T043 Document changes under `## [Unreleased]` following Keep a Changelog and Conventional Commits in CHANGELOG.md
 
 ---
 

@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Modernizar linear-workflow com ciclo de vida de Living Specs acoplado a GitHub Draft PRs abertos na etapa de especificação (/speckit-specify) e vinculados ao card no Linear (FAL-58)
+- Implementar máquina de estados canônica de 6 estágios (Backlog ➔ Planned ➔ Todo ➔ In Progress ➔ In Review ➔ Done + Canceled) com avanço para Planned no /speckit-plan e para Todo no /speckit-tasks (FAL-58)
+- Adicionar subcomandos sync-boards e setup-board em linear_api.py para reconciliação automática de quadros, migração de Technical Analysis para Planned, e suporte a --dry-run (FAL-58)
+- Adicionar isolamento operacional via Git Worktrees efêmeros (.worktrees/<CARD-ID>) com validação obrigatória de <CARD-ID> em todos os comandos pós-especificação (FAL-58)
+- Adicionar promoção automática de PR Draft para pronto para revisão via gh pr ready ao concluir a implementação em /speckit-implement (FAL-58)
+- Adicionar convergência autônoma de code review em /speckit-converge com ciclo de transição In Review ➔ In Progress ➔ correções ➔ In Review e comentários estruturados no PR (FAL-58)
 - Persistir especificacao tecnica integral no Linear durante technical analysis e adicionar flags --description e --description-file no helper CLI (FAL-34)
 - Integrar perguntas interativas aos Consent Gates de /fk-new-issue, /fk-technical-analysis e /fk-develop com suporte a loopback ("Editar...") e fallback multi-harness (FAL-27)
 - Adicionar comando /fk-fix para aplicação autônoma de feedback de code review no PR e Linear (FAL-28)
@@ -23,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Deprecated
 
 ### Removed
+- Expurgar completamente referências e menções legadas aos comandos /fk-* em prompts, instruções, documentação e templates (FAL-58)
 - Remover aliases curtos (fk-dev, fk-ta e fk-issue) das sub-skills e documentação do linear-workflow (FAL-26)
 
 ### Fixed
@@ -30,3 +37,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Prevent shell backtick and quote corruption in GitHub CLI and Linear Markdown payloads by enforcing UTF-8 file flags (--description-file, --comment-file, --body-file) (FAL-40)
 
 ### Security
+- Implementar bloqueio estrito na CLI linear_api.py impedindo transições automatizadas para o estado Done, reservando o fechamento exclusivamente para desenvolvedores humanos após merge do PR (FAL-58)

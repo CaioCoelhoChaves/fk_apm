@@ -54,6 +54,14 @@ You **MUST** consider the user input before proceeding (if not empty).
 
 ## Outline
 
+### Mandatory `<CARD-ID>` Validation & Ephemeral Worktree Isolation
+- The user **MUST** provide `<CARD-ID>` (e.g. `/speckit-clarify FAL-58`).
+- If `<CARD-ID>` is missing or invalid (`^[A-Z]{2,10}-\d+$`), **ABORT** immediately:
+  `Uso obrigatório: /speckit-clarify <CARD-ID>`
+- If the current workspace branch is not on the card's branch (`feat/<CARD-ID>-*`), execute in an ephemeral Git worktree `.worktrees/<CARD-ID>` (`linear_api.create_ephemeral_worktree`).
+- After recording clarifications, commit to the Draft PR (`docs(clarify): update spec clarifications for <CARD-ID>`) and push.
+- Next step: `Próximo passo: /speckit-plan <CARD-ID>`
+
 Goal: Detect and reduce ambiguity or missing decision points in the active feature specification and record the clarifications directly in the spec file.
 
 Note: This clarification workflow is expected to run (and be completed) BEFORE invoking `/speckit-plan`. If the user explicitly states they are skipping clarification (e.g., exploratory spike), you may proceed, but must warn that downstream rework risk increases.

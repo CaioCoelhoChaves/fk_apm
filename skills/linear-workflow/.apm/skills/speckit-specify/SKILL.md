@@ -1,6 +1,6 @@
 ---
 name: "speckit-specify"
-description: "Create or update a Spec Kit feature specification (specs/<feature>/spec.md) and create/link atomic Linear card(s) in Backlog using the 3-Stage Consent Gate. Replaces /fk-new-issue."
+description: "Create or update a Spec Kit feature specification (specs/<feature>/spec.md) and create/link atomic Linear card(s) in Backlog using the 3-Stage Consent Gate. Living Specs & GitHub Draft PR Lifecycle."
 compatibility: "Requires spec-kit project structure with .specify/ directory and linear-workflow CLI"
 metadata:
   author: "github-spec-kit + fk_apm"
@@ -290,10 +290,16 @@ When `/speckit-specify` is used to specify a new feature or decompose requiremen
   - `is_multi_select`: `false`
 - Wait for the user's response. If the user selects `"Editar..."`, apply their adjustments to `spec.md` and repeat Stage 1 & Stage 2.
 
-### Stage 3 — Atomic Execution on Linear (File-First UTF-8)
+### Stage 3 — Atomic Execution on Linear & Living Spec Draft PR (File-First UTF-8)
 - Only after explicit approval in Stage 2:
-  1. Write the card description Markdown (referencing `specs/<feature>/spec.md`, user stories, functional requirements, and acceptance scenarios) to a temporary UTF-8 file (e.g., `.tmp-linear-desc.md`).
-  2. **NEVER** pass multi-line Markdown inline via `--description "..."`. Always use `--description-file`:
+  1. Create the Gitflow branch `<type>/<CARD-ID>-<slug>` (e.g. `feat/FAL-58-modernizar-linear-workflow-draft-prs`).
+  2. Commit the initial specification artifact: `git add specs/<feature>/spec.md checklists/requirements.md && git commit -m "docs(spec): specify <CARD-ID> - <slug>"` and push: `git push -u origin <branch>`.
+  3. Open a Pull Request on GitHub in Draft mode via `gh pr create --draft`:
+     ```bash
+     gh pr create --draft --base develop --head "<branch>" --title "<conventional-title>" --body-file ".tmp-pr-body.md"
+     ```
+  4. Write the Linear card description Markdown (referencing `specs/<feature>/spec.md`, user stories, functional requirements, acceptance scenarios, and the Draft PR link `* **Pull Request (Draft)**: [#<num> — <title>](<url>)`) to a temporary UTF-8 file (`.tmp-linear-desc.md`).
+  5. **NEVER** pass multi-line Markdown inline via `--description "..."`. Always use `--description-file`:
      ```bash
      python skills/linear-workflow/scripts/linear_api.py create-issue \
        --team-id "<team-id>" \
@@ -303,7 +309,8 @@ When `/speckit-specify` is used to specify a new feature or decompose requiremen
        --label "<label>" \
        --description-file ".tmp-linear-desc.md"
      ```
-  3. Remove the temporary `.tmp-linear-desc.md` file and report the created Linear issue key (`FAL-XX`) and URL in the Completion Report.
+  6. Clean up temporary files and orient the developer with the next steps:
+     `Próximo passo: /speckit-clarify <CARD-ID> ou /speckit-plan <CARD-ID>`
 
 ## Completion Report
 

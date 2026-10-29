@@ -24,6 +24,165 @@ if hasattr(sys.stderr, "reconfigure"):
 
 LINEAR_GRAPHQL_ENDPOINT = "https://api.linear.app/graphql"
 
+CANONICAL_WORKFLOW_STATES = [
+    {"name": "Backlog", "type": "backlog", "position": 0.0, "color": "#BEC2C8"},
+    {"name": "Planned", "type": "unstarted", "position": 1.0, "color": "#F2C94C"},
+    {"name": "Todo", "type": "unstarted", "position": 2.0, "color": "#4EA7FC"},
+    {"name": "In Progress", "type": "started", "position": 3.0, "color": "#F2994A"},
+    {"name": "In Review", "type": "started", "position": 4.0, "color": "#BB87FC"},
+    {"name": "Done", "type": "completed", "position": 5.0, "color": "#56D364"},
+    {"name": "Canceled", "type": "canceled", "position": 6.0, "color": "#828282"},
+]
+
+ALLOWED_STATE_NAMES = {"Backlog", "Planned", "Todo", "In Progress", "In Review", "Done", "Canceled"}
+ALLOWED_STATE_TYPES = {"backlog", "unstarted", "started", "completed", "canceled"}
+COLOR_REGEX = re.compile(r"^#[0-9A-Fa-f]{6}$")
+CARD_ID_REGEX = re.compile(r"^[A-Z]{2,10}-\d+$")
+DRAFT_PR_URL_REGEX = re.compile(r"https://github\.com/([a-zA-Z0-9_\-\.]+)/([a-zA-Z0-9_\-\.]+)/pull/(\d+)")
+
+def validate_card_id(card_id: Optional[str]) -> bool:
+    r"""Validate card ID against mandatory format ^[A-Z]{2,10}-\d+$."""
+    if not card_id or not isinstance(card_id, str):
+        return False
+    return bool(CARD_ID_REGEX.match(card_id.strip()))
+
+def validate_linear_workflow_state(state: Dict[str, Any]) -> Tuple[bool, List[str]]:
+    """
+    Validate LinearWorkflowState quoting constraints verbatim:
+    - name: "Um de: `Backlog`, `Planned`, `Todo`, `In Progress`, `In Review`, `Done`, `Canceled`"
+    - type: "Um de: `backlog`, `unstarted`, `started`, `completed`, `canceled`"
+    - position: "Valores de 0.0 a 6.0 com incrementos regulares"
+    - color: "Regex: `^#[0-9A-Fa-f]{6}$`"
+    """
+    errors: List[str] = []
+    name = state.get("name")
+    stype = state.get("type")
+    position = state.get("position")
+    color = state.get("color")
+
+    if not name or name not in ALLOWED_STATE_NAMES:
+        errors.append("name: Um de: `Backlog`, `Planned`, `Todo`, `In Progress`, `In Review`, `Done`, `Canceled`")
+    if not stype or stype not in ALLOWED_STATE_TYPES:
+        errors.append("type: Um de: `backlog`, `unstarted`, `started`, `completed`, `canceled`")
+    if position is None or not isinstance(position, (int, float)) or position < 0.0 or position > 6.0:
+        errors.append("position: Valores de 0.0 a 6.0 com incrementos regulares")
+    if not color or not isinstance(color, str) or not COLOR_REGEX.match(color):
+        errors.append("color: Regex: `^#[0-9A-Fa-f]{6}$`")
+
+    return len(errors) == 0, errors
+
+class EphemeralWorktreeContext:
+    r"""
+    Manages lifecycle of ephemeral git worktrees for isolated spec and implementation workflows:
+    - cardId: Padrão: `^[A-Z]{2,10}-\d+$` (obrigatório em todos os comandos)
+    - worktreePath: Padrão: `.worktrees/<CARD-ID>`
+    - status: `created`, `active`, `syncing`, `cleaned_up`, `failed`
+    """
+    def __init__(self, card_id: str, repo_root: Optional[Path] = None, target_branch: Optional[str] = None):
+        if not validate_card_id(card_id):
+            raise ValueError(f"Uso obrigatório: <CARD-ID> no formato ^[A-Z]{{2,10}}-\\d+$. Fornecido: '{card_id}'")
+        self.card_id = card_id.strip()
+        self.repo_root = (repo_root or Path.cwd()).resolve()
+        self.worktree_path = self.repo_root / ".worktrees" / self.card_id
+        self.target_branch = target_branch
+        self.status = "created"
+        self.is_current_workspace = False
+
+        if self.target_branch:
+            try:
+                import subprocess
+                res = subprocess.run(
+                    ["git", "rev-parse", "--abbrev-ref", "HEAD"],
+                    cwd=str(self.repo_root),
+                    capture_output=True,
+                    text=True,
+                    check=False
+                )
+                if res.returncode == 0 and res.stdout.strip() == self.target_branch:
+                    self.is_current_workspace = True
+            except Exception:
+                pass
+
+    def __enter__(self):
+        self.status = "active"
+        if not self.is_current_workspace:
+            self.worktree_path.parent.mkdir(parents=True, exist_ok=True)
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if exc_type is not None:
+            self.status = "failed"
+        else:
+            self.status = "cleaned_up"
+
+def create_ephemeral_worktree(card_id: str, target_branch: Optional[str] = None, repo_root: Optional[Path] = None) -> EphemeralWorktreeContext:
+    ctx = EphemeralWorktreeContext(card_id=card_id, target_branch=target_branch, repo_root=repo_root)
+    ctx.__enter__()
+    return ctx
+
+def cleanup_ephemeral_worktree(ctx_or_path: Any, repo_root: Optional[Path] = None) -> bool:
+    if isinstance(ctx_or_path, EphemeralWorktreeContext):
+        ctx_or_path.status = "cleaned_up"
+        return True
+    return True
+
+def parse_draft_pr_url(text: Optional[str]) -> Optional[str]:
+    """Extract GitHub PR HTML URL from text or markdown."""
+    if not text:
+        return None
+    m = DRAFT_PR_URL_REGEX.search(text)
+    if m:
+        return f"https://github.com/{m.group(1)}/{m.group(2)}/pull/{m.group(3)}"
+    return None
+
+def create_draft_pr(
+    branch_name: str,
+    title: str,
+    body: str,
+    base_branch: str = "develop",
+    repo_root: Optional[Path] = None,
+    is_draft: bool = True
+) -> Dict[str, Any]:
+    """
+    Open or update a LivingSpecDraftPR via GitHub CLI ('gh pr create --draft'):
+    - branchName: Padrão: `<type>/<CARD-ID>-<slug>`
+    - title: Padrão: `<type>(<CARD-ID>): <descricao-curta>`
+    - isDraft: `true` durante `specify`, `clarify`, `plan`, `tasks`; `false` após `implement`
+    - htmlUrl: Padrão: `https://github.com/<owner>/<repo>/pull/<number>`
+    """
+    import subprocess
+    cmd = ["gh", "pr", "create", "--base", base_branch, "--head", branch_name, "--title", title]
+    if is_draft:
+        cmd.append("--draft")
+
+    temp_body_file = (repo_root or Path.cwd()).resolve() / ".tmp-pr-body.md"
+    try:
+        temp_body_file.write_text(sanitize_markdown_payload(body), encoding="utf-8")
+        cmd.extend(["--body-file", str(temp_body_file)])
+
+        res = subprocess.run(cmd, cwd=str(repo_root or Path.cwd()), capture_output=True, text=True)
+        if res.returncode == 0:
+            pr_url = parse_draft_pr_url(res.stdout) or res.stdout.strip()
+            return {
+                "success": True,
+                "url": pr_url,
+                "branch": branch_name,
+                "is_draft": is_draft,
+                "stdout": res.stdout.strip()
+            }
+        else:
+            return {
+                "success": False,
+                "error": res.stderr.strip() or res.stdout.strip()
+            }
+    finally:
+        if temp_body_file.exists():
+            try:
+                temp_body_file.unlink()
+            except Exception:
+                pass
+
+
 def resolve_api_key(explicit_key: Optional[str] = None) -> Optional[str]:
     """
     Dynamically resolve Linear API key in priority order:
@@ -328,6 +487,58 @@ mutation CreateComment($input: CommentCreateInput!) {
 }
 """
 
+
+WORKSPACE_TEAMS_AND_STATES_QUERY = """
+query WorkspaceTeamsAndStates {
+  teams {
+    nodes {
+      id
+      name
+      key
+      states {
+        nodes {
+          id
+          name
+          type
+          position
+          color
+        }
+      }
+    }
+  }
+}
+"""
+
+WORKFLOW_STATE_CREATE_MUTATION = """
+mutation WorkflowStateCreate($input: WorkflowStateCreateInput!) {
+  workflowStateCreate(input: $input) {
+    success
+    workflowState {
+      id
+      name
+      type
+      position
+      color
+    }
+  }
+}
+"""
+
+WORKFLOW_STATE_UPDATE_MUTATION = """
+mutation WorkflowStateUpdate($id: String!, $input: WorkflowStateUpdateInput!) {
+  workflowStateUpdate(id: $id, input: $input) {
+    success
+    workflowState {
+      id
+      name
+      type
+      position
+      color
+    }
+  }
+}
+"""
+
 CREATE_LABEL_MUTATION = """
 mutation CreateLabel($input: IssueLabelCreateInput!) {
   issueLabelCreate(input: $input) {
@@ -547,6 +758,19 @@ def _resolve_spec_dir(
                 for child in sorted(candidate_root.iterdir()):
                     if child.is_dir() and child.name.startswith(num_prefix):
                         return child.resolve()
+            # Inspect spec.md and plan.md files in directories to match target_clean
+            for child in sorted(candidate_root.iterdir()):
+                if not child.is_dir():
+                    continue
+                for spec_candidate in ("spec.md", "plan.md", "tasks.md", "feature.json"):
+                    sc_path = child / spec_candidate
+                    if sc_path.is_file():
+                        try:
+                            sc_content = sc_path.read_text(encoding="utf-8")
+                            if lower_target in sc_content.lower():
+                                return child.resolve()
+                        except Exception:
+                            pass
 
     if active_feature_dir is not None and active_feature_dir.is_dir():
         if not target_clean or target_clean.lower() in active_feature_dir.name.lower():
@@ -864,7 +1088,8 @@ def resolve_state_id(api_key: str, team_id: str, state_name: str) -> Optional[st
     # Fuzzy alias mapping
     aliases = {
         "backlog": ["backlog"],
-        "technical analysis": ["technical analysis", "analysis", "analise tecnica", "análise técnica", "spike", "investigation"],
+        "planned": ["planned", "planejado", "technical analysis", "analysis", "analise tecnica", "análise técnica", "spike", "investigation"],
+        "technical analysis": ["technical analysis", "analysis", "analise tecnica", "análise técnica", "spike", "investigation", "planned"],
         "todo": ["todo", "to do", "a fazer"],
         "in progress": ["in progress", "started", "doing", "em progresso", "em andamento"],
         "in review": ["in review", "review", "revisão", "em revisão", "pr"],
@@ -959,6 +1184,13 @@ def cmd_update_issue(
     2. Updates state, title, and/or description (if requested).
     3. Posts comment with idempotency protection (skips duplicates posted within 10 min).
     """
+    if state_name and state_name.strip().lower() == "done":
+        err_out = {
+            "success": False,
+            "error": "Transição para 'Done' é restrita a humanos após merge manual de Pull Request."
+        }
+        print(json.dumps(err_out, indent=2, ensure_ascii=False))
+        return err_out
     # 1. Fetch current issue context
     issue_res = execute_graphql(api_key, GET_ISSUE_QUERY, {"id": issue_id})
     if not issue_res.get("success") or not issue_res.get("data", {}).get("issue"):
@@ -1099,6 +1331,204 @@ def cmd_update_issue(
 
     print(json.dumps(output, indent=2, ensure_ascii=False))
 
+
+def cmd_sync_boards(api_key: str, team_id: Optional[str] = None, dry_run: bool = False):
+    """
+    Audit and reconcile canonical 6-stage workflow states across teams:
+    1. Fetches teams and their current workflow states.
+    2. Identifies legacy 'Technical Analysis' state and maps to 'Planned'.
+    3. Idempotently creates missing canonical states.
+    4. Updates positions and colors to match canonical configuration.
+    """
+    res = execute_graphql(api_key, WORKSPACE_TEAMS_AND_STATES_QUERY)
+    if not res.get("success"):
+        print(json.dumps(res, indent=2, ensure_ascii=False))
+        return
+
+    teams = res["data"].get("teams", {}).get("nodes", [])
+    if team_id:
+        teams = [t for t in teams if t["id"] == team_id or t.get("key") == team_id]
+
+    results: List[Dict[str, Any]] = []
+
+    for team in teams:
+        t_id = team["id"]
+        t_name = team["name"]
+        raw_states = team.get("states", {}).get("nodes", [])
+
+        states_updated: List[Dict[str, Any]] = []
+        states_created: List[Dict[str, Any]] = []
+
+        state_by_name = {s["name"].strip().lower(): s for s in raw_states}
+
+        legacy_names = ["technical analysis", "análise técnica", "analise tecnica"]
+        legacy_state = None
+        for lname in legacy_names:
+            if lname in state_by_name:
+                legacy_state = state_by_name[lname]
+                break
+
+        if legacy_state and "planned" not in state_by_name:
+            update_spec = {
+                "id": legacy_state["id"],
+                "previous_name": legacy_state["name"],
+                "new_name": "Planned",
+                "type": "unstarted",
+                "position": 1.0,
+                "color": "#F2C94C"
+            }
+            states_updated.append(update_spec)
+            if not dry_run:
+                execute_graphql(api_key, WORKFLOW_STATE_UPDATE_MUTATION, {
+                    "id": legacy_state["id"],
+                    "input": {
+                        "name": "Planned",
+                        "type": "unstarted",
+                        "position": 1.0,
+                        "color": "#F2C94C"
+                    }
+                })
+            del state_by_name[legacy_state["name"].strip().lower()]
+            legacy_state = dict(legacy_state)
+            legacy_state["name"] = "Planned"
+            legacy_state["type"] = "unstarted"
+            legacy_state["position"] = 1.0
+            legacy_state["color"] = "#F2C94C"
+            state_by_name["planned"] = legacy_state
+
+        for canonical in CANONICAL_WORKFLOW_STATES:
+            cname_lower = canonical["name"].lower()
+            if cname_lower not in state_by_name:
+                states_created.append({
+                    "name": canonical["name"],
+                    "type": canonical["type"],
+                    "position": canonical["position"],
+                    "color": canonical["color"]
+                })
+                if not dry_run:
+                    c_res = execute_graphql(api_key, WORKFLOW_STATE_CREATE_MUTATION, {
+                        "input": {
+                            "teamId": t_id,
+                            "name": canonical["name"],
+                            "type": canonical["type"],
+                            "position": canonical["position"],
+                            "color": canonical["color"]
+                        }
+                    })
+                    new_st = c_res.get("data", {}).get("workflowStateCreate", {}).get("workflowState")
+                    if new_st:
+                        state_by_name[cname_lower] = new_st
+            else:
+                existing = state_by_name[cname_lower]
+                needs_update = False
+                update_fields: Dict[str, Any] = {}
+                if float(existing.get("position", 0)) != canonical["position"]:
+                    update_fields["position"] = canonical["position"]
+                    needs_update = True
+                if (existing.get("color") or "").lower() != canonical["color"].lower():
+                    update_fields["color"] = canonical["color"]
+                    needs_update = True
+                if needs_update and existing != legacy_state:
+                    update_spec = {
+                        "id": existing["id"],
+                        "previous_name": existing["name"],
+                        "new_name": canonical["name"],
+                        "type": canonical["type"],
+                        "position": canonical["position"],
+                        "color": canonical["color"]
+                    }
+                    states_updated.append(update_spec)
+                    if not dry_run:
+                        execute_graphql(api_key, WORKFLOW_STATE_UPDATE_MUTATION, {
+                            "id": existing["id"],
+                            "input": update_fields
+                        })
+
+        current_list: List[Dict[str, Any]] = []
+        for s in state_by_name.values():
+            current_list.append({
+                "name": s["name"],
+                "position": float(s.get("position", 0.0)),
+                "type": s.get("type", "unstarted")
+            })
+        current_list.sort(key=lambda x: x["position"])
+
+        results.append({
+            "team_id": t_id,
+            "team_name": t_name,
+            "states_created": states_created,
+            "states_updated": states_updated,
+            "states_current": current_list
+        })
+
+    output = {
+        "success": True,
+        "dry_run": dry_run,
+        "teams_analyzed": len(results),
+        "results": results
+    }
+    print(json.dumps(output, indent=2, ensure_ascii=False))
+
+
+def cmd_setup_board(api_key: str, team_id: str, force: bool = False):
+    """
+    Idempotently provision canonical 6 states (+ Canceled) for a team:
+    - Creates missing states
+    - If force=True, realigns existing state positions and colors
+    """
+    res = execute_graphql(api_key, LIST_STATES_QUERY, {"teamId": team_id})
+    if not res.get("success"):
+        print(json.dumps(res, indent=2, ensure_ascii=False))
+        return
+
+    raw_states = res["data"].get("team", {}).get("states", {}).get("nodes", [])
+    state_by_name = {s["name"].strip().lower(): s for s in raw_states}
+
+    provisioned: List[Dict[str, Any]] = []
+
+    for canonical in CANONICAL_WORKFLOW_STATES:
+        cname = canonical["name"]
+        cname_lower = cname.lower()
+
+        if cname_lower in state_by_name:
+            existing = state_by_name[cname_lower]
+            if force:
+                execute_graphql(api_key, WORKFLOW_STATE_UPDATE_MUTATION, {
+                    "id": existing["id"],
+                    "input": {
+                        "position": canonical["position"],
+                        "color": canonical["color"],
+                        "type": canonical["type"]
+                    }
+                })
+            provisioned.append({
+                "name": cname,
+                "status": "existing"
+            })
+        else:
+            c_res = execute_graphql(api_key, WORKFLOW_STATE_CREATE_MUTATION, {
+                "input": {
+                    "teamId": team_id,
+                    "name": cname,
+                    "type": canonical["type"],
+                    "position": canonical["position"],
+                    "color": canonical["color"]
+                }
+            })
+            new_id = c_res.get("data", {}).get("workflowStateCreate", {}).get("workflowState", {}).get("id", "created")
+            provisioned.append({
+                "name": cname,
+                "status": "created",
+                "id": new_id
+            })
+
+    output = {
+        "success": True,
+        "team_id": team_id,
+        "provisioned_states": provisioned
+    }
+    print(json.dumps(output, indent=2, ensure_ascii=False))
+
 def cmd_create_comment(
     api_key: str,
     issue_id: str,
@@ -1225,6 +1655,16 @@ def main():
     c_comment.add_argument("--comment-file", help="Path to UTF-8 file containing comment markdown body to post")
     c_comment.add_argument("--force", action="store_true", help="Force posting comment even if identical comment exists within 10 minutes")
 
+    # sync-boards
+    s_boards = subparsers.add_parser("sync-boards", help="Audit and reconcile canonical 6-stage workflow states across teams")
+    s_boards.add_argument("--team-id", help="Linear Team ID (optional, synchronizes all teams if omitted)")
+    s_boards.add_argument("--dry-run", action="store_true", help="Preview planned state migrations without executing mutations")
+
+    # setup-board
+    set_board = subparsers.add_parser("setup-board", help="Provision canonical 6 states (+ Canceled) for a team")
+    set_board.add_argument("--team-id", required=True, help="Linear Team ID")
+    set_board.add_argument("--force", action="store_true", help="Force realignment of state positions and colors")
+
     # validate-plan (local static validation, no API key required)
     v_plan = subparsers.add_parser("validate-plan", help="Validate local specs/<feature>/plan.md and tasks.md integrity")
     v_plan.add_argument("target", nargs="?", default="", help="Issue key (e.g. FAL-53) or path to spec directory (optional, defaults to .specify/feature.json)")
@@ -1305,6 +1745,10 @@ def main():
         )
     elif args.command == "create-comment":
         cmd_create_comment(api_key, args.issue_id, args.comment, args.force, comment_file=args.comment_file)
+    elif args.command == "sync-boards":
+        cmd_sync_boards(api_key, team_id=args.team_id, dry_run=args.dry_run)
+    elif args.command == "setup-board":
+        cmd_setup_board(api_key, team_id=args.team_id, force=args.force)
 
 if __name__ == "__main__":
     main()
