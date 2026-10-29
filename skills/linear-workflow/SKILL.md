@@ -82,7 +82,17 @@ A standardized workflow for AI coding agents to integrate Linear issue managemen
      1. **Backtick Escape & Expansion**: In **Windows PowerShell**, double-quoted strings (`"..."`) treat the backtick (`` ` ``) as an escape character (`` `f `` ➔ Form Feed `\x0c`, `` `t `` ➔ Tab `\t`, `` `r `` ➔ Carriage Return `\r`, `` `b `` ➔ Backspace `\x08`, `` `n `` ➔ Newline `\n`, or strip standalone backticks), corrupting `` `feat` `` ➔ `eat`, `` `fix` `` ➔ `ix`, `` `test` `` ➔ `est`, `` `refactor` `` ➔ `efactor`, and `` `chore` `` ➔ `chore`. In **Bash/Zsh**, backticks inside `"..."` trigger command substitution.
      2. **Win32 Double-Quote Stripping (`CommandLineToArgvW`)**: In Windows PowerShell 5.1, passing strings or variables with internal double quotes (`"`) to native binaries (`python`, `gh`) fails to escape quotes in `lpCommandLine`, causing `CommandLineToArgvW` to split arguments or strip quotes from Markdown payloads.
    - **Mandatory File-First Standard**: Write Markdown descriptions, comments, and PR bodies to temporary UTF-8 files (using the agent's native file tool or `Set-Content -Path <file> -Encoding utf8` with `@' ... '@` in PowerShell / `cat <<'EOF' > <file>` in Bash) and pass `--description-file "<path>"`, `--comment-file "<path>"`, and `--body-file "<path>"`.
+   - **Deterministic Markdown Sanitizer (`sanitize_markdown_payload`)**: `scripts/linear_api.py` automatically runs `sanitize_markdown_payload` on all descriptions and comments before GraphQL execution (and exposes the `sanitize-markdown` CLI subcommand), normalizing `\r\n` to `\n`, stripping invalid ASCII control characters, aligning Markdown table pipes, and auto-closing unclosed fenced code blocks (```` ``` ````).
    - **Explicit Prohibition**: **Never** pass Markdown containing backticks (`` ` ``), code blocks, or double quotes directly via inline `--description "..."`, `--comment "..."`, or `--body "..."`.
+
+10. **Spec-Driven Development (`spec-kit`), Cognitive Scaffolding & Executive Briefing**:
+    - **Repository Constitution (`.speckit/constitution.md`)**: Architectural principles and non-negotiable engineering standards live in `.speckit/constitution.md`. Agents must read this file (when present) as Cognitive Scaffolding before authoring technical plans.
+    - **Local Versioned Spec Layer (`.specs/<issue-key>/`)**:
+      - `.specs/<issue-key>/spec.md`: Functional requirements, user/system scenarios, and acceptance criteria (generated optionally in `/fk-new-issue` or refined in `/fk-technical-analysis`).
+      - `.specs/<issue-key>/plan.md`: Complete 5-section architectural and technical design (`Diagnóstico e Contexto`, `Arquitetura da Solução & Desenho Técnico`, `Checklist de Arquivos Impactados`, `Estratégia de Testes`, `Plano Gitflow`).
+      - `.specs/<issue-key>/tasks.md`: Ordered, atomic implementation checklist (`- [ ]` / `- [x]`) consumed and updated progressively during `/fk-develop`.
+    - **Static Integrity Validation (`validate-plan`)**: Before triggering the Stage 2 Consent Gate in `/fk-technical-analysis`, run `python skills/linear-workflow/scripts/linear_api.py validate-plan <issue-key>` to verify mandatory sections, valid repository file paths, and actionable tasks.
+    - **Executive Briefing Standard (Chat & Linear)**: Instead of dumping massive walls of Markdown into chat or Linear comments, present a concise **10-15 line Executive Briefing** containing key metrics (impacted files count, tasks count, target branch), the **Título Revisado**, the **Descrição Atualizada**, a compact synthesis of the 5 mandatory sections, and the path reference to `.specs/<issue-key>/`.
 
 ---
 
@@ -111,6 +121,8 @@ The agent dynamically uses whatever tool is available in the current environment
 | **Create Card** | `linear_create_issue` | `python <skill-dir>/scripts/linear_api.py create-issue --team-id "<tid>" --project-id "<pid>" --title "<title>" --description-file "<path>" --state "<state>" --label "Front"` |
 | **Atomic Update** | `linear_update_issue` + `linear_create_comment` | `python <skill-dir>/scripts/linear_api.py update-issue "<id>" [--team-id "<tid>"] [--state "<state>"] [--title "<title>"] [--description-file "<path>"] [--comment-file "<path>"]` |
 | **Add Comment** | `linear_create_comment` | `python <skill-dir>/scripts/linear_api.py update-issue "<id>" --comment-file "<path>"` *(idempotente)* |
+| **Validate Plan** | *(Local Static CLI)* | `python <skill-dir>/scripts/linear_api.py validate-plan "<issue-key>"` *(sem API key)* |
+| **Sanitize Markdown** | *(Local Static CLI)* | `python <skill-dir>/scripts/linear_api.py sanitize-markdown "<file.md>" [--in-place]` *(sem API key)* |
 
 ---
 
@@ -164,7 +176,8 @@ Gatilhos: `/fk-new-issue`, `fk-new-issue`, *"vamos planejar tarefas"*, *"crie os
      - Pergunta: *"Resumo do plano (N cards em Backlog): 1) <título-1> [<label>]; 2) <título-2> [<label>]. O escopo e a divisão dos cards estão alinhados? Posso criá-los no Linear sob o status Backlog (padrão)?"*
    - Se o usuário escolher `Editar...`: coleta as correções em texto livre, retorna à Etapa 1 para atualizar a decomposição e reapresenta o Consent Gate.
 3. **Etapa 3 - Execução Atômica**:
-   - Somente após `Sim, aprovar`, cria os cards no Linear via CLI/MCP utilizando `--description-file "<path>"` (arquivo UTF-8 temporário para preservar crases e blocos de código sem corrupção de shell).
+   - Somente após `Sim, aprovar`, cria os cards no Linear via CLI/MCP utilizando `--description-file "<path>"` (arquivo UTF-8 temporário sanitizado automaticamente por `sanitize_markdown_payload` para preservar crases e blocos de código sem corrupção de shell).
+   - Opcionalmente, quando solicitado ou aplicável para features estruturais, gera o arquivo funcional inicial `.specs/<issue-key>/spec.md` com os requisitos e critérios de aceitação aprovados.
    - Apresenta o sumário final com links diretos e IDs.
 
 ---
@@ -173,11 +186,16 @@ Gatilhos: `/fk-new-issue`, `fk-new-issue`, *"vamos planejar tarefas"*, *"crie os
 
 Gatilhos: `/fk-technical-analysis`, `fk-technical-analysis`, *"vamos analisar tecnicamente o card X"*, *"faça um spike técnico sobre Y"*.
 
-1. **Etapa 1 - Apresentação & Dúvidas (Leitura e Renderização Prévia Obrigatória)**:
-   - Consulta o card via `get-issue` ou `search-issues`.
-   - Se o card estava em `Backlog`, o início da análise é apresentado no chat.
+1. **Etapa 1 - Cognitive Scaffolding, Artefatos `.specs/<issue-key>/` & Executive Briefing (Zero Mutação no Linear)**:
+   - Consulta o card via `get-issue` ou `search-issues` e lê `.speckit/constitution.md` (se existir no repositório) como Cognitive Scaffolding arquitetural.
    - Realiza a análise arquitetural, opções de implementação, trade-offs e impactos no workspace.
-   - **Proibição de Consent Gate Cego**: Apresenta integralmente no texto visível do chat o **Título Revisado** e a **Descrição Atualizada** do card, além da especificação técnica estruturada sob **5 seções obrigatórias** antes de invocar `ask_question` / `AskUserQuestion`:
+   - **Persistência Local Spec-Driven (`.specs/<issue-key>/`)**:
+     - Cria/atualiza `.specs/<issue-key>/plan.md` contendo a especificação técnica detalhada com as 5 seções obrigatórias.
+     - Cria/atualiza `.specs/<issue-key>/tasks.md` contendo o checklist atômico e ordenado de implementação (`- [ ]`).
+     - Opcionalmente cria/atualiza `.specs/<issue-key>/spec.md` com os requisitos funcionais refinados.
+   - **Validação Determinística (`validate-plan`)**:
+     - Executa `python skills/linear-workflow/scripts/linear_api.py validate-plan <issue-key>` para assegurar que `plan.md` e `tasks.md` possuem todas as seções obrigatórias, caminhos de arquivos válidos e tarefas acionáveis antes do Consent Gate.
+   - **Proibição de Consent Gate Cego & Padrão Executive Briefing**: Apresenta no texto visível do chat um **Executive Briefing** conciso (10-15 linhas com métricas-chave e link para `.specs/<issue-key>/`) contendo obrigatoriamente o **Título Revisado** e a **Descrição Atualizada** do card, além da síntese estruturada sob as **5 seções obrigatórias** antes de invocar `ask_question` / `AskUserQuestion`:
      - **Título Revisado do Card**: `<type>(<scope>): <resumo-tecnico-refinado>`
      - **Descrição Atualizada do Card**: Contexto, problema, escopo técnico refinado e critérios de aceitação atualizados.
      1. **Diagnóstico e Contexto**: Causa-raiz ou motivação técnica refinada.
@@ -185,21 +203,21 @@ Gatilhos: `/fk-technical-analysis`, `fk-technical-analysis`, *"vamos analisar te
      3. **Checklist de Arquivos Impactados**: Caminhos explícitos de arquivos a criar, modificar ou remover.
      4. **Estratégia de Testes**: Validações automáticas, comandos e critérios técnicos.
      5. **Plano Gitflow**: Nome da branch (`<type>/<key>-<slug>`), Conventional Commits 1.0.0 e estado `Todo`.
-   - **Zero mutação prematura no card**: Nenhum comentário preliminar ou mudança de estado é postada enquanto houver dúvidas em aberto.
+   - **Zero mutação prematura no card**: Nenhum comentário preliminar ou mudança de estado é postada no Linear enquanto houver dúvidas em aberto.
 2. **Etapa 2 - Consent Gate Interativo**:
    - Aciona a ferramenta interativa de perguntas do harness (ex: `ask_question` / `AskUserQuestion`) ou fallback textual com as opções `(Recommended) Sim, aprovar` e `Editar...`, incluindo obrigatoriamente um **resumo conciso da análise na própria pergunta**:
-     - Pergunta: *"Resumo da análise (<issue-key>): <resumo-solucao> | Arquivos: <N> | Branch: <branch>. A análise técnica está aprovada? Posso registrar as decisões no Linear e mover o card para **Todo** (pronto para desenvolvimento)?"*
-   - Se o usuário escolher `Editar...`: recebe os direcionamentos técnicos adicionais, volta à Etapa 1 para refinar a análise e reapresenta o Consent Gate.
-3. **Etapa 3 - Execução Atômica & Persistência Integral da Especificação Técnica**:
-   - Somente após `Sim, aprovar`, executa atomicamente a transição de estado para `Todo` acompanhada da **atualização obrigatória do título (`--title`) e da descrição do card (`--description-file`)** e persistindo a **especificação técnica completa nas 5 seções** no comentário consolidado (`--comment-file`):
+     - Pergunta: *"Resumo da análise (<issue-key>): <resumo-solucao> | Arquivos: <N> | Tasks: <M> | Branch: <branch>. A análise técnica (validada em .specs/<issue-key>/) está aprovada? Posso registrar as decisões no Linear e mover o card para **Todo** (pronto para desenvolvimento)?"*
+   - Se o usuário escolher `Editar...`: recebe os direcionamentos técnicos adicionais, volta à Etapa 1 para refinar `.specs/<issue-key>/plan.md` e `tasks.md`, reexecuta `validate-plan` e reapresenta o Consent Gate.
+3. **Etapa 3 - Execução Atômica & Persistência do Executive Briefing no Linear**:
+   - Somente após `Sim, aprovar`, executa atomicamente a transição de estado para `Todo` acompanhada da **atualização obrigatória do título (`--title`) e da descrição do card (`--description-file`)** e postando o **Executive Briefing estruturado nas 5 seções** com referência para `.specs/<issue-key>/` no comentário consolidado (`--comment-file`):
      ```bash
      python skills/linear-workflow/scripts/linear_api.py update-issue "<id>" \
        --state "Todo" \
        --title "<titulo-revisado>" \
        --description-file "<descricao-utf8.md>" \
-       --comment-file "<comentario-5-secoes-utf8.md>"
+       --comment-file "<executive-briefing-5-secoes-utf8.md>"
      ```
-   - Sempre utilize arquivos UTF-8 temporários (`--description-file "<path>"` e `--comment-file "<path>"`) no mesmo comando atômico `update-issue` junto a `--state "Todo"` e `--title "<titulo-revisado>"` para evitar corrupção de crases (`` `feat` ``, `` `fix` ``, etc.) e aspas duplas no PowerShell/Bash. Substitua sempre títulos ou descrições preliminares de `Backlog` pelo contexto técnico refinado.
+   - Sempre utilize arquivos UTF-8 temporários (`--description-file "<path>"` e `--comment-file "<path>"`, sanitizados automaticamente por `sanitize_markdown_payload`) no mesmo comando atômico `update-issue` junto a `--state "Todo"` e `--title "<titulo-revisado>"` para evitar corrupção de crases (`` `feat` ``, `` `fix` ``, etc.) e aspas duplas no PowerShell/Bash. Substitua sempre títulos ou descrições preliminares de `Backlog` pelo contexto técnico refinado.
    - O card avança formalmente para **`Todo`** e não permanece em `Technical Analysis`.
 
 ---
@@ -214,21 +232,21 @@ Gatilhos: `/fk-develop`, `fk-develop`, *"vamos desenvolver a tarefa X"*, *"quero
 >
 > **Diretriz de Decisão**: A LLM **só deve perguntar ao desenvolvedor em casos excepcionais de ambiguidade real e bloqueante**. Comportamento padrão: decidir tecnicamente, registrar a premissa assumida no comentário do card/PR e seguir em frente.
 
-1. **Leitura do Card & Critérios**:
-   - Lê o card (`get-issue <id>`).
-   - **Consome prioritariamente a especificação técnica completa** persistida no comentário de Análise Técnica (`🤖 **AI Agent Update**: Análise Técnica Concluída`) ou na descrição do card, extraindo diretamente dela o diagnóstico, as decisões arquiteturais, o checklist de arquivos impactados, a estratégia de testes e o nome planejado da branch Gitflow.
-   - Formata a branch Gitflow no padrão Linear `<type>/<key>-<slug>` conforme especificado na análise técnica.
+1. **Leitura do Contrato Local (`.specs/<issue-key>/`) & Card no Linear**:
+   - Lê o card (`get-issue <id>`) e verifica prioritariamente a existência dos artefatos locais em `.specs/<issue-key>/` (`tasks.md`, `plan.md`, `spec.md`), além de `.speckit/constitution.md`.
+   - **Consome prioritariamente `.specs/<issue-key>/tasks.md` e `.specs/<issue-key>/plan.md`** como contrato técnico local confiável (usando o comentário `🤖 **AI Agent Update**: Análise Técnica Concluída` ou a descrição do card no Linear como fallback caso `.specs/<issue-key>/` ainda não exista).
+   - Formata a branch Gitflow no padrão Linear `<type>/<key>-<slug>` conforme especificado em `plan.md` / análise técnica.
 2. **Transição Imediata para `In Progress` no Linear**:
-   - Move imediatamente o card para `In Progress` com comentário inicial informando a branch e premissas assumidas (usando `--comment-file` para payloads Markdown com crases):
+   - Move imediatamente o card para `In Progress` com comentário inicial (Executive Briefing) informando a branch e premissas assumidas (usando `--comment-file` para payloads Markdown com crases):
      ```bash
      python skills/linear-workflow/scripts/linear_api.py update-issue "<id>" --state "In Progress" --comment-file "<comentario-inicio-utf8.md>"
      ```
-3. **Criação da Branch Gitflow & Codificação Autônoma**:
+3. **Criação da Branch Gitflow & Codificação Autônoma Guiada por `tasks.md`**:
    - Garante base atualizada e cria/muda para a branch:
      ```bash
      git checkout -b <branch-name>
      ```
-   - Implementa código e testes sem pedir confirmações intermediárias.
+   - Implementa código e testes sem pedir confirmações intermediárias, **marcando progressivamente cada item concluído (`- [ ]` ➔ `- [x]`) no arquivo local `.specs/<issue-key>/tasks.md`**.
 4. **Finalização do Desenvolvimento & Movimentação para `In Review`**:
    - Após implementar, validar os testes unitários e abrir o Pull Request no GitHub (`gh pr create --body-file "<pr-body-utf8.md>"`):
    - **O agente move obrigatoriamente o card para `In Review`**:

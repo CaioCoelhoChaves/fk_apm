@@ -607,5 +607,135 @@ class TestLinearApiUpdateIssue(unittest.TestCase):
         self.assertIn("--comment-file", fk_fix)
         self.assertIn("--body-file", fk_fix)
 
+    def test_sanitize_markdown_payload_closes_unclosed_code_blocks(self):
+        raw = (
+            "### Exemplo de Código\n"
+            "```python\n"
+            "def hello():\n"
+            "    return 'world'"
+        )
+        sanitized = linear_api.sanitize_markdown_payload(raw)
+        self.assertTrue(sanitized.endswith("\n```"))
+        self.assertEqual(sanitized.count("```"), 2)
+
+        # Already closed fence should not duplicate closing fence
+        already_closed = "```bash\necho ok\n```"
+        self.assertEqual(linear_api.sanitize_markdown_payload(already_closed), already_closed)
+
+    def test_sanitize_markdown_payload_aligns_misaligned_tables(self):
+        raw = (
+            "Resumo da análise (FAL-53): teste | Arquivos: 3 | Branch: feat/FAL-53\n\n"
+            "| Arquivo | Ação | Status |\n"
+            "| :--- |---\n"
+            "| linear_api.py | Modificar\n"
+            "SKILL.md | Atualizar | OK |"
+        )
+        sanitized = linear_api.sanitize_markdown_payload(raw)
+        lines = sanitized.split("\n")
+        # Single-line prose with pipes must remain untouched
+        self.assertEqual(
+            lines[0],
+            "Resumo da análise (FAL-53): teste | Arquivos: 3 | Branch: feat/FAL-53"
+        )
+        # Table rows must all have aligned leading/trailing pipes and 3 columns
+        self.assertEqual(lines[2], "| Arquivo | Ação | Status |")
+        self.assertEqual(lines[3], "| :--- | --- | --- |")
+        self.assertEqual(lines[4], "| linear_api.py | Modificar |  |")
+        self.assertEqual(lines[5], "| SKILL.md | Atualizar | OK |")
+
+    def test_sanitize_markdown_payload_strips_control_chars_and_crlf(self):
+        raw = "Linha 1\r\nLinha 2\rLinha 3 com \x0cformfeed e \x08backspace e \x00null\tcom tab"
+        sanitized = linear_api.sanitize_markdown_payload(raw)
+        self.assertNotIn("\r", sanitized)
+        self.assertNotIn("\x0c", sanitized)
+        self.assertNotIn("\x08", sanitized)
+        self.assertNotIn("\x00", sanitized)
+        self.assertEqual(
+            sanitized,
+            "Linha 1\nLinha 2\nLinha 3 com formfeed e backspace e null\tcom tab"
+        )
+
+    def test_validate_spec_plan_valid_and_invalid_cases(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_root = Path(tmpdir)
+            (repo_root / ".speckit").mkdir(parents=True)
+            (repo_root / ".speckit" / "constitution.md").write_text("# Constitution\n", encoding="utf-8")
+            (repo_root / "src").mkdir(parents=True)
+            (repo_root / "src" / "existing.py").write_text("print(1)\n", encoding="utf-8")
+
+            spec_dir = repo_root / ".specs" / "FAL-99"
+            spec_dir.mkdir(parents=True)
+            (spec_dir / "plan.md").write_text(
+                "# Plano FAL-99\n\n"
+                "## 1. Diagnóstico e Contexto\nContexto ok.\n\n"
+                "## 2. Arquitetura da Solução & Desenho Técnico\nDesign ok.\n\n"
+                "## 3. Checklist de Arquivos Impactados\n"
+                "- `src/existing.py` (modificar)\n"
+                "- `src/new_module.py` (criar)\n\n"
+                "## 4. Estratégia de Testes\n`python -m unittest`\n\n"
+                "## 5. Plano Gitflow\n- Branch: `feat/FAL-99-test`\n",
+                encoding="utf-8"
+            )
+            (spec_dir / "tasks.md").write_text(
+                "# Tasks\n- [x] Task 1\n- [ ] Task 2\n",
+                encoding="utf-8"
+            )
+
+            res = linear_api.validate_spec_plan("FAL-99", repo_root=repo_root)
+            self.assertTrue(res["valid"])
+            self.assertEqual(len(res["sections_found"]), 5)
+            self.assertEqual(res["tasks"]["total"], 2)
+            self.assertEqual(res["tasks"]["completed"], 1)
+            self.assertEqual(res["tasks"]["pending"], 1)
+
+            # Invalid case: missing section and placeholder file path
+            bad_dir = repo_root / ".specs" / "FAL-100"
+            bad_dir.mkdir(parents=True)
+            (bad_dir / "plan.md").write_text(
+                "# Plano Incompleto\n\n"
+                "## 1. Diagnóstico e Contexto\nOk\n\n"
+                "## 3. Checklist de Arquivos Impactados\n"
+                "- `<arquivo-1>`\n"
+                "- `nonexistent_dir/missing.py` (modificar)\n",
+                encoding="utf-8"
+            )
+            (bad_dir / "tasks.md").write_text("# Sem checkboxes\nTexto solto\n", encoding="utf-8")
+
+            bad_res = linear_api.validate_spec_plan("FAL-100", repo_root=repo_root)
+            self.assertFalse(bad_res["valid"])
+            self.assertTrue(any("Arquitetura da Solução" in e for e in bad_res["errors"]))
+            self.assertTrue(any("<arquivo-1>" in e for e in bad_res["errors"]))
+            self.assertTrue(any("nonexistent_dir/missing.py" in e for e in bad_res["errors"]))
+            self.assertTrue(any("tasks.md" in e for e in bad_res["errors"]))
+
+    def test_validate_fal53_homologation_spec_and_sdd_skill_contracts(self):
+        skill_root = Path(__file__).resolve().parent.parent
+        repo_root = skill_root.parent.parent
+
+        # Validate real FAL-53 spec artifacts
+        res = linear_api.validate_spec_plan("FAL-53", repo_root=repo_root)
+        self.assertTrue(res["valid"], f"Expected FAL-53 spec to be valid, got errors: {res['errors']}")
+        self.assertTrue(res["constitution_exists"])
+        self.assertTrue(res["files"]["spec_md"])
+        self.assertTrue(res["files"]["plan_md"])
+        self.assertTrue(res["files"]["tasks_md"])
+
+        # Verify SDD & Executive Briefing contracts in skill files
+        linear_skill = (skill_root / "SKILL.md").read_text(encoding="utf-8")
+        fk_tech = (skill_root / ".apm" / "skills" / "fk-technical-analysis" / "SKILL.md").read_text(encoding="utf-8")
+        fk_dev = (skill_root / ".apm" / "skills" / "fk-develop" / "SKILL.md").read_text(encoding="utf-8")
+        fk_new = (skill_root / ".apm" / "skills" / "fk-new-issue" / "SKILL.md").read_text(encoding="utf-8")
+        instructions = (skill_root / ".apm" / "instructions" / "linear-lifecycle-commands.instructions.md").read_text(encoding="utf-8")
+
+        self.assertIn(".speckit/constitution.md", linear_skill)
+        self.assertIn("validate-plan", linear_skill)
+        self.assertIn("sanitize_markdown_payload", linear_skill)
+        self.assertIn("Executive Briefing", fk_tech)
+        self.assertIn("validate-plan", fk_tech)
+        self.assertIn(".specs/<issue-key>/tasks.md", fk_dev)
+        self.assertIn(".specs/<issue-key>/spec.md", fk_new)
+        self.assertIn("validate-plan", instructions)
+
+
 if __name__ == "__main__":
     unittest.main()

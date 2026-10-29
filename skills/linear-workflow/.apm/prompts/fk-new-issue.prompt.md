@@ -23,6 +23,7 @@ Contexto fornecido: $ARGUMENTS
    - **Proibido Consent Gate Cego**: Só invoque `ask_question` / `AskUserQuestion` após renderizar toda a proposta no texto do chat, e inclua um resumo conciso dos cards (`Resumo do plano (N cards em Backlog): 1) <título> [<label>]...`) dentro do próprio campo `question` da ferramenta interativa ou fallback textual com opções `(Recommended) Sim, aprovar` e `Editar...`.
    - Se `Editar...`: receba ajustes de escopo em texto livre, retorne à Etapa 1 para atualizar a decomposição e reapresente o Consent Gate. Zero mutação no Linear até aprovação explícita.
    - Aguarde `Sim, aprovar` antes de qualquer chamada de mutação.
-3. **Etapa 3 - Execução Atômica**:
-   - Após aprovação, crie os cards no Linear via CLI (`create-issue --description-file "<path>"`) ou MCP (`linear_create_issue`), gravando a descrição em arquivo UTF-8 temporário para evitar corrupção de crases (`` ` ``) e aspas duplas no shell.
-   - Apresente o sumário final com links diretos e identificadores (ex: `FAL-10`).
+3. **Etapa 3 - Execução Atômica & Suporte a `.specs/<issue-key>/spec.md`**:
+   - Após aprovação, crie os cards no Linear via CLI (`create-issue --description-file "<path>"`) ou MCP (`linear_create_issue`), gravando a descrição em arquivo UTF-8 temporário (sanitizado por `sanitize_markdown_payload`) para evitar corrupção de crases (`` ` ``) e aspas duplas no shell.
+   - Opcionalmente, gere o arquivo funcional inicial `.specs/<issue-key>/spec.md` quando aplicável ou solicitado.
+   - Apresente o sumário final (Executive Briefing) com links diretos e identificadores (ex: `FAL-10`).

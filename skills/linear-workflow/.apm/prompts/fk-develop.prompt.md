@@ -15,14 +15,14 @@ Execute o rito de desenvolvimento para a tarefa Linear indicada de forma **autô
 Alvo / Issue: $ARGUMENTS
 
 ## Diretrizes de Execução
-1. **Leitura & Identificação da Issue**:
+1. **Leitura da Issue & Contrato Local (`.specs/<issue-key>/`)**:
    - Consulte o card via `get-issue $ARGUMENTS` ou MCP `linear_issue_search`.
-   - **Consuma prioritariamente a especificação técnica completa** persistida no histórico de comentários (`🤖 **AI Agent Update**: Análise Técnica Concluída`) ou descrição do card, extraindo o diagnóstico, arquitetura, checklist de arquivos impactados, estratégia de testes e nome da branch planejado.
-   - Adote a branch planejada ou formate no padrão `<type>/<key>-<slug>`.
+   - **Consuma prioritariamente `.specs/<issue-key>/tasks.md` e `.specs/<issue-key>/plan.md`** (além de `.speckit/constitution.md`), usando o histórico de comentários (`🤖 **AI Agent Update**: Análise Técnica Concluída`) ou descrição do card no Linear como fallback caso `.specs/<issue-key>/` ainda não exista.
+   - Adote a branch planejada em `plan.md` ou formate no padrão `<type>/<key>-<slug>`.
 2. **Transição Imediata para In Progress (Sem Confirmação)**:
    - Transicione imediatamente o card para `In Progress` com comentário inicial via `--comment-file "<path>"` (`🤖 **AI Agent Update**: Início autônomo do desenvolvimento na branch <branch-name>...`).
-3. **Criação da Branch & Codificação Autônoma**:
-   - Crie a branch Git e execute a codificação e testes sem pedir confirmação prévia.
+3. **Criação da Branch & Codificação Autônoma com `tasks.md`**:
+   - Crie a branch Git e execute a codificação e testes sem pedir confirmação prévia, **marcando progressivamente os checkboxes (`- [ ]` ➔ `- [x]`) em `.specs/<issue-key>/tasks.md`** à medida que cada item é concluído.
    - **Diretriz de Decisão**: Só faça perguntas ao desenvolvedor se houver dúvida realmente bloqueante. Em caso de detalhes ou trade-offs menores, decida tecnicamente, documente a premissa assumida no comentário/PR e continue.
 4. **Finalização & In Review**:
    - Ao concluir a implementação e testes locais, abra o Pull Request no GitHub (`gh pr create --body-file "<pr-body-utf8.md>"`, proibindo `--body "..."` inline com crases).

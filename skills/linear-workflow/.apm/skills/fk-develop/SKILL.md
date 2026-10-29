@@ -20,24 +20,25 @@ Este comando orquestra o ciclo completo de desenvolvimento de uma tarefa no Line
 
 ## Ciclo de Desenvolvimento Autônomo
 
-### 1. Leitura & Identificação da Issue
+### 1. Leitura da Issue & Consumo Prioritário de `.specs/<issue-key>/tasks.md`
 - **Consulta da Issue**: Consulte os detalhes da issue indicada via MCP `linear_issue_search` ou CLI:
   ```bash
   python .agents/skills/linear-workflow/scripts/linear_api.py get-issue "<issue-key>"
   ```
-- **Consumo Prioritário da Especificação Técnica**:
-  - Analise prioritariamente a especificação técnica completa registrada no histórico de comentários (comentário consolidado `🤖 **AI Agent Update**: Análise Técnica Concluída`) ou na descrição do card.
-  - Extraia diretamente da especificação persistida:
+- **Consumo Prioritário do Contrato Local (`.specs/<issue-key>/`)**:
+  - Verifique prioritariamente a existência dos artefatos Spec-Driven locais em `.specs/<issue-key>/` (`tasks.md`, `plan.md` e `spec.md`) e da constituição `.speckit/constitution.md`.
+  - Leia diretamente `.specs/<issue-key>/tasks.md` (checklist atômico e ordenado de execução) e `.specs/<issue-key>/plan.md` (as 5 seções técnicas).
+  - **Fallback Remoto**: Caso `.specs/<issue-key>/` ainda não exista no workspace, consuma a especificação técnica registrada no histórico de comentários (`🤖 **AI Agent Update**: Análise Técnica Concluída`) ou na descrição do card (e opcionalmente crie `.specs/<issue-key>/plan.md` e `tasks.md` para rastrear a execução).
+  - Extraia da especificação:
     1. **Diagnóstico & Contexto**: causa-raiz ou motivação técnica.
     2. **Arquitetura da Solução**: decisões de desenho técnico, trade-offs e dependências.
-    3. **Checklist de Arquivos Impactados**: arquivos a criar, modificar ou remover.
+    3. **Checklist de Arquivos Impactados & Tasks (`tasks.md`)**: arquivos a criar, modificar ou remover e tarefas ordenadas.
     4. **Estratégia de Testes**: testes unitários, validações automáticas e comandos de execução.
     5. **Plano Gitflow**: nome da branch planejado no padrão `<type>/<issue-key>-<slug>`.
-  - Se o card não contiver análise prévia consolidada, utilize os requisitos da descrição e critérios de aceitação.
-- **Planejamento da Branch**: Adote o nome da branch indicado na especificação técnica ou formate no padrão Linear `<type>/<issue-key>-<slug>` (ex: `feat/FAL-34-persistir-especificacao-tecnica-linear`).
+- **Planejamento da Branch**: Adote o nome da branch indicado em `plan.md` / especificação técnica ou formate no padrão Linear `<type>/<issue-key>-<slug>` (ex: `feat/FAL-34-persistir-especificacao-tecnica-linear`).
 
 ### 2. Transição Imediata para In Progress (Sem Confirmação)
-- Transicione o card no Linear para **`In Progress`** com comentário inicial via `--comment-file` (arquivo UTF-8 temporário para evitar corrupção de crases e aspas no shell) informando a branch e premissas assumidas (se houver):
+- Transicione o card no Linear para **`In Progress`** com comentário inicial (Executive Briefing) via `--comment-file` (arquivo UTF-8 temporário sanitizado por `sanitize_markdown_payload` para evitar corrupção de crases e aspas no shell) informando a branch e premissas assumidas (se houver):
   ```bash
   python .agents/skills/linear-workflow/scripts/linear_api.py update-issue "<issue-id>" \
     --state "In Progress" \
@@ -51,8 +52,9 @@ Este comando orquestra o ciclo completo de desenvolvimento de uma tarefa no Line
   git checkout -b <branch-name>
   ```
 
-### 4. Implementação de Código & Testes
-- Execute o desenvolvimento diretamente no workspace, mantendo testes unitários e qualidade de código.
+### 4. Implementação de Código, Atualização Progressiva de `tasks.md` & Testes
+- Execute o desenvolvimento diretamente no workspace guiado pelos itens de `.specs/<issue-key>/tasks.md`, mantendo testes unitários e qualidade de código.
+- **Atualização Progressiva de Checklist**: À medida que cada tarefa for concluída e verificada, marque o respectivo item em `.specs/<issue-key>/tasks.md` de `- [ ]` para `- [x]`.
 - Implemente sem pedir confirmações intermediárias nem pausar a esteira.
 
 ### 5. Conclusão do Desenvolvimento & Avanço para In Review

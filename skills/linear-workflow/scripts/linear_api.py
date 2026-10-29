@@ -339,6 +339,300 @@ mutation CreateLabel($input: IssueLabelCreateInput!) {
 }
 """
 
+def _is_table_separator_cells(cells: List[str]) -> bool:
+    """Return True if cells represent a Markdown table delimiter row (e.g. | :--- | --- |)."""
+    if not cells:
+        return False
+    return all(bool(re.match(r"^:?-{1,}:?$", c.strip())) for c in cells if c.strip()) and any(c.strip() for c in cells)
+
+
+def _split_table_row(line: str) -> List[str]:
+    """Split a Markdown table line into stripped cells by unescaped pipe."""
+    stripped = line.strip()
+    if stripped.startswith("|"):
+        stripped = stripped[1:]
+    if stripped.endswith("|") and not stripped.endswith(r"\|"):
+        stripped = stripped[:-1]
+    parts = re.split(r"(?<!\\)\|", stripped)
+    return [p.strip() for p in parts]
+
+
+def _normalize_separator_cell(cell: str) -> str:
+    c = cell.strip()
+    if not re.match(r"^:?-{1,}:?$", c):
+        return "---"
+    left = ":" if c.startswith(":") else ""
+    right = ":" if c.endswith(":") else ""
+    return f"{left}---{right}"
+
+
+def _normalize_table_block(table_lines: List[str]) -> List[str]:
+    """Normalize pipe alignment and column counts across a Markdown table block."""
+    rows_cells = [_split_table_row(line) for line in table_lines]
+    max_cols = max((len(r) for r in rows_cells), default=0)
+    if max_cols == 0:
+        return table_lines
+
+    normalized: List[str] = []
+    for cells in rows_cells:
+        if _is_table_separator_cells(cells):
+            norm_cells = [_normalize_separator_cell(c) for c in cells]
+            while len(norm_cells) < max_cols:
+                norm_cells.append("---")
+        else:
+            norm_cells = list(cells)
+            while len(norm_cells) < max_cols:
+                norm_cells.append("")
+        normalized.append("| " + " | ".join(norm_cells[:max_cols]) + " |")
+    return normalized
+
+
+def sanitize_markdown_payload(text: Optional[str]) -> str:
+    """
+    Deterministic Markdown sanitizer for Linear and GitHub payloads:
+    1. Normalizes CRLF/CR line breaks to LF (\\n).
+    2. Strips invalid ASCII control characters (preserving \\n and \\t).
+    3. Normalizes misaligned Markdown tables outside code fences.
+    4. Automatically closes unclosed fenced code blocks (``` or ~~~).
+    """
+    if text is None:
+        return ""
+    if not text:
+        return ""
+
+    # 1. Normalize line endings
+    cleaned = text.replace("\r\n", "\n").replace("\r", "\n")
+
+    # 2. Remove problematic control chars (keep \n = \x0a and \t = \x09)
+    cleaned = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]", "", cleaned)
+
+    raw_lines = cleaned.split("\n")
+    out_lines: List[str] = []
+    table_buffer: List[str] = []
+    active_fence: Optional[str] = None
+
+    def flush_table_buffer():
+        nonlocal table_buffer
+        if not table_buffer:
+            return
+        has_separator = any(_is_table_separator_cells(_split_table_row(l)) for l in table_buffer)
+        all_start_with_pipe = len(table_buffer) >= 2 and all(l.lstrip().startswith("|") for l in table_buffer)
+        if len(table_buffer) >= 2 and (has_separator or all_start_with_pipe):
+            out_lines.extend(_normalize_table_block(table_buffer))
+        else:
+            out_lines.extend(table_buffer)
+        table_buffer = []
+
+    for line in raw_lines:
+        fence_match = re.match(r"^(\s*)(`{3,}|~{3,})(.*)$", line)
+        if active_fence is None:
+            if fence_match:
+                flush_table_buffer()
+                active_fence = fence_match.group(2)
+                out_lines.append(line)
+                continue
+
+            # Candidate table line outside code block
+            if "|" in line and not line.lstrip().startswith((">", "#", "- ", "* ")):
+                table_buffer.append(line)
+            else:
+                flush_table_buffer()
+                out_lines.append(line)
+        else:
+            # Inside code fence: check if this line closes the active fence
+            fence_char = active_fence[0]
+            fence_len = len(active_fence)
+            close_pattern = rf"^\s*{re.escape(fence_char)}{{{fence_len},}}\s*$"
+            if re.match(close_pattern, line):
+                active_fence = None
+            out_lines.append(line)
+
+    flush_table_buffer()
+
+    # 4. Close unclosed code fence at end of payload
+    if active_fence is not None:
+        out_lines.append(active_fence)
+
+    return "\n".join(out_lines)
+
+
+REQUIRED_PLAN_SECTIONS: List[Tuple[str, str]] = [
+    ("Diagnóstico e Contexto", r"(?i)^#{1,4}\s*(?:\d+[\.\)]\s*)?diagn[oó]stico\b"),
+    ("Arquitetura da Solução", r"(?i)^#{1,4}\s*(?:\d+[\.\)]\s*)?arquitetura\b"),
+    ("Checklist de Arquivos Impactados", r"(?i)^#{1,4}\s*(?:\d+[\.\)]\s*)?(?:checklist\s+de\s+)?arquivos\s+impactados\b"),
+    ("Estratégia de Testes", r"(?i)^#{1,4}\s*(?:\d+[\.\)]\s*)?(?:estrat[eé]gia\s+de\s+)?testes\b"),
+    ("Plano Gitflow", r"(?i)^#{1,4}\s*(?:\d+[\.\)]\s*)?(?:plano\s+)?gitflow\b"),
+]
+
+
+def _extract_file_path_from_bullet(bullet_text: str) -> Optional[str]:
+    """Extract a relative file path from a markdown checklist bullet line."""
+    # Prefer backticked path first: - `path/to/file.py` (modificar)
+    bt_match = re.search(r"`([^`]+)`", bullet_text)
+    candidate = bt_match.group(1).strip() if bt_match else bullet_text.strip()
+    if not bt_match:
+        # Remove optional checkbox and trailing description after ':' or '('
+        candidate = re.sub(r"^\[[ xX]\]\s*", "", candidate)
+        candidate = re.split(r"\s+(?:\(|—|-|:)", candidate, maxsplit=1)[0].strip()
+        candidate = candidate.rstrip(":")
+    return candidate or None
+
+
+def validate_spec_plan(
+    target: str,
+    specs_root: Optional[Path] = None,
+    repo_root: Optional[Path] = None
+) -> Dict[str, Any]:
+    """
+    Validate local Spec-Driven Development artifacts (.specs/<issue-key>/plan.md and tasks.md).
+    Checks mandatory sections, file path integrity, and actionable tasks checklist.
+    """
+    resolved_repo = (repo_root or Path.cwd()).resolve()
+    resolved_specs = (specs_root or (resolved_repo / ".specs")).resolve()
+
+    target_clean = target.strip()
+    candidate_dir = Path(target_clean)
+    if candidate_dir.is_dir():
+        spec_dir = candidate_dir.resolve()
+    elif (resolved_repo / target_clean).is_dir() and ("/" in target_clean or "\\" in target_clean):
+        spec_dir = (resolved_repo / target_clean).resolve()
+    else:
+        spec_dir = (resolved_specs / target_clean).resolve()
+
+    errors: List[str] = []
+    warnings: List[str] = []
+
+    constitution_path = resolved_repo / ".speckit" / "constitution.md"
+    constitution_exists = constitution_path.is_file()
+    if not constitution_exists:
+        warnings.append("File '.speckit/constitution.md' not found in repository root.")
+
+    if not spec_dir.is_dir():
+        return {
+            "success": False,
+            "valid": False,
+            "issue_dir": str(spec_dir),
+            "constitution_exists": constitution_exists,
+            "files": {"spec_md": False, "plan_md": False, "tasks_md": False},
+            "sections_found": [],
+            "impacted_files": [],
+            "tasks": {"total": 0, "completed": 0, "pending": 0},
+            "errors": [f"Spec directory not found: '{spec_dir}'"],
+            "warnings": warnings,
+        }
+
+    spec_file = spec_dir / "spec.md"
+    plan_file = spec_dir / "plan.md"
+    tasks_file = spec_dir / "tasks.md"
+
+    files_status = {
+        "spec_md": spec_file.is_file(),
+        "plan_md": plan_file.is_file(),
+        "tasks_md": tasks_file.is_file(),
+    }
+
+    if not files_status["plan_md"]:
+        errors.append(f"Missing mandatory file: '{plan_file.name}'")
+    if not files_status["tasks_md"]:
+        errors.append(f"Missing mandatory file: '{tasks_file.name}'")
+
+    sections_found: List[str] = []
+    impacted_files: List[str] = []
+
+    if files_status["plan_md"]:
+        plan_text = plan_file.read_text(encoding="utf-8")
+        plan_lines = plan_text.splitlines()
+
+        # Check required sections and collect lines under each section
+        section_indices: Dict[str, int] = {}
+        all_heading_indices: List[int] = []
+        for idx, line in enumerate(plan_lines):
+            if re.match(r"^#{1,4}\s+\S+", line.strip()):
+                all_heading_indices.append(idx)
+            for sec_name, pattern in REQUIRED_PLAN_SECTIONS:
+                if sec_name not in section_indices and re.search(pattern, line.strip()):
+                    section_indices[sec_name] = idx
+                    sections_found.append(sec_name)
+
+        for sec_name, _ in REQUIRED_PLAN_SECTIONS:
+            if sec_name not in section_indices:
+                errors.append(f"Missing required section in plan.md: '{sec_name}'")
+
+        # Validate Checklist de Arquivos Impactados content
+        if "Checklist de Arquivos Impactados" in section_indices:
+            start_idx = section_indices["Checklist de Arquivos Impactados"]
+            next_headings = [i for i in all_heading_indices if i > start_idx]
+            end_idx = next_headings[0] if next_headings else len(plan_lines)
+            checklist_lines = plan_lines[start_idx + 1 : end_idx]
+
+            for raw_line in checklist_lines:
+                stripped = raw_line.strip()
+                bullet_match = re.match(r"^[-*]\s+(.+)$", stripped)
+                if not bullet_match:
+                    continue
+                bullet_body = bullet_match.group(1).strip()
+                extracted_path = _extract_file_path_from_bullet(bullet_body)
+                if not extracted_path:
+                    continue
+
+                # Check for placeholders or illegal characters
+                if re.search(r"[<>?*\"|]", extracted_path) or extracted_path in ("...", "TODO", "path/to/file"):
+                    errors.append(f"Invalid placeholder or file path in plan.md checklist: '{extracted_path}'")
+                    continue
+
+                impacted_files.append(extracted_path)
+                full_target = (resolved_repo / extracted_path).resolve()
+                try:
+                    full_target.relative_to(resolved_repo)
+                except ValueError:
+                    errors.append(f"File path escapes repository root: '{extracted_path}'")
+                    continue
+
+                is_new_file = bool(re.search(r"(?i)\b(criar|create|novo|new|add|adicionar)\b", bullet_body))
+                if not is_new_file and not full_target.exists():
+                    # If neither the file nor its parent directory exists, flag error
+                    if not full_target.parent.exists():
+                        errors.append(
+                            f"Impacted file path does not exist (and is not marked as new): '{extracted_path}'"
+                        )
+
+            if not impacted_files:
+                errors.append("Section 'Checklist de Arquivos Impactados' in plan.md must list at least one file path.")
+
+    tasks_summary = {"total": 0, "completed": 0, "pending": 0}
+    if files_status["tasks_md"]:
+        tasks_text = tasks_file.read_text(encoding="utf-8")
+        for line in tasks_text.splitlines():
+            m = re.match(r"^\s*[-*]\s+\[([ xX])\]\s+(.+)$", line)
+            if m:
+                state_char = m.group(1)
+                task_desc = m.group(2).strip()
+                if re.search(r"^<[^>]+>$", task_desc) or task_desc.upper() == "TODO":
+                    errors.append(f"Placeholder task item found in tasks.md: '{task_desc}'")
+                tasks_summary["total"] += 1
+                if state_char.lower() == "x":
+                    tasks_summary["completed"] += 1
+                else:
+                    tasks_summary["pending"] += 1
+
+        if tasks_summary["total"] == 0:
+            errors.append("File 'tasks.md' must contain at least one actionable checkbox item ('- [ ] ...').")
+
+    is_valid = len(errors) == 0
+    return {
+        "success": is_valid,
+        "valid": is_valid,
+        "issue_dir": str(spec_dir),
+        "constitution_exists": constitution_exists,
+        "files": files_status,
+        "sections_found": sections_found,
+        "impacted_files": impacted_files,
+        "tasks": tasks_summary,
+        "errors": errors,
+        "warnings": warnings,
+    }
+
+
 def check_comment_idempotency(comments: List[Dict[str, Any]], target_body: str, window_minutes: float = 10.0) -> Tuple[bool, Optional[Dict[str, Any]]]:
     """
     Check if an identical comment was already posted within the specified time window.
@@ -510,7 +804,7 @@ def cmd_create_issue(
     input_data: Dict[str, Any] = {
         "teamId": team_id,
         "title": title,
-        "description": resolved_description or ""
+        "description": sanitize_markdown_payload(resolved_description or "")
     }
     if project_id:
         input_data["projectId"] = project_id
@@ -584,6 +878,9 @@ def cmd_update_issue(
             print(json.dumps(output, indent=2, ensure_ascii=False))
             return
 
+    if resolved_description is not None:
+        resolved_description = sanitize_markdown_payload(resolved_description)
+
     # Handle comment resolution
     resolved_comment = comment
     if comment_file:
@@ -596,6 +893,9 @@ def cmd_update_issue(
             }
             print(json.dumps(output, indent=2, ensure_ascii=False))
             return
+
+    if resolved_comment is not None:
+        resolved_comment = sanitize_markdown_payload(resolved_comment)
 
     # 2. Update state and/or description if requested
     update_input: Dict[str, Any] = {}
@@ -698,6 +998,44 @@ def cmd_create_comment(
         return
     cmd_update_issue(api_key, issue_id=issue_id, comment=comment, comment_file=comment_file, force_comment=force)
 
+
+def cmd_validate_plan(target: str, specs_root: Optional[str] = None, repo_root: Optional[str] = None):
+    """Validate local Spec-Driven Development plan.md and tasks.md artifacts."""
+    result = validate_spec_plan(
+        target=target,
+        specs_root=Path(specs_root) if specs_root else None,
+        repo_root=Path(repo_root) if repo_root else None,
+    )
+    print(json.dumps(result, indent=2, ensure_ascii=False))
+    if not result.get("valid", False):
+        sys.exit(1)
+
+
+def cmd_sanitize_markdown(input_file: str, output_file: Optional[str] = None, in_place: bool = False):
+    """Sanitize a UTF-8 Markdown file deterministically."""
+    src = Path(input_file)
+    if not src.is_file():
+        print(json.dumps({
+            "success": False,
+            "error": f"Input file not found: '{input_file}'"
+        }, indent=2, ensure_ascii=False))
+        sys.exit(1)
+
+    raw_text = src.read_text(encoding="utf-8")
+    sanitized = sanitize_markdown_payload(raw_text)
+    dest = src if in_place else (Path(output_file) if output_file else None)
+    if dest is not None:
+        dest.write_text(sanitized, encoding="utf-8")
+        print(json.dumps({
+            "success": True,
+            "file": str(dest),
+            "original_length": len(raw_text),
+            "sanitized_length": len(sanitized)
+        }, indent=2, ensure_ascii=False))
+    else:
+        print(sanitized, end="")
+
+
 def main():
     parser = argparse.ArgumentParser(description="Linear GraphQL API helper CLI")
     parser.add_argument("--api-key", help="Linear Personal API Key (optional, defaults to dynamic discovery)")
@@ -759,7 +1097,26 @@ def main():
     c_comment.add_argument("--comment-file", help="Path to UTF-8 file containing comment markdown body to post")
     c_comment.add_argument("--force", action="store_true", help="Force posting comment even if identical comment exists within 10 minutes")
 
+    # validate-plan (local static validation, no API key required)
+    v_plan = subparsers.add_parser("validate-plan", help="Validate local .specs/<issue-key>/plan.md and tasks.md integrity")
+    v_plan.add_argument("target", help="Issue key (e.g. FAL-53) or path to spec directory")
+    v_plan.add_argument("--specs-root", help="Custom .specs root directory (defaults to <repo-root>/.specs)")
+    v_plan.add_argument("--repo-root", help="Repository root directory (defaults to current working directory)")
+
+    # sanitize-markdown (local markdown sanitizer, no API key required)
+    s_md = subparsers.add_parser("sanitize-markdown", help="Sanitize a Markdown file deterministically")
+    s_md.add_argument("input_file", help="Path to UTF-8 Markdown file")
+    s_md.add_argument("--output-file", help="Destination path for sanitized Markdown")
+    s_md.add_argument("--in-place", action="store_true", help="Overwrite input file in place")
+
     args = parser.parse_args()
+
+    if args.command == "validate-plan":
+        cmd_validate_plan(args.target, specs_root=args.specs_root, repo_root=args.repo_root)
+        return
+    elif args.command == "sanitize-markdown":
+        cmd_sanitize_markdown(args.input_file, output_file=args.output_file, in_place=args.in_place)
+        return
 
     api_key = resolve_api_key(args.api_key)
     if not api_key:

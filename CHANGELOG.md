@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Adicionar comando /fk-fix para aplicação autônoma de feedback de code review no PR e Linear (FAL-28)
 - Adicionar skill semver-changelog para gerenciamento de CHANGELOG e SemVer 2.0.0 (FAL-23)
 - Enforce mandatory card title and description update in /fk-technical-analysis and support --title in linear_api.py (FAL-39)
+- Integrate Spec-Driven Development (spec-kit constitution, .specs/<issue-key>/ layer, validate-plan CLI, Executive Briefing, and deterministic Markdown sanitizer) into linear-workflow (FAL-53)
 
 ### Changed
 - Priorizar leitura da especificacao tecnica completa persistida no /fk-develop garantindo transferencia de contexto sem degradacao (FAL-34)
