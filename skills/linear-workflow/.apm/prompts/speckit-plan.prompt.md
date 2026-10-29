@@ -1,6 +1,6 @@
 ﻿---
 name: "speckit-plan"
-description: "Execute the Spec Kit implementation planning workflow (specs/<feature>/plan.md, research.md, data-model.md) coupled with Linear Technical Analysis (5 mandatory sections & 3-Stage Consent Gate to Todo). Replaces /fk-technical-analysis."
+description: "Execute the Spec Kit implementation planning workflow (specs/<feature>/plan.md, research.md, data-model.md) coupled with Linear Technical Analysis (5 mandatory sections & 3-Stage Consent Gate to Todo). coupled with Linear Technical Analysis & Planned state."
 compatibility: "Requires spec-kit project structure with .specify/ directory and linear-workflow CLI"
 metadata:
   author: "github-spec-kit + fk_apm"
@@ -53,6 +53,12 @@ You **MUST** consider the user input before proceeding (if not empty).
 - If no hooks are registered or `.specify/extensions.yml` does not exist, skip silently
 
 ## Outline
+
+### Mandatory `<CARD-ID>` Validation & Ephemeral Worktree Isolation
+- The user **MUST** provide `<CARD-ID>` (e.g. `/speckit-plan FAL-58`).
+- If `<CARD-ID>` is missing or invalid (`^[A-Z]{2,10}-\d+$`), **ABORT** immediately:
+  `Uso obrigatório: /speckit-plan <CARD-ID>`
+- If current workspace is not on the card's branch (`feat/<CARD-ID>-*`), execute in ephemeral worktree `.worktrees/<CARD-ID>`.
 
 1. **Setup**: Run `python3 .specify/scripts/python/setup_plan.py --json` from repo root and parse JSON for FEATURE_SPEC, IMPL_PLAN, FEATURE_DIR, BRANCH. For single quotes in args like "I'm Groot", use escape syntax: e.g 'I'\''m Groot' (or double-quote if possible: "I'm Groot").
 
@@ -119,19 +125,20 @@ When `/speckit-plan` is executed for a Linear issue (`FAL-XX` or any `<TEAM>-<NU
    - `## 4. Estratégia de Testes`: Unit, integration, and contract tests to add/run.
    - `## 5. Plano Gitflow`: Target branch `<type>/<issue-key>-<slug>` and base branch (`develop` or `main`).
 
-3. **Transition to `/speckit-tasks` or Advance Card to `Todo` via 3-Stage Consent Gate**:
-   - After generating `plan.md`, if `tasks.md` has not been generated yet, either generate `tasks.md` immediately (following `/speckit-tasks`) or prompt the user to run `/speckit-tasks` before advancing the card to `Todo`.
-   - Whenever advancing the Linear card from `Backlog` / `Technical Analysis` ➔ **`Todo`**, you **MUST** execute the **3-Stage Consent Gate**:
+3. **Advance Card to `Planned` via 3-Stage Consent Gate**:
+   - Commit the generated plan artifacts (`plan.md`, `research.md`, `data-model.md`, `contracts/`, `quickstart.md`) to the Draft PR: `git commit -m "docs(plan): technical plan and architecture for <CARD-ID>"` and `git push`.
+   - Advance the Linear card from `Backlog` ➔ **`Planned`** executing the **3-Stage Consent Gate**:
      - **Stage 1 (Pre-Render Gate — Zero Mutation on Linear)**: Output in chat the **Executive Briefing** containing **Título Revisado**, **Descrição Atualizada**, and the 5 mandatory architectural sections **before** calling any question tool.
      - **Stage 2 (Interactive Confirmation)**: Call `ask_question` / `AskUserQuestion` with a self-contained summary embedded in `question` and options `["(Recommended) Sim, aprovar", "Editar..."]`.
      - **Stage 3 (Atomic Execution on Linear)**: Write the updated description and Executive Briefing comment to UTF-8 temporary files and execute:
        ```bash
        python skills/linear-workflow/scripts/linear_api.py update-issue "<issue-id>" \
-         --state "Todo" \
+         --state "Planned" \
          --title "<titulo-revisado>" \
          --description-file ".tmp-plan-desc.md" \
          --comment-file ".tmp-plan-briefing.md"
        ```
+   - Suggest next step: `Próximo passo: /speckit-tasks <CARD-ID>`
 
 ## Completion Report
 

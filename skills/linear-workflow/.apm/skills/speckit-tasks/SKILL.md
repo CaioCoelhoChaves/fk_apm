@@ -54,6 +54,12 @@ You **MUST** consider the user input before proceeding (if not empty).
 
 ## Outline
 
+### Mandatory `<CARD-ID>` Validation & Ephemeral Worktree Isolation
+- The user **MUST** provide `<CARD-ID>` (e.g. `/speckit-tasks FAL-58`).
+- If `<CARD-ID>` is missing or invalid (`^[A-Z]{2,10}-\d+$`), **ABORT** immediately:
+  `Uso obrigatório: /speckit-tasks <CARD-ID>`
+- If current workspace is not on the card's branch (`feat/<CARD-ID>-*`), execute in ephemeral worktree `.worktrees/<CARD-ID>`.
+
 1. **Setup**: Run `python3 .specify/scripts/python/setup_tasks.py --json` from repo root and parse FEATURE_DIR, TASKS_TEMPLATE_CONTENT, TASKS_TEMPLATE, and AVAILABLE_DOCS list. `FEATURE_DIR` and `TASKS_TEMPLATE` must be absolute paths when provided. `AVAILABLE_DOCS` is a list of document names/relative paths available under `FEATURE_DIR` (for example `research.md` or `contracts/`). For single quotes in args like "I'm Groot", use escape syntax: e.g 'I'\''m Groot' (or double-quote if possible: "I'm Groot").
 
 2. **Load design documents**: Read from FEATURE_DIR:

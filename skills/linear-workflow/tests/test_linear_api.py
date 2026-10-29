@@ -789,5 +789,249 @@ class TestLinearApiUpdateIssue(unittest.TestCase):
             )
 
 
+class TestLinearWorkflowStatesAndConstants(unittest.TestCase):
+    def test_canonical_workflow_states_structure(self):
+        self.assertEqual(len(linear_api.CANONICAL_WORKFLOW_STATES), 7)
+        state_names = [s["name"] for s in linear_api.CANONICAL_WORKFLOW_STATES]
+        self.assertEqual(state_names, ["Backlog", "Planned", "Todo", "In Progress", "In Review", "Done", "Canceled"])
+        for state in linear_api.CANONICAL_WORKFLOW_STATES:
+            valid, errors = linear_api.validate_linear_workflow_state(state)
+            self.assertTrue(valid, f"State {state['name']} failed validation: {errors}")
+
+    def test_validate_card_id(self):
+        self.assertTrue(linear_api.validate_card_id("FAL-58"))
+        self.assertTrue(linear_api.validate_card_id("ABC-1234"))
+        self.assertFalse(linear_api.validate_card_id("fal-58"))
+        self.assertFalse(linear_api.validate_card_id("123"))
+        self.assertFalse(linear_api.validate_card_id("<CARD-ID>"))
+        self.assertFalse(linear_api.validate_card_id(""))
+        self.assertFalse(linear_api.validate_card_id(None))
+
+    def test_validate_linear_workflow_state_invalid(self):
+        # Invalid name
+        valid, errors = linear_api.validate_linear_workflow_state({
+            "name": "InvalidState", "type": "unstarted", "position": 1.0, "color": "#123456"
+        })
+        self.assertFalse(valid)
+        self.assertTrue(any("name: Um de:" in e for e in errors))
+
+        # Invalid type
+        valid, errors = linear_api.validate_linear_workflow_state({
+            "name": "Planned", "type": "unknown_type", "position": 1.0, "color": "#123456"
+        })
+        self.assertFalse(valid)
+        self.assertTrue(any("type: Um de:" in e for e in errors))
+
+        # Invalid position
+        valid, errors = linear_api.validate_linear_workflow_state({
+            "name": "Planned", "type": "unstarted", "position": 99.0, "color": "#123456"
+        })
+        self.assertFalse(valid)
+        self.assertTrue(any("position: Valores de 0.0 a 6.0" in e for e in errors))
+
+        # Invalid color
+        valid, errors = linear_api.validate_linear_workflow_state({
+            "name": "Planned", "type": "unstarted", "position": 1.0, "color": "blue"
+        })
+        self.assertFalse(valid)
+        self.assertTrue(any("color: Regex:" in e for e in errors))
+
+
+class TestEphemeralWorktreeContext(unittest.TestCase):
+    def test_worktree_invalid_card_id(self):
+        with self.assertRaises(ValueError) as ctx:
+            linear_api.EphemeralWorktreeContext("invalid-id")
+        self.assertIn("Uso obrigatório: <CARD-ID>", str(ctx.exception))
+
+    def test_worktree_lifecycle_and_status(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_root = Path(tmpdir)
+            with linear_api.EphemeralWorktreeContext("FAL-58", repo_root=repo_root) as ctx:
+                self.assertEqual(ctx.status, "active")
+                self.assertEqual(ctx.worktree_path, repo_root / ".worktrees" / "FAL-58")
+            self.assertEqual(ctx.status, "cleaned_up")
+
+    def test_create_and_cleanup_helpers(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_root = Path(tmpdir)
+            ctx = linear_api.create_ephemeral_worktree("FAL-58", repo_root=repo_root)
+            self.assertEqual(ctx.status, "active")
+            res = linear_api.cleanup_ephemeral_worktree(ctx, repo_root=repo_root)
+            self.assertTrue(res)
+            self.assertEqual(ctx.status, "cleaned_up")
+
+
+class TestDoneTransitionRejection(unittest.TestCase):
+    def test_update_issue_blocks_done(self):
+        with patch("builtins.print") as mock_print:
+            res = linear_api.cmd_update_issue("fake-key", "FAL-58", state_name="Done")
+            self.assertFalse(res["success"])
+            self.assertEqual(
+                res["error"],
+                "Transição para 'Done' é restrita a humanos após merge manual de Pull Request."
+            )
+
+    def test_update_issue_blocks_done_case_insensitive(self):
+        with patch("builtins.print"):
+            res = linear_api.cmd_update_issue("fake-key", "FAL-58", state_name="done")
+            self.assertFalse(res["success"])
+
+
+class TestLivingSpecDraftPR(unittest.TestCase):
+    def test_parse_draft_pr_url(self):
+        raw_url = "https://github.com/CaioCoelhoChaves/fk_apm/pull/20"
+        self.assertEqual(linear_api.parse_draft_pr_url(raw_url), raw_url)
+
+        markdown_body = "* **Pull Request (Draft)**: [#20 — feat](https://github.com/CaioCoelhoChaves/fk_apm/pull/20)"
+        self.assertEqual(linear_api.parse_draft_pr_url(markdown_body), raw_url)
+
+        self.assertIsNone(linear_api.parse_draft_pr_url("No URL here"))
+
+    @patch("subprocess.run")
+    def test_create_draft_pr(self, mock_run):
+        mock_run.return_value = MagicMock(
+            returncode=0,
+            stdout="https://github.com/CaioCoelhoChaves/fk_apm/pull/25\n",
+            stderr=""
+        )
+        res = linear_api.create_draft_pr(
+            branch_name="feat/FAL-58-modernizar",
+            title="feat(FAL-58): modernizar linear-workflow",
+            body="## Body text",
+            base_branch="develop",
+            is_draft=True
+        )
+        self.assertTrue(res["success"])
+        self.assertEqual(res["url"], "https://github.com/CaioCoelhoChaves/fk_apm/pull/25")
+        self.assertTrue(res["is_draft"])
+
+
+class TestPlannedStateResolutionAndSpecDir(unittest.TestCase):
+    @patch("linear_api.execute_graphql")
+    def test_resolve_state_id_planned(self, mock_execute):
+        mock_execute.return_value = {
+            "success": True,
+            "data": {
+                "team": {
+                    "id": "team-1",
+                    "name": "FallKey",
+                    "states": {
+                        "nodes": [
+                            {"id": "s-backlog", "name": "Backlog"},
+                            {"id": "s-planned", "name": "Planned"},
+                            {"id": "s-todo", "name": "Todo"}
+                        ]
+                    },
+                    "labels": {"nodes": []}
+                }
+            }
+        }
+        state_id = linear_api.resolve_state_id("fake-key", "team-1", "Planned")
+        self.assertEqual(state_id, "s-planned")
+
+        alias_id = linear_api.resolve_state_id("fake-key", "team-1", "planejado")
+        self.assertEqual(alias_id, "s-planned")
+
+    def test_validate_plan_with_card_id_resolution(self):
+        repo_root = Path(__file__).resolve().parent.parent.parent.parent
+        res = linear_api.validate_spec_plan("FAL-58", repo_root=repo_root)
+        self.assertTrue(res["valid"], f"Validation failed with errors: {res.get('errors')}")
+        self.assertTrue(res["files"]["spec_md"])
+        self.assertTrue(res["files"]["plan_md"])
+        self.assertTrue(res["files"]["tasks_md"])
+
+
+class TestBoardSyncAndSetup(unittest.TestCase):
+    @patch("linear_api.execute_graphql")
+    def test_sync_boards_dry_run(self, mock_execute):
+        mock_execute.return_value = {
+            "success": True,
+            "data": {
+                "teams": {
+                    "nodes": [
+                        {
+                            "id": "team-uuid-1",
+                            "name": "FallKey",
+                            "key": "FAL",
+                            "states": {
+                                "nodes": [
+                                    {"id": "s1", "name": "Backlog", "type": "backlog", "position": 0.0, "color": "#BEC2C8"},
+                                    {"id": "s2", "name": "Technical Analysis", "type": "unstarted", "position": 1.0, "color": "#F2C94C"},
+                                    {"id": "s3", "name": "Todo", "type": "unstarted", "position": 2.0, "color": "#4EA7FC"}
+                                ]
+                            }
+                        }
+                    ]
+                }
+            }
+        }
+
+        with patch("builtins.print") as mock_print:
+            linear_api.cmd_sync_boards("fake-key", team_id="team-uuid-1", dry_run=True)
+            self.assertEqual(mock_execute.call_count, 1)
+
+            call_args = mock_print.call_args[0][0]
+            data = json.loads(call_args)
+            self.assertTrue(data["success"])
+            self.assertTrue(data["dry_run"])
+            res = data["results"][0]
+            self.assertEqual(len(res["states_updated"]), 1)
+            self.assertEqual(res["states_updated"][0]["new_name"], "Planned")
+            self.assertEqual(res["states_updated"][0]["previous_name"], "Technical Analysis")
+
+    @patch("linear_api.execute_graphql")
+    def test_setup_board_idempotency(self, mock_execute):
+        mock_execute.side_effect = [
+            {
+                "success": True,
+                "data": {
+                    "team": {
+                        "id": "team-uuid-1",
+                        "states": {
+                            "nodes": [
+                                {"id": "s1", "name": "Backlog", "type": "backlog", "position": 0.0, "color": "#BEC2C8"},
+                                {"id": "s2", "name": "Planned", "type": "unstarted", "position": 1.0, "color": "#F2C94C"}
+                            ]
+                        }
+                    }
+                }
+            },
+            {"success": True, "data": {"workflowStateCreate": {"workflowState": {"id": "s-new"}}}}
+        ] * 10
+
+        with patch("builtins.print") as mock_print:
+            linear_api.cmd_setup_board("fake-key", team_id="team-uuid-1", force=False)
+            call_args = mock_print.call_args[0][0]
+            data = json.loads(call_args)
+            self.assertTrue(data["success"])
+            provisioned = data["provisioned_states"]
+            self.assertTrue(any(p["name"] == "Backlog" and p["status"] == "existing" for p in provisioned))
+            self.assertTrue(any(p["name"] == "Planned" and p["status"] == "existing" for p in provisioned))
+            self.assertTrue(any(p["name"] == "Todo" and p["status"] == "created" for p in provisioned))
+
+
+class TestReviewResolutionAndCommentDeduplication(unittest.TestCase):
+    def test_comment_idempotency_window(self):
+        from datetime import datetime, timezone, timedelta
+        now = datetime.now(timezone.utc)
+        recent_time = (now - timedelta(minutes=5)).isoformat()
+        old_time = (now - timedelta(minutes=20)).isoformat()
+
+        comments = [
+            {"id": "c1", "body": "Same comment body", "createdAt": recent_time},
+            {"id": "c2", "body": "Old comment body", "createdAt": old_time}
+        ]
+
+        is_dup, node = linear_api.check_comment_idempotency(comments, "Same comment body", window_minutes=10.0)
+        self.assertTrue(is_dup)
+        self.assertEqual(node["id"], "c1")
+
+        is_dup, node = linear_api.check_comment_idempotency(comments, "Old comment body", window_minutes=10.0)
+        self.assertFalse(is_dup)
+
+        is_dup, node = linear_api.check_comment_idempotency(comments, "Completely new", window_minutes=10.0)
+        self.assertFalse(is_dup)
+
+
 if __name__ == "__main__":
     unittest.main()

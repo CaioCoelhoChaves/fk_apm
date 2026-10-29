@@ -1,6 +1,6 @@
 ﻿---
 name: "speckit-converge"
-description: "Assess codebase convergence against spec.md/plan.md/tasks.md AND autonomously resolve PR review feedback without Consent Gate: move Linear card to In Progress, append/execute convergence tasks on the PR branch, comment on the PR, and return Linear card to In Review. Replaces /fk-fix."
+description: "Assess codebase convergence against spec.md/plan.md/tasks.md AND autonomously resolve PR review feedback without Consent Gate: move Linear card to In Progress, append/execute convergence tasks on the PR branch, comment on the PR, and return Linear card to In Review. Autonomous PR Review Convergence."
 compatibility: "Requires spec-kit project structure with .specify/ directory and linear-workflow CLI"
 metadata:
   author: "github-spec-kit + fk_apm"
@@ -234,9 +234,9 @@ Append to the **end** of `tasks.md`, per the append contract:
 - Report: **"✅ Converged — the implementation satisfies the spec, plan, and tasks."**
 - Include the summary counts of what was checked.
 
-### 8. Provide Next Actions (Handoff) & Linear Autonomous PR Review Convergence (`/fk-fix` Replacement)
+### 8. Provide Next Actions (Handoff) & Linear Autonomous PR Review Convergence Autonomous Execution
 
-> **NO CONSENT GATE FOR PR REVIEW FIXES**: When `/speckit-converge` is invoked on a Linear card in `In Review` or an open Pull Request with review feedback (replacing `/fk-fix`), it operates **autonomously without a Consent Gate**:
+> **NO CONSENT GATE FOR PR REVIEW FIXES**: When `/speckit-converge` is invoked on a Linear card in `In Review` or an open Pull Request with review feedback , it operates **autonomously without a Consent Gate**:
 
 1. **Read Open PR Reviews & Comments + Spec Gaps**:
    - Inspect PR comments and inline review threads via `gh pr view [<pr-number>] --comments`, `gh api repos/{owner}/{repo}/pulls/{pr_number}/reviews`, and `gh api repos/{owner}/{repo}/pulls/{pr_number}/comments`.
@@ -259,6 +259,7 @@ Append to the **end** of `tasks.md`, per the append contract:
        --comment-file ".tmp-converge-done.md"
      ```
    - **NEVER** move the Linear card to `Done`.
+- Next step orientation: `Próximo passo: Revisão final e merge manual do Pull Request pelo mantenedor`.
 
 - When invoked purely as a static audit prior to PR opening:
   - On `tasks_appended`: state how many tasks were appended under which phase, and recommend running `/speckit-implement` to complete them.
