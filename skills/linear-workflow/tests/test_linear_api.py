@@ -378,42 +378,36 @@ class TestLinearApiUpdateIssue(unittest.TestCase):
 
     def test_skill_files_enforce_prerender_and_tooling_labels(self):
         skill_root = Path(__file__).resolve().parent.parent
-        fk_new_issue = (skill_root / ".apm" / "skills" / "fk-new-issue" / "SKILL.md").read_text(encoding="utf-8")
-        fk_tech_analysis = (skill_root / ".apm" / "skills" / "fk-technical-analysis" / "SKILL.md").read_text(encoding="utf-8")
+        speckit_specify = (skill_root / ".apm" / "skills" / "speckit-specify" / "SKILL.md").read_text(encoding="utf-8")
+        speckit_tasks = (skill_root / ".apm" / "skills" / "speckit-tasks" / "SKILL.md").read_text(encoding="utf-8")
         main_skill = (skill_root / "SKILL.md").read_text(encoding="utf-8")
 
-        for content in (fk_new_issue, fk_tech_analysis, main_skill):
-            self.assertIn("Proibição de Consent Gate Cego", content)
-            self.assertIn("Resumo", content)
+        self.assertIn("Proibição de Consent Gate Cego", main_skill)
+        for content in (speckit_specify, speckit_tasks, main_skill):
+            self.assertIn("Pre-Render Gate", content)
 
-        self.assertIn("Feature", fk_new_issue)
-        self.assertIn("não force `Back`", fk_new_issue)
+        self.assertIn("Feature", speckit_specify)
         self.assertIn("Feature", main_skill)
         self.assertIn("não force `Back`", main_skill)
 
     def test_skill_files_enforce_mandatory_title_and_description_in_tech_analysis(self):
         skill_root = Path(__file__).resolve().parent.parent
-        fk_tech_skill = (skill_root / ".apm" / "skills" / "fk-technical-analysis" / "SKILL.md").read_text(encoding="utf-8")
-        fk_tech_prompt = (skill_root / ".apm" / "prompts" / "fk-technical-analysis.prompt.md").read_text(encoding="utf-8")
+        speckit_plan = (skill_root / ".apm" / "skills" / "speckit-plan" / "SKILL.md").read_text(encoding="utf-8")
+        speckit_tasks = (skill_root / ".apm" / "skills" / "speckit-tasks" / "SKILL.md").read_text(encoding="utf-8")
+        speckit_tasks_prompt = (skill_root / ".apm" / "prompts" / "speckit-tasks.prompt.md").read_text(encoding="utf-8")
         instructions = (skill_root / ".apm" / "instructions" / "linear-lifecycle-commands.instructions.md").read_text(encoding="utf-8")
         main_skill = (skill_root / "SKILL.md").read_text(encoding="utf-8")
         multi_harness = (skill_root / "references" / "multi-harness-commands.md").read_text(encoding="utf-8")
         states_ref = (skill_root / "references" / "states-and-labels.md").read_text(encoding="utf-8")
 
-        for content in (fk_tech_skill, fk_tech_prompt, instructions, main_skill):
+        for content in (speckit_plan, speckit_tasks, speckit_tasks_prompt, instructions, main_skill):
             self.assertIn("Título Revisado", content)
             self.assertIn("Descrição Atualizada", content)
             self.assertIn("--title", content)
-            self.assertIn("--description", content)
+            self.assertIn("--description-file", content)
 
-        self.assertNotIn("Atualização de Descrição (Opcional / Recomendado)", fk_tech_skill)
-        self.assertNotIn("opcionalmente na descrição do card", fk_tech_prompt)
-        self.assertNotIn("opcionalmente na descrição do card", instructions)
-        self.assertNotIn("Opcionalmente, caso o escopo técnico tenha sido significativamente refinado", main_skill)
-        self.assertNotIn("optionally updating the card description", multi_harness)
-        self.assertIn("mandatorily updating the card title (`--title`) and description", multi_harness)
-        self.assertIn("--title", states_ref)
-        self.assertIn("--description", states_ref)
+        self.assertIn("Título Revisado", multi_harness)
+        self.assertIn("--description-file", states_ref)
 
     @patch("linear_api.resolve_state_id", return_value="state-backlog-id")
     @patch("linear_api.execute_graphql")
@@ -589,23 +583,211 @@ class TestLinearApiUpdateIssue(unittest.TestCase):
         git_skill = (repo_root / "skills" / "git-workflow" / "SKILL.md").read_text(encoding="utf-8")
         gitflow_ref = (repo_root / "skills" / "git-workflow" / "references" / "gitflow.md").read_text(encoding="utf-8")
         linear_skill = (skill_root / "SKILL.md").read_text(encoding="utf-8")
-        fk_new_issue = (skill_root / ".apm" / "skills" / "fk-new-issue" / "SKILL.md").read_text(encoding="utf-8")
-        fk_tech_analysis = (skill_root / ".apm" / "skills" / "fk-technical-analysis" / "SKILL.md").read_text(encoding="utf-8")
-        fk_develop = (skill_root / ".apm" / "skills" / "fk-develop" / "SKILL.md").read_text(encoding="utf-8")
-        fk_fix = (skill_root / ".apm" / "skills" / "fk-fix" / "SKILL.md").read_text(encoding="utf-8")
+        speckit_specify = (skill_root / ".apm" / "skills" / "speckit-specify" / "SKILL.md").read_text(encoding="utf-8")
+        speckit_tasks = (skill_root / ".apm" / "skills" / "speckit-tasks" / "SKILL.md").read_text(encoding="utf-8")
+        speckit_implement = (skill_root / ".apm" / "skills" / "speckit-implement" / "SKILL.md").read_text(encoding="utf-8")
+        speckit_converge = (skill_root / ".apm" / "skills" / "speckit-converge" / "SKILL.md").read_text(encoding="utf-8")
 
         self.assertIn("--body-file", git_skill)
         self.assertIn("--body-file", gitflow_ref)
         self.assertIn("--description-file", linear_skill)
         self.assertIn("--comment-file", linear_skill)
         self.assertIn("--body-file", linear_skill)
-        self.assertIn("--description-file", fk_new_issue)
-        self.assertIn("--description-file", fk_tech_analysis)
-        self.assertIn("--comment-file", fk_tech_analysis)
-        self.assertIn("--comment-file", fk_develop)
-        self.assertIn("--body-file", fk_develop)
-        self.assertIn("--comment-file", fk_fix)
-        self.assertIn("--body-file", fk_fix)
+        self.assertIn("--description-file", speckit_specify)
+        self.assertIn("--description-file", speckit_tasks)
+        self.assertIn("--comment-file", speckit_tasks)
+        self.assertIn("--comment-file", speckit_implement)
+        self.assertIn("--body-file", speckit_implement)
+        self.assertIn("--comment-file", speckit_converge)
+        self.assertIn("--body-file", speckit_converge)
+
+    def test_sanitize_markdown_payload_closes_unclosed_code_blocks(self):
+        raw = (
+            "### Exemplo de Código\n"
+            "```python\n"
+            "def hello():\n"
+            "    return 'world'"
+        )
+        sanitized = linear_api.sanitize_markdown_payload(raw)
+        self.assertTrue(sanitized.endswith("\n```"))
+        self.assertEqual(sanitized.count("```"), 2)
+
+        # Already closed fence should not duplicate closing fence
+        already_closed = "```bash\necho ok\n```"
+        self.assertEqual(linear_api.sanitize_markdown_payload(already_closed), already_closed)
+
+    def test_sanitize_markdown_payload_aligns_misaligned_tables(self):
+        raw = (
+            "Resumo da análise (FAL-53): teste | Arquivos: 3 | Branch: feat/FAL-53\n\n"
+            "| Arquivo | Ação | Status |\n"
+            "| :--- |---\n"
+            "| linear_api.py | Modificar\n"
+            "SKILL.md | Atualizar | OK |"
+        )
+        sanitized = linear_api.sanitize_markdown_payload(raw)
+        lines = sanitized.split("\n")
+        # Single-line prose with pipes must remain untouched
+        self.assertEqual(
+            lines[0],
+            "Resumo da análise (FAL-53): teste | Arquivos: 3 | Branch: feat/FAL-53"
+        )
+        # Table rows must all have aligned leading/trailing pipes and 3 columns
+        self.assertEqual(lines[2], "| Arquivo | Ação | Status |")
+        self.assertEqual(lines[3], "| :--- | --- | --- |")
+        self.assertEqual(lines[4], "| linear_api.py | Modificar |  |")
+        self.assertEqual(lines[5], "| SKILL.md | Atualizar | OK |")
+
+    def test_sanitize_markdown_payload_strips_control_chars_and_crlf(self):
+        raw = "Linha 1\r\nLinha 2\rLinha 3 com \x0cformfeed e \x08backspace e \x00null\tcom tab"
+        sanitized = linear_api.sanitize_markdown_payload(raw)
+        self.assertNotIn("\r", sanitized)
+        self.assertNotIn("\x0c", sanitized)
+        self.assertNotIn("\x08", sanitized)
+        self.assertNotIn("\x00", sanitized)
+        self.assertEqual(
+            sanitized,
+            "Linha 1\nLinha 2\nLinha 3 com formfeed e backspace e null\tcom tab"
+        )
+
+    def test_validate_spec_plan_valid_and_invalid_cases(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_root = Path(tmpdir)
+            (repo_root / ".speckit").mkdir(parents=True)
+            (repo_root / ".speckit" / "constitution.md").write_text("# Constitution\n", encoding="utf-8")
+            (repo_root / "src").mkdir(parents=True)
+            (repo_root / "src" / "existing.py").write_text("print(1)\n", encoding="utf-8")
+
+            spec_dir = repo_root / ".specs" / "FAL-99"
+            spec_dir.mkdir(parents=True)
+            (spec_dir / "plan.md").write_text(
+                "# Plano FAL-99\n\n"
+                "## 1. Diagnóstico e Contexto\nContexto ok.\n\n"
+                "## 2. Arquitetura da Solução & Desenho Técnico\nDesign ok.\n\n"
+                "## 3. Checklist de Arquivos Impactados\n"
+                "- `src/existing.py` (modificar)\n"
+                "- `src/new_module.py` (criar)\n\n"
+                "## 4. Estratégia de Testes\n`python -m unittest`\n\n"
+                "## 5. Plano Gitflow\n- Branch: `feat/FAL-99-test`\n",
+                encoding="utf-8"
+            )
+            (spec_dir / "tasks.md").write_text(
+                "# Tasks\n- [x] Task 1\n- [ ] Task 2\n",
+                encoding="utf-8"
+            )
+
+            res = linear_api.validate_spec_plan("FAL-99", repo_root=repo_root)
+            self.assertTrue(res["valid"])
+            self.assertEqual(len(res["sections_found"]), 5)
+            self.assertEqual(res["tasks"]["total"], 2)
+            self.assertEqual(res["tasks"]["completed"], 1)
+            self.assertEqual(res["tasks"]["pending"], 1)
+
+            # Invalid case: missing section and placeholder file path
+            bad_dir = repo_root / ".specs" / "FAL-100"
+            bad_dir.mkdir(parents=True)
+            (bad_dir / "plan.md").write_text(
+                "# Plano Incompleto\n\n"
+                "## 1. Diagnóstico e Contexto\nOk\n\n"
+                "## 3. Checklist de Arquivos Impactados\n"
+                "- `<arquivo-1>`\n"
+                "- `nonexistent_dir/missing.py` (modificar)\n",
+                encoding="utf-8"
+            )
+            (bad_dir / "tasks.md").write_text("# Sem checkboxes\nTexto solto\n", encoding="utf-8")
+
+            bad_res = linear_api.validate_spec_plan("FAL-100", repo_root=repo_root)
+            self.assertFalse(bad_res["valid"])
+            self.assertTrue(any("Arquitetura da Solução" in e for e in bad_res["errors"]))
+            self.assertTrue(any("<arquivo-1>" in e for e in bad_res["errors"]))
+            self.assertTrue(any("nonexistent_dir/missing.py" in e for e in bad_res["errors"]))
+            self.assertTrue(any("tasks.md" in e for e in bad_res["errors"]))
+
+    def test_validate_fal53_homologation_spec_and_sdd_skill_contracts(self):
+        skill_root = Path(__file__).resolve().parent.parent
+        repo_root = skill_root.parent.parent
+
+        # Validate real FAL-53 spec artifacts in specs/053-fal-53-spec-kit-linear-workflow
+        res = linear_api.validate_spec_plan("FAL-53", repo_root=repo_root)
+        self.assertTrue(res["valid"], f"Expected FAL-53 spec to be valid, got errors: {res['errors']}")
+        self.assertTrue(res["constitution_exists"])
+        self.assertTrue(res["files"]["spec_md"])
+        self.assertTrue(res["files"]["plan_md"])
+        self.assertTrue(res["files"]["tasks_md"])
+
+        # Verify official github/spec-kit & Executive Briefing contracts in skill files
+        linear_skill = (skill_root / "SKILL.md").read_text(encoding="utf-8")
+        speckit_plan = (skill_root / ".apm" / "skills" / "speckit-plan" / "SKILL.md").read_text(encoding="utf-8")
+        speckit_tasks = (skill_root / ".apm" / "skills" / "speckit-tasks" / "SKILL.md").read_text(encoding="utf-8")
+        speckit_impl = (skill_root / ".apm" / "skills" / "speckit-implement" / "SKILL.md").read_text(encoding="utf-8")
+        speckit_spec = (skill_root / ".apm" / "skills" / "speckit-specify" / "SKILL.md").read_text(encoding="utf-8")
+        instructions = (skill_root / ".apm" / "instructions" / "linear-lifecycle-commands.instructions.md").read_text(encoding="utf-8")
+
+        self.assertIn(".specify/memory/constitution.md", linear_skill)
+        self.assertIn("validate-plan", linear_skill)
+        self.assertIn("sanitize_markdown_payload", linear_skill)
+        self.assertIn("Executive Briefing", speckit_plan)
+        self.assertIn("Executive Briefing", speckit_tasks)
+        self.assertIn("validate-plan", speckit_tasks)
+        self.assertIn("In Progress", speckit_impl)
+        self.assertIn("In Review", speckit_impl)
+        self.assertIn("Backlog", speckit_spec)
+        self.assertIn("validate-plan", instructions)
+
+    def test_bootstrap_specify_and_10_speckit_skills(self):
+        skill_root = Path(__file__).resolve().parent.parent
+        repo_root = skill_root.parent.parent
+
+        expected_skills = [
+            "speckit-analyze",
+            "speckit-checklist",
+            "speckit-clarify",
+            "speckit-constitution",
+            "speckit-converge",
+            "speckit-implement",
+            "speckit-plan",
+            "speckit-specify",
+            "speckit-tasks",
+            "speckit-taskstoissues",
+        ]
+        for sname in expected_skills:
+            self.assertTrue(
+                (skill_root / ".apm" / "skills" / sname / "SKILL.md").is_file(),
+                f"Missing {sname}/SKILL.md in skills/linear-workflow/.apm/skills/"
+            )
+            self.assertTrue(
+                (skill_root / ".apm" / "prompts" / f"{sname}.prompt.md").is_file(),
+                f"Missing {sname}.prompt.md in skills/linear-workflow/.apm/prompts/"
+            )
+            self.assertTrue(
+                (repo_root / ".agents" / "skills" / sname / "SKILL.md").is_file(),
+                f"Missing deployed {sname}/SKILL.md in .agents/skills/"
+            )
+
+        # Verify legacy fk-* skills are removed from linear-workflow
+        for legacy in ("fk-new-issue", "fk-technical-analysis", "fk-develop", "fk-fix"):
+            self.assertFalse((skill_root / ".apm" / "skills" / legacy).exists())
+            self.assertFalse((repo_root / ".agents" / "skills" / legacy).exists())
+
+        # Test bootstrap_specify in a clean temporary consumer repo
+        with tempfile.TemporaryDirectory() as tmpdir:
+            consumer_root = Path(tmpdir)
+            boot_res = linear_api.bootstrap_specify(repo_root=consumer_root, force=False)
+            self.assertTrue(boot_res["success"])
+            self.assertTrue((consumer_root / ".specify" / "scripts" / "python" / "check_prerequisites.py").is_file())
+            self.assertTrue((consumer_root / ".specify" / "templates" / "spec-template.md").is_file())
+            self.assertTrue((consumer_root / ".specify" / "memory" / "constitution.md").is_file())
+
+            # Modify constitution.md and ensure bootstrap_specify(force=False) preserves it
+            custom_constitution = "# Custom Consumer Constitution\n"
+            (consumer_root / ".specify" / "memory" / "constitution.md").write_text(custom_constitution, encoding="utf-8")
+            boot_res_2 = linear_api.bootstrap_specify(repo_root=consumer_root, force=False)
+            self.assertTrue(boot_res_2["success"])
+            self.assertIn("memory/constitution.md", boot_res_2["skipped_files"])
+            self.assertEqual(
+                (consumer_root / ".specify" / "memory" / "constitution.md").read_text(encoding="utf-8"),
+                custom_constitution
+            )
+
 
 if __name__ == "__main__":
     unittest.main()

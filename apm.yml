@@ -52,7 +52,7 @@ marketplace:
       version: 0.1.0
 
     - name: linear-workflow
-      description: Seamless Linear issue tracking, task lifecycle commands (/fk-* & fk-* multi-harness), Consent Gates for planning/analysis, autonomous development (/fk-develop) and PR review fixes (/fk-fix), and task sync
+      description: Official github/spec-kit (/speckit-*) Spec-Driven Development coupled with Linear issue tracking, 3-Stage Consent Gates, autonomous implementation (/speckit-implement) and PR review convergence (/speckit-converge), and Markdown sanitization
       source: ./skills/linear-workflow
       version: 0.1.0
 
