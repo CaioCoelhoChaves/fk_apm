@@ -20,8 +20,8 @@
 
 **Purpose**: Project initialization and command parsing structure
 
-- [ ] T001 Verify and prepare test harness execution environment for linear_api in skills/linear-workflow/tests/test_linear_api.py
-- [ ] T002 [P] Configure arguments and subparser skeleton for create-manual-issues in skills/linear-workflow/scripts/linear_api.py
+- [X] T001 Verify and prepare test harness execution environment for linear_api in skills/linear-workflow/tests/test_linear_api.py
+- [X] T002 [P] Configure arguments and subparser skeleton for create-manual-issues in skills/linear-workflow/scripts/linear_api.py
 
 ---
 
@@ -31,9 +31,9 @@
 
 ⚠️ **CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T003 Implement helper to resolve or create manual label with team scoping in skills/linear-workflow/scripts/linear_api.py
-- [ ] T004 Implement helper to resolve Backlog state identifier and ensure state enforcement in skills/linear-workflow/scripts/linear_api.py
-- [ ] T005 [P] Implement payload sanitization wrapper using sanitize_markdown_payload for manual issue descriptions in skills/linear-workflow/scripts/linear_api.py
+- [X] T003 Implement helper to resolve or create manual label with team scoping in skills/linear-workflow/scripts/linear_api.py
+- [X] T004 Implement helper to resolve Backlog state identifier and ensure state enforcement in skills/linear-workflow/scripts/linear_api.py
+- [X] T005 [P] Implement payload sanitization wrapper using sanitize_markdown_payload for manual issue descriptions in skills/linear-workflow/scripts/linear_api.py
 
 **Checkpoint**: Core helpers ready - user story implementation can now begin
 
@@ -47,14 +47,14 @@
 
 ### Tests for User Story 1 ⚠️
 
-- [ ] T006 [P] [US1] Add unit test test_create_manual_issues_single in skills/linear-workflow/tests/test_linear_api.py
-- [ ] T007 [P] [US1] Add unit test test_create_manual_issues_ensures_backlog_state in skills/linear-workflow/tests/test_linear_api.py
-- [ ] T008 [P] [US1] Add unit test test_create_manual_issues_ensures_manual_label in skills/linear-workflow/tests/test_linear_api.py
+- [X] T006 [P] [US1] Add unit test test_create_manual_issues_single in skills/linear-workflow/tests/test_linear_api.py
+- [X] T007 [P] [US1] Add unit test test_create_manual_issues_ensures_backlog_state in skills/linear-workflow/tests/test_linear_api.py
+- [X] T008 [P] [US1] Add unit test test_create_manual_issues_ensures_manual_label in skills/linear-workflow/tests/test_linear_api.py
 
 ### Implementation for User Story 1
 
-- [ ] T009 [US1] Implement single issue creation handler in cmd_create_manual_issues in skills/linear-workflow/scripts/linear_api.py
-- [ ] T010 [US1] Support file-first description reading via --description-file in skills/linear-workflow/scripts/linear_api.py
+- [X] T009 [US1] Implement single issue creation handler in cmd_create_manual_issues in skills/linear-workflow/scripts/linear_api.py
+- [X] T010 [US1] Support file-first description reading via --description-file in skills/linear-workflow/scripts/linear_api.py
 
 **Checkpoint**: User Story 1 is functional and testable independently (MVP ready)
 
@@ -68,13 +68,13 @@
 
 ### Tests for User Story 2 ⚠️
 
-- [ ] T011 [P] [US2] Add unit test test_create_manual_issues_batch in skills/linear-workflow/tests/test_linear_api.py
-- [ ] T012 [P] [US2] Add unit test test_create_manual_issues_missing_team_or_auth in skills/linear-workflow/tests/test_linear_api.py
+- [X] T011 [P] [US2] Add unit test test_create_manual_issues_batch in skills/linear-workflow/tests/test_linear_api.py
+- [X] T012 [P] [US2] Add unit test test_create_manual_issues_missing_team_or_auth in skills/linear-workflow/tests/test_linear_api.py
 
 ### Implementation for User Story 2
 
-- [ ] T013 [US2] Implement batch payload parsing and schema validation for --batch-file in skills/linear-workflow/scripts/linear_api.py
-- [ ] T014 [US2] Implement sequential batch issue creation with consolidated JSON response in skills/linear-workflow/scripts/linear_api.py
+- [X] T013 [US2] Implement batch payload parsing and schema validation for --batch-file in skills/linear-workflow/scripts/linear_api.py
+- [X] T014 [US2] Implement sequential batch issue creation with consolidated JSON response in skills/linear-workflow/scripts/linear_api.py
 
 **Checkpoint**: User Story 2 is functional and supports batch creation reliably
 
@@ -88,9 +88,9 @@
 
 ### Implementation for User Story 3
 
-- [ ] T015 [P] [US3] Create prompt definition for fk-new-manual-issue in skills/linear-workflow/.apm/prompts/fk-new-manual-issue.prompt.md
-- [ ] T016 [P] [US3] Create skill declaration for fk-new-manual-issue in skills/linear-workflow/.apm/skills/fk-new-manual-issue/SKILL.md
-- [ ] T017 [P] [US3] Install skill declaration into workspace in .agents/skills/fk-new-manual-issue/SKILL.md
+- [X] T015 [P] [US3] Create prompt definition for fk-new-manual-issue in skills/linear-workflow/.apm/prompts/fk-new-manual-issue.prompt.md
+- [X] T016 [P] [US3] Create skill declaration for fk-new-manual-issue in skills/linear-workflow/.apm/skills/fk-new-manual-issue/SKILL.md
+- [X] T017 [P] [US3] Install skill declaration into workspace in .agents/skills/fk-new-manual-issue/SKILL.md
 
 **Checkpoint**: User Story 3 enables interactive command execution across supported harnesses
 
@@ -104,8 +104,8 @@
 
 ### Implementation for User Story 4
 
-- [ ] T018 [US4] Enforce zero git mutations constraint and update command documentation in skills/linear-workflow/SKILL.md
-- [ ] T019 [P] [US4] Register /fk-new-manual-issue command in skills/linear-workflow/references/multi-harness-commands.md
+- [X] T018 [US4] Enforce zero git mutations constraint and update command documentation in skills/linear-workflow/SKILL.md
+- [X] T019 [P] [US4] Register /fk-new-manual-issue command in skills/linear-workflow/references/multi-harness-commands.md
 
 **Checkpoint**: User Story 4 ensures governance constraints and full documentation coverage
 
@@ -115,9 +115,9 @@
 
 **Purpose**: Quality verification, regression testing, and changelog tracking
 
-- [ ] T020 [P] Execute full test suite in skills/linear-workflow/tests/test_linear_api.py
-- [ ] T021 Validate end-to-end quickstart scenarios in specs/055-manual-linear-cards/quickstart.md
-- [ ] T022 Update CHANGELOG.md with Keep a Changelog entry under Unreleased
+- [X] T020 [P] Execute full test suite in skills/linear-workflow/tests/test_linear_api.py
+- [X] T021 Validate end-to-end quickstart scenarios in specs/055-manual-linear-cards/quickstart.md
+- [X] T022 Update CHANGELOG.md with Keep a Changelog entry under Unreleased
 
 ---
 

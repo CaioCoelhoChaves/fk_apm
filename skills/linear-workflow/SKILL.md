@@ -67,6 +67,12 @@ A standardized workflow for AI coding agents that integrates the official [`gith
    - `python skills/linear-workflow/scripts/linear_api.py sync-boards [--team-id <UUID>] [--dry-run]`: Reconcilia times existentes, migra `Technical Analysis` para `Planned`, e alinha cores/posições.
    - `python skills/linear-workflow/scripts/linear_api.py setup-board --team-id <UUID> [--force]`: Provisiona os 6 estados canônicos (+ Canceled) de forma idempotente.
 
+10. **Cards Operacionais Manuais & Isolamento Total de Código (`/fk-new-manual-issue`)**:
+   - Destinado exclusivamente a demandas estritamente operacionais e humanas (registro em serviços, pagamentos, consoles de lojas de aplicativos, alinhamentos).
+   - Cria cards no Linear diretamente na coluna `Backlog` com a etiqueta `manual`.
+   - **Zero Git Mutations**: Proibição estrita de criar branches Git (`feat/*`), criar worktrees, alterar código ou abrir Pull Requests.
+   - Suporta criação individual e em lote via CLI (`--batch-file`). Opera sob o **3-Stage Consent Gate** com Pre-Render Gate tabular no chat.
+
 ---
 
 ## Official `/speckit-*` Lifecycle Commands Reference
@@ -83,3 +89,4 @@ A standardized workflow for AI coding agents that integrates the official [`gith
 | **`/speckit-taskstoissues`**| `[<CARD-ID>]` | `tasks.md` ➔ Sub-cards | Cria sub-cards em **`Backlog`** | **3-Stage Consent Gate** |
 | **`/speckit-implement`** | `<CARD-ID>` | Executa `tasks.md` (`[X]`) | `Todo` ➔ **`In Progress`** ➔ **`In Review`** | **Autônomo (SEM Consent Gate)** |
 | **`/speckit-converge`** | `<CARD-ID>` | Fixes de review em `tasks.md` | `In Review` ➔ **`In Progress`** ➔ **`In Review`** | **Autônomo (SEM Consent Gate)** |
+| **`/fk-new-manual-issue`** | `[<descrição>]` | — | Cria card(s) em **`Backlog`** com tag `manual` | **3-Stage Consent Gate** (Zero Git / Zero PR) |
