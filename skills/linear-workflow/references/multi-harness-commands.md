@@ -21,7 +21,8 @@ skills/linear-workflow/
 │   │   ├── speckit-checklist.prompt.md
 │   │   ├── speckit-taskstoissues.prompt.md
 │   │   ├── speckit-implement.prompt.md
-│   │   └── speckit-converge.prompt.md
+│   │   ├── speckit-converge.prompt.md
+│   │   └── fk-new-manual-issue.prompt.md
 │   └── skills/
 │       ├── speckit-constitution/SKILL.md
 │       ├── speckit-specify/SKILL.md
@@ -32,7 +33,8 @@ skills/linear-workflow/
 │       ├── speckit-checklist/SKILL.md
 │       ├── speckit-taskstoissues/SKILL.md
 │       ├── speckit-implement/SKILL.md
-│       └── speckit-converge/SKILL.md
+│       ├── speckit-converge/SKILL.md
+│       └── fk-new-manual-issue/SKILL.md
 ├── assets/
 │   └── .specify/                                      # Bundled github/spec-kit runtime
 ├── SKILL.md                                           # Core workflow engine
@@ -55,18 +57,7 @@ Todos os comandos pós-especificação exigem obrigatoriamente o identificador `
 | **`/speckit-taskstoissues`** | Opcional (`<CARD-ID>`) | Converte tarefas ou fases de `tasks.md` em sub-cards atômicos em **`Backlog`** | **Autônomo (Cria sub-cards)** | `Próximo passo: /speckit-plan <SUB-CARD-ID>` |
 | **`/speckit-implement`** | **Sim** (`<CARD-ID>`) | Move para **`In Progress`**, executa tasks, roda testes, promove PR (`gh pr ready`) e avança para **`In Review`** | **Autônomo (SEM Consent Gate)** | `Próximo passo: Revisar Pull Request no GitHub e acionar /speckit-converge <CARD-ID> para feedbacks` |
 | **`/speckit-converge`** | **Sim** (`<CARD-ID>`) | Move para **`In Progress`**, resolve code review na branch do PR, comita, comenta no PR e retorna para **`In Review`** | **Autônomo (SEM Consent Gate)** | `Próximo passo: Revisão final e merge manual do Pull Request pelo mantenedor` |
-| **`/speckit-constitution`** | Não | Cria ou atualiza a Constituição do projeto em `.specify/memory/constitution.md` | Interativo / Governança | — |
-| **`/speckit-analyze`** | Opcional (`<CARD-ID>`) | Auditoria de consistência read-only entre `spec.md`, `plan.md`, `tasks.md` e Constituição | Read-Only | — |
-| **`/speckit-checklist`** | Opcional (`<CARD-ID>`) | Gera checklists customizados de requisitos em `specs/<feature>/checklists/` | Interativo | — |
-
---- | :--- | :--- | :--- | :--- |
-| **`/speckit-specify`** | Não (`<descrição>`) | Cria `spec.md`, branch Gitflow, Draft PR no GitHub e card em **`Backlog`** | **3-Stage Consent Gate** | `Próximo passo: /speckit-clarify <CARD-ID> ou /speckit-plan <CARD-ID>` |
-| **`/speckit-clarify`** | **Sim** (`<CARD-ID>`) | Refina até 5 dúvidas em `spec.md`, executa em worktree efêmero e comita no Draft PR | Perguntas interativas | `Próximo passo: /speckit-plan <CARD-ID>` |
-| **`/speckit-plan`** | **Sim** (`<CARD-ID>`) | Gera `plan.md` (com 5 seções obrigatórias), executa em worktree efêmero e avança para **`Planned`** com **Título Revisado** e **Descrição Atualizada** | **3-Stage Consent Gate** | `Próximo passo: /speckit-tasks <CARD-ID>` |
-| **`/speckit-tasks`** | **Sim** (`<CARD-ID>`) | Gera `tasks.md`, roda `validate-plan`, executa em worktree efêmero e avança para **`Todo`** | **3-Stage Consent Gate** | `Próximo passo: /speckit-implement <CARD-ID>` |
-| **`/speckit-taskstoissues`** | Opcional (`<CARD-ID>`) | Converte tarefas ou fases de `tasks.md` em sub-cards atômicos em **`Backlog`** | **3-Stage Consent Gate** | `Próximo passo: /speckit-plan <SUB-CARD-ID>` |
-| **`/speckit-implement`** | **Sim** (`<CARD-ID>`) | Move para **`In Progress`**, executa tasks, roda testes, promove PR (`gh pr ready`) e avança para **`In Review`** | **Autônomo (SEM Consent Gate)** | `Próximo passo: Revisar Pull Request no GitHub e acionar /speckit-converge <CARD-ID> para feedbacks` |
-| **`/speckit-converge`** | **Sim** (`<CARD-ID>`) | Move para **`In Progress`**, resolve code review na branch do PR, comita, comenta no PR e retorna para **`In Review`** | **Autônomo (SEM Consent Gate)** | `Próximo passo: Revisão final e merge manual do Pull Request pelo mantenedor` |
+| **`/fk-new-manual-issue`** | Opcional (`[<descrição>]`) | Cria 1 ou múltiplos cards estritamente operacionais no Linear em **`Backlog`** com tag **`manual`** | **3-Stage Consent Gate** (Zero Git / Zero PR) | — |
 | **`/speckit-constitution`** | Não | Cria ou atualiza a Constituição do projeto em `.specify/memory/constitution.md` | Interativo / Governança | — |
 | **`/speckit-analyze`** | Opcional (`<CARD-ID>`) | Auditoria de consistência read-only entre `spec.md`, `plan.md`, `tasks.md` e Constituição | Read-Only | — |
 | **`/speckit-checklist`** | Opcional (`<CARD-ID>`) | Gera checklists customizados de requisitos em `specs/<feature>/checklists/` | Interativo | — |
@@ -87,3 +78,13 @@ Para evitar trocas de branch no repositório de trabalho do desenvolvedor e gara
 - **Living Specs Review no GitHub**: A validação e alinhamento do desenvolvedor ocorrem através do Draft Pull Request criado no `/speckit-specify`.
 - **Relatórios Executivos com Links**: Ao finalizar cada fase, o agente emite um Executive Briefing no chat contendo links clicáveis para o Pull Request e Linear.
 - **Execução Atômica File-First**: Toda mutação no Linear ou GitHub utiliza arquivos temporários UTF-8 (`--description-file`, `--comment-file`, `--body-file`).
+
+---
+
+## 5. Cards Operacionais e Isolamento Total de Código (`/fk-new-manual-issue`)
+
+Para atividades estritamente manuais e operacionais (sem alteração de código, branches Git ou PRs):
+- O comando `/fk-new-manual-issue` opera sob o **3-Stage Consent Gate** com Pre-Render Gate tabular no chat.
+- Cria cards diretamente na coluna `Backlog` com a etiqueta `manual`.
+- **Garantia de Isolamento Absoluto**: Zero branches Git criadas, zero worktrees, zero commits e zero Draft PRs.
+- Suporta criação individual e em lote via CLI (`--batch-file`).

@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Autonomia total no ciclo de vida do Spec Kit (/speckit-specify, /speckit-plan, /speckit-tasks, /speckit-taskstoissues) sem bloqueios de Consent Gate no chat (FAL-60)
 - Sincronização remota via git pull --rebase no /speckit-clarify para absorver alterações e revisões feitas diretamente no GitHub (FAL-60)
 - Elevação da Constituição do repositório para a versão 1.2.0 ratificando esteira contínua e salvaguarda manual estrita de Done (FAL-60)
+- Adicionar comando /fk-new-manual-issue e subcomando CLI create-manual-issues para criação rápida e isolada de cards operacionais no Linear em Backlog com tag manual e salvaguardas estritas de zero mutações Git (FAL-59)
 - Modernizar linear-workflow com ciclo de vida de Living Specs acoplado a GitHub Draft PRs abertos na etapa de especificação (/speckit-specify) e vinculados ao card no Linear (FAL-58)
 - Implementar máquina de estados canônica de 6 estágios (Backlog ➔ Planned ➔ Todo ➔ In Progress ➔ In Review ➔ Done + Canceled) com avanço para Planned no /speckit-plan e para Todo no /speckit-tasks (FAL-58)
 - Adicionar subcomandos sync-boards e setup-board em linear_api.py para reconciliação automática de quadros, migração de Technical Analysis para Planned, e suporte a --dry-run (FAL-58)

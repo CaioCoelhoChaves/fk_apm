@@ -1134,5 +1134,274 @@ class TestAutonomousWorkflowAndTransitions(unittest.TestCase):
         self.assertEqual(res.stdout, "Successfully rebased")
 
 
+class TestLinearApiCreateManualIssues(unittest.TestCase):
+    @patch("linear_api.execute_graphql")
+    @patch("linear_api.resolve_state_id")
+    @patch("linear_api.resolve_or_create_label_id")
+    def test_create_manual_issues_single(self, mock_resolve_label, mock_resolve_state, mock_execute):
+        mock_resolve_state.return_value = "state-backlog-id"
+        mock_resolve_label.return_value = "label-manual-id"
+        mock_execute.return_value = {
+            "success": True,
+            "data": {
+                "issueCreate": {
+                    "success": True,
+                    "issue": {
+                        "id": "uuid-man-1",
+                        "identifier": "FAL-60",
+                        "title": "Configurar credenciais no Gateway",
+                        "url": "https://linear.app/fallkey/issue/FAL-60/configurar-credenciais",
+                        "state": {"id": "state-backlog-id", "name": "Backlog"},
+                        "labels": {"nodes": [{"id": "label-manual-id", "name": "manual"}]}
+                    }
+                }
+            }
+        }
+
+        with patch("builtins.print") as mock_print:
+            res = linear_api.cmd_create_manual_issues(
+                api_key="fake-key",
+                team_id="team-1",
+                title="Configurar credenciais no Gateway",
+                description="## Contexto\nAcessar dashboard",
+                priority=2
+            )
+
+        self.assertTrue(res["success"])
+        self.assertEqual(res["count"], 1)
+        self.assertEqual(res["issues"][0]["identifier"], "FAL-60")
+        self.assertEqual(res["issues"][0]["state"], "Backlog")
+        self.assertIn("manual", res["issues"][0]["labels"])
+        mock_resolve_state.assert_called_with("fake-key", "team-1", "Backlog")
+        mock_resolve_label.assert_called_with("fake-key", "team-1", "manual")
+
+    @patch("linear_api.execute_graphql")
+    @patch("linear_api.resolve_state_id")
+    @patch("linear_api.resolve_or_create_label_id")
+    def test_create_manual_issues_ensures_backlog_state(self, mock_resolve_label, mock_resolve_state, mock_execute):
+        mock_resolve_state.return_value = "state-backlog-uuid-99"
+        mock_resolve_label.return_value = "label-manual-uuid"
+        mock_execute.return_value = {
+            "success": True,
+            "data": {
+                "issueCreate": {
+                    "success": True,
+                    "issue": {
+                        "id": "uuid-man-2",
+                        "identifier": "FAL-61",
+                        "title": "Tarefa Backlog State",
+                        "url": "https://linear.app/fallkey/issue/FAL-61/tarefa",
+                        "state": {"id": "state-backlog-uuid-99", "name": "Backlog"},
+                        "labels": {"nodes": [{"id": "label-manual-uuid", "name": "manual"}]}
+                    }
+                }
+            }
+        }
+
+        with patch("builtins.print"):
+            linear_api.cmd_create_manual_issues(
+                api_key="fake-key",
+                team_id="team-1",
+                title="Tarefa Backlog State"
+            )
+
+        mock_resolve_state.assert_called_with("fake-key", "team-1", "Backlog")
+        variables = mock_execute.call_args[0][2]
+        self.assertEqual(variables["input"]["stateId"], "state-backlog-uuid-99")
+
+    @patch("linear_api.execute_graphql")
+    @patch("linear_api.resolve_state_id")
+    @patch("linear_api.resolve_or_create_label_id")
+    def test_create_manual_issues_ensures_manual_label(self, mock_resolve_label, mock_resolve_state, mock_execute):
+        mock_resolve_state.return_value = "state-backlog-id"
+        mock_resolve_label.return_value = "label-manual-id"
+        mock_execute.return_value = {
+            "success": True,
+            "data": {
+                "issueCreate": {
+                    "success": True,
+                    "issue": {
+                        "id": "uuid-man-3",
+                        "identifier": "FAL-62",
+                        "title": "Verificar Manual Label",
+                        "url": "https://linear.app/fallkey/issue/FAL-62/verificar",
+                        "state": {"id": "state-backlog-id", "name": "Backlog"},
+                        "labels": {"nodes": [{"id": "label-manual-id", "name": "manual"}]}
+                    }
+                }
+            }
+        }
+
+        with patch("builtins.print"):
+            linear_api.cmd_create_manual_issues(
+                api_key="fake-key",
+                team_id="team-1",
+                title="Verificar Manual Label"
+            )
+
+        mock_resolve_label.assert_called_with("fake-key", "team-1", "manual")
+        variables = mock_execute.call_args[0][2]
+        self.assertEqual(variables["input"]["labelIds"], ["label-manual-id"])
+
+    @patch("linear_api.execute_graphql")
+    @patch("linear_api.resolve_state_id")
+    @patch("linear_api.resolve_or_create_label_id")
+    def test_create_manual_issues_batch(self, mock_resolve_label, mock_resolve_state, mock_execute):
+        mock_resolve_state.return_value = "state-backlog-id"
+        mock_resolve_label.return_value = "label-manual-id"
+        mock_execute.side_effect = [
+            {
+                "success": True,
+                "data": {
+                    "issueCreate": {
+                        "success": True,
+                        "issue": {
+                            "id": "uuid-batch-1",
+                            "identifier": "FAL-71",
+                            "title": "Batch Issue 1",
+                            "url": "https://linear.app/fallkey/issue/FAL-71",
+                            "state": {"name": "Backlog"},
+                            "labels": {"nodes": [{"name": "manual"}]}
+                        }
+                    }
+                }
+            },
+            {
+                "success": True,
+                "data": {
+                    "issueCreate": {
+                        "success": True,
+                        "issue": {
+                            "id": "uuid-batch-2",
+                            "identifier": "FAL-72",
+                            "title": "Batch Issue 2",
+                            "url": "https://linear.app/fallkey/issue/FAL-72",
+                            "state": {"name": "Backlog"},
+                            "labels": {"nodes": [{"name": "manual"}]}
+                        }
+                    }
+                }
+            }
+        ]
+
+        with tempfile.NamedTemporaryFile("w", encoding="utf-8", delete=False, suffix=".json") as f:
+            batch_payload = {
+                "issues": [
+                    {"title": "Batch Issue 1", "description": "Desc 1"},
+                    {"title": "Batch Issue 2", "description": "Desc 2"}
+                ]
+            }
+            json.dump(batch_payload, f)
+            batch_path = f.name
+
+        try:
+            with patch("builtins.print"):
+                res = linear_api.cmd_create_manual_issues(
+                    api_key="fake-key",
+                    team_id="team-1",
+                    batch_file=batch_path
+                )
+            self.assertTrue(res["success"])
+            self.assertEqual(res["count"], 2)
+            self.assertEqual(len(res["issues"]), 2)
+            self.assertEqual(res["issues"][0]["identifier"], "FAL-71")
+            self.assertEqual(res["issues"][1]["identifier"], "FAL-72")
+            self.assertEqual(mock_execute.call_count, 2)
+        finally:
+            if os.path.exists(batch_path):
+                os.remove(batch_path)
+
+    @patch("linear_api.execute_graphql")
+    def test_create_manual_issues_missing_team_or_auth(self, mock_execute):
+        mock_execute.return_value = {
+            "success": True,
+            "data": {
+                "viewer": {"id": "viewer-1"},
+                "teams": {"nodes": []}
+            }
+        }
+
+        with patch("builtins.print"):
+            res = linear_api.cmd_create_manual_issues(
+                api_key="fake-key",
+                team_id=None,
+                title="Single Issue Without Team"
+            )
+
+        self.assertFalse(res["success"])
+        self.assertIn("Team ID could not be resolved", res["error"])
+        self.assertEqual(res["issues"], [])
+
+    @patch("linear_api.execute_graphql")
+    @patch("linear_api.resolve_state_id")
+    @patch("linear_api.resolve_or_create_label_id")
+    def test_create_manual_issues_with_description_file(self, mock_resolve_label, mock_resolve_state, mock_execute):
+        mock_resolve_state.return_value = "state-backlog-id"
+        mock_resolve_label.return_value = "label-manual-id"
+        mock_execute.return_value = {
+            "success": True,
+            "data": {
+                "issueCreate": {
+                    "success": True,
+                    "issue": {
+                        "id": "uuid-desc-file",
+                        "identifier": "FAL-73",
+                        "title": "Issue From File",
+                        "url": "https://linear.app/fallkey/issue/FAL-73",
+                        "state": {"name": "Backlog"},
+                        "labels": {"nodes": [{"name": "manual"}]}
+                    }
+                }
+            }
+        }
+
+        with tempfile.NamedTemporaryFile("w", encoding="utf-8", delete=False, suffix=".md") as f:
+            f.write("## Contexto Arquivo\nDetalhes em Markdown")
+            desc_file_path = f.name
+
+        try:
+            with patch("builtins.print"):
+                res = linear_api.cmd_create_manual_issues(
+                    api_key="fake-key",
+                    team_id="team-1",
+                    title="Issue From File",
+                    description_file=desc_file_path
+                )
+            self.assertTrue(res["success"])
+            self.assertEqual(res["issues"][0]["identifier"], "FAL-73")
+            variables = mock_execute.call_args[0][2]
+            self.assertIn("Contexto Arquivo", variables["input"]["description"])
+        finally:
+            if os.path.exists(desc_file_path):
+                os.remove(desc_file_path)
+
+    @patch("linear_api.resolve_api_key")
+    @patch("linear_api.cmd_create_manual_issues")
+    def test_cli_create_manual_issues_parses_arguments(self, mock_cmd_manual, mock_resolve_key):
+        mock_resolve_key.return_value = "fake-api-key"
+        test_args = [
+            "linear_api.py",
+            "create-manual-issues",
+            "--title", "Test CLI Title",
+            "--description", "Test CLI Desc",
+            "--team-id", "team-123",
+            "--project-id", "proj-456",
+            "--priority", "2"
+        ]
+        with patch.object(sys, "argv", test_args):
+            linear_api.main()
+
+        mock_cmd_manual.assert_called_once_with(
+            "fake-api-key",
+            title="Test CLI Title",
+            description="Test CLI Desc",
+            description_file=None,
+            batch_file=None,
+            team_id="team-123",
+            project_id="proj-456",
+            priority=2
+        )
+
+
 if __name__ == "__main__":
     unittest.main()

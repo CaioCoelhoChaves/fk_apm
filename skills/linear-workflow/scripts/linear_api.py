@@ -1166,6 +1166,214 @@ def cmd_create_issue(
     res = execute_graphql(api_key, CREATE_ISSUE_MUTATION, {"input": input_data})
     print(json.dumps(res, indent=2, ensure_ascii=False))
 
+def resolve_default_team_id(api_key: str, project_id: Optional[str] = None) -> Optional[str]:
+    """Resolve default team ID from viewer's accessible teams."""
+    v_res = execute_graphql(api_key, VIEWER_QUERY)
+    if not v_res.get("success"):
+        return None
+    teams = v_res.get("data", {}).get("teams", {}).get("nodes", [])
+    if teams:
+        return teams[0]["id"]
+    return None
+
+def resolve_or_create_manual_label_id(api_key: str, team_id: str) -> Optional[str]:
+    """Resolve or create 'manual' label with team scoping."""
+    return resolve_or_create_label_id(api_key, team_id, "manual")
+
+def resolve_backlog_state_id(api_key: str, team_id: str) -> Optional[str]:
+    """Resolve 'Backlog' workflow state identifier for team."""
+    return resolve_state_id(api_key, team_id, "Backlog")
+
+def sanitize_manual_issue_description(description: Optional[str]) -> str:
+    """Wrapper using sanitize_markdown_payload for manual issue descriptions."""
+    return sanitize_markdown_payload(description or "")
+
+def cmd_create_manual_issues(
+    api_key: str,
+    title: Optional[str] = None,
+    description: Optional[str] = "",
+    description_file: Optional[str] = None,
+    batch_file: Optional[str] = None,
+    team_id: Optional[str] = None,
+    project_id: Optional[str] = None,
+    priority: Optional[int] = None
+) -> Dict[str, Any]:
+    """
+    Create one or multiple manual operational issues in Linear with Backlog state and 'manual' label.
+    Supports single issue CLI parameters and JSON batch file (--batch-file).
+    """
+    if not batch_file and not title:
+        err = {
+            "success": False,
+            "error": "Either --batch-file or --title must be provided.",
+            "issues": []
+        }
+        print(json.dumps(err, indent=2, ensure_ascii=False))
+        return err
+
+    issues_to_create: List[Dict[str, Any]] = []
+    effective_team_id = team_id
+    effective_project_id = project_id
+
+    if batch_file:
+        batch_path = Path(batch_file)
+        if not batch_path.is_file():
+            err = {
+                "success": False,
+                "error": f"Batch file not found: {batch_file}",
+                "issues": []
+            }
+            print(json.dumps(err, indent=2, ensure_ascii=False))
+            return err
+
+        try:
+            raw_content = batch_path.read_text(encoding="utf-8")
+            batch_data = json.loads(raw_content)
+        except Exception as e:
+            err = {
+                "success": False,
+                "error": f"Failed to parse batch JSON file '{batch_file}': {e}",
+                "issues": []
+            }
+            print(json.dumps(err, indent=2, ensure_ascii=False))
+            return err
+
+        if not isinstance(batch_data, dict) or "issues" not in batch_data or not isinstance(batch_data["issues"], list) or len(batch_data["issues"]) == 0:
+            err = {
+                "success": False,
+                "error": "Invalid batch schema: 'issues' array is required and must not be empty.",
+                "issues": []
+            }
+            print(json.dumps(err, indent=2, ensure_ascii=False))
+            return err
+
+        if not effective_team_id and batch_data.get("team_id"):
+            effective_team_id = batch_data.get("team_id")
+        if not effective_project_id and batch_data.get("project_id"):
+            effective_project_id = batch_data.get("project_id")
+
+        for idx, item in enumerate(batch_data["issues"]):
+            if not isinstance(item, dict) or not item.get("title") or not isinstance(item.get("title"), str) or not item.get("title").strip():
+                err = {
+                    "success": False,
+                    "error": f"Issue at index {idx} missing required non-empty 'title'.",
+                    "issues": []
+                }
+                print(json.dumps(err, indent=2, ensure_ascii=False))
+                return err
+            issues_to_create.append(item)
+    else:
+        issues_to_create.append({
+            "title": title.strip(),
+            "description": description or "",
+            "description_file": description_file,
+            "priority": priority
+        })
+
+    # Resolve team ID if missing
+    if not effective_team_id:
+        effective_team_id = resolve_default_team_id(api_key, effective_project_id)
+        if not effective_team_id:
+            err = {
+                "success": False,
+                "error": "Team ID could not be resolved from environment or Linear projects",
+                "issues": []
+            }
+            print(json.dumps(err, indent=2, ensure_ascii=False))
+            return err
+
+    # Resolve Backlog state ID
+    backlog_state_id = resolve_backlog_state_id(api_key, effective_team_id)
+    if not backlog_state_id:
+        err = {
+            "success": False,
+            "error": f"Failed to resolve 'Backlog' workflow state for team '{effective_team_id}'",
+            "issues": []
+        }
+        print(json.dumps(err, indent=2, ensure_ascii=False))
+        return err
+
+    # Resolve or create 'manual' label ID
+    manual_label_id = resolve_or_create_manual_label_id(api_key, effective_team_id)
+
+    created_issues: List[Dict[str, Any]] = []
+    for item in issues_to_create:
+        item_desc = item.get("description", "")
+        if item.get("description_file"):
+            desc_path = Path(item["description_file"])
+            if desc_path.is_file():
+                try:
+                    item_desc = desc_path.read_text(encoding="utf-8")
+                except Exception as e:
+                    err = {
+                        "success": False,
+                        "error": f"Failed to read description file '{item['description_file']}': {e}",
+                        "issues": created_issues
+                    }
+                    print(json.dumps(err, indent=2, ensure_ascii=False))
+                    return err
+            else:
+                err = {
+                    "success": False,
+                    "error": f"Description file not found: {item['description_file']}",
+                    "issues": created_issues
+                }
+                print(json.dumps(err, indent=2, ensure_ascii=False))
+                return err
+
+        sanitized_desc = sanitize_manual_issue_description(item_desc)
+
+        issue_input: Dict[str, Any] = {
+            "teamId": effective_team_id,
+            "title": item["title"].strip(),
+            "description": sanitized_desc,
+            "stateId": backlog_state_id,
+        }
+        if effective_project_id:
+            issue_input["projectId"] = effective_project_id
+        if manual_label_id:
+            issue_input["labelIds"] = [manual_label_id]
+        if item.get("priority") is not None:
+            issue_input["priority"] = item["priority"]
+
+        create_res = execute_graphql(api_key, CREATE_ISSUE_MUTATION, {"input": issue_input})
+        if not create_res.get("success") or not create_res.get("data", {}).get("issueCreate", {}).get("success"):
+            err = {
+                "success": False,
+                "error": f"Failed to create issue '{item['title']}': {create_res.get('error') or create_res.get('errors') or 'Linear mutation error'}",
+                "issues": created_issues
+            }
+            print(json.dumps(err, indent=2, ensure_ascii=False))
+            return err
+
+        created_data = create_res["data"]["issueCreate"]["issue"]
+        state_name = "Backlog"
+        if created_data.get("state") and created_data["state"].get("name"):
+            state_name = created_data["state"]["name"]
+
+        labels_list = []
+        if created_data.get("labels") and created_data["labels"].get("nodes"):
+            labels_list = [l["name"] for l in created_data["labels"]["nodes"]]
+        elif manual_label_id:
+            labels_list = ["manual"]
+
+        created_issues.append({
+            "id": created_data.get("id"),
+            "identifier": created_data.get("identifier"),
+            "title": created_data.get("title"),
+            "url": created_data.get("url"),
+            "state": state_name,
+            "labels": labels_list
+        })
+
+    out = {
+        "success": True,
+        "count": len(created_issues),
+        "issues": created_issues
+    }
+    print(json.dumps(out, indent=2, ensure_ascii=False))
+    return out
+
 def cmd_update_issue(
     api_key: str,
     issue_id: str,
@@ -1637,6 +1845,16 @@ def main():
     c_issue.add_argument("--state", help="State name (e.g., 'Backlog', 'Todo', 'In Progress')")
     c_issue.add_argument("--label", action="append", dest="labels", help="Labels to attach (e.g. Front, Back)")
 
+    # create-manual-issues
+    c_manual = subparsers.add_parser("create-manual-issues", help="Create one or multiple manual operational issues in Linear with Backlog state and 'manual' label")
+    c_manual.add_argument("--team-id", help="Linear Team ID (optional, dynamically resolved if omitted)")
+    c_manual.add_argument("--project-id", help="Linear Project ID (optional)")
+    c_manual.add_argument("--title", help="Issue title (for single issue creation)")
+    c_manual.add_argument("--description", default="", help="Issue description markdown")
+    c_manual.add_argument("--description-file", help="Path to UTF-8 file containing issue description markdown")
+    c_manual.add_argument("--batch-file", help="Path to JSON file containing list of manual issues to create")
+    c_manual.add_argument("--priority", type=int, choices=[0, 1, 2, 3, 4], help="Priority level (0: None, 1: Urgent, 2: High, 3: Medium, 4: Low)")
+
     # update-issue
     u_issue = subparsers.add_parser("update-issue", help="Update issue state, title, description, and/or add comment with idempotency protection")
     u_issue.add_argument("issue_id", help="Linear Issue ID or identifier")
@@ -1730,6 +1948,17 @@ def main():
             args.state,
             args.labels,
             description_file=args.description_file
+        )
+    elif args.command == "create-manual-issues":
+        cmd_create_manual_issues(
+            api_key,
+            title=args.title,
+            description=args.description,
+            description_file=args.description_file,
+            batch_file=args.batch_file,
+            team_id=args.team_id,
+            project_id=args.project_id,
+            priority=args.priority
         )
     elif args.command == "update-issue":
         cmd_update_issue(
