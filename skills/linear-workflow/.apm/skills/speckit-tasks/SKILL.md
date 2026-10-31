@@ -1,6 +1,6 @@
 ---
 name: "speckit-tasks"
-description: "Generate an actionable, dependency-ordered tasks.md from Spec Kit design artifacts, validate the plan, and advance the Linear card to Todo via the 3-Stage Consent Gate."
+description: "Generate an actionable, dependency-ordered tasks.md from Spec Kit design artifacts, validate the plan, and autonomously advance the Linear card to Todo."
 compatibility: "Requires spec-kit project structure with .specify/ directory and linear-workflow CLI"
 metadata:
   author: "github-spec-kit + fk_apm"
@@ -127,39 +127,30 @@ Check if `.specify/extensions.yml` exists in the project root.
     To execute: `/{command}`
     ```
 
-## Linear Workflow Validation & 3-Stage Consent Gate (Advancing Card to `Todo`)
+## Linear Workflow Validation & Autonomous Transition to `Todo`
 
 > **Cross-Platform Python Execution**: Run `python .specify/scripts/python/setup_tasks.py --json` (or `python3`).
 
-After generating `tasks.md` in `FEATURE_DIR`:
+> **NO CONSENT GATE**: `/speckit-tasks` operates with **100% autonomous execution**. Do **NOT** ask for interactive user confirmation (`ask_question` / `AskUserQuestion`) before committing `tasks.md` or advancing the Linear card. Developer review is centralized in the GitHub Draft PR.
 
-1. **Deterministic Plan & Tasks Validation**:
-   - Run `python skills/linear-workflow/scripts/linear_api.py validate-plan` (or `--issue-key "<issue-key>"`).
-   - Verify that `valid` is `true` (all 5 mandatory sections exist in `plan.md`, impacted files are valid, and `tasks.md` has actionable `- [ ] T001 ...` items).
+1. **Static Plan Validation Gate (`validate-plan`)**:
+   Run `python skills/linear-workflow/scripts/linear_api.py validate-plan <CARD-ID>` (or `--issue-key <CARD-ID>`).
+   Ensure that `valid: true`. If validation fails, fix missing sections or artifacts before proceeding.
 
-2. **3-Stage Consent Gate (`Backlog` / `Technical Analysis` ➔ `Todo`)**:
+2. **Autonomous Advancement (`Planned` ➔ `Todo`)**:
    When a Linear issue is associated with this feature:
-   - **Stage 1 — Pre-Render Gate (Zero Mutation on Linear)**:
-     - **NEVER** mutate Linear before user approval.
-     - Render directly in the chat message the **Executive Briefing** containing:
-       - **Título Revisado** (Conventional Commits format)
-       - **Descrição Atualizada** (refined card description incorporating `spec.md`, `plan.md`, and `tasks.md`)
-       - Summary of the **5 Mandatory Sections**: `1. Diagnóstico e Contexto`, `2. Arquitetura da Solução & Desenho Técnico`, `3. Checklist de Arquivos Impactados`, `4. Estratégia de Testes`, `5. Plano Gitflow` + total tasks count in `tasks.md`.
-   - **Stage 2 — Interactive Confirmation via Native Question Tool**:
-     - Invoke `ask_question` (Antigravity) or `AskUserQuestion` (Claude Code / Cursor / Copilot):
-       - `question`: Self-contained summary with the revised title, task count, impacted files, and target state (`Todo`), asking: *"A especificação, o plano técnico (`plan.md`) e a lista de tarefas (`tasks.md`) estão prontos. Deseja aprovar e avançar o card para Todo no Linear?"*
-       - `options`: `["(Recommended) Sim, aprovar", "Editar..."]`
-       - `is_multi_select`: `false`
-   - **Stage 3 — Atomic Execution on Linear (File-First UTF-8)**:
-     - Upon approval, write the updated description and the full 5-section Executive Briefing comment to UTF-8 temp files (`.tmp-todo-desc.md` and `.tmp-todo-comment.md`) and run:
-       ```bash
-       python skills/linear-workflow/scripts/linear_api.py update-issue "<issue-id>" \
-         --state "Todo" \
-         --title "<titulo-revisado>" \
-         --description-file ".tmp-todo-desc.md" \
-         --comment-file ".tmp-todo-comment.md"
-       ```
-     - Clean up the temporary files after the command succeeds.
+   - Commit `tasks.md`: `git add specs/<feature>/tasks.md && git commit -m "docs(tasks): implementation tasks decomposition for <CARD-ID>"` and push: `git push origin <branch>`.
+   - Write the updated description (com **Título Revisado** e **Descrição Atualizada**) and the full 5-section Executive Briefing comment to UTF-8 temp files (`.tmp-todo-desc.md` and `.tmp-todo-comment.md`) and run:
+     ```bash
+     python skills/linear-workflow/scripts/linear_api.py update-issue "<issue-id>" \
+       --state "Todo" \
+       --title "<titulo-revisado>" \
+       --description-file ".tmp-todo-desc.md" \
+       --comment-file ".tmp-todo-comment.md"
+     ```
+   - Clean up temporary files.
+   - **Executive Report in Chat**: Output the Executive Briefing with total tasks count, impacted files checklist, and clickable links to the Draft PR and Linear card.
+   - Next step: `Próximo passo: /speckit-implement <CARD-ID>`
 
 ## Completion Report
 

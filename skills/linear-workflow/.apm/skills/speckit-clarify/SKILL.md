@@ -54,12 +54,24 @@ You **MUST** consider the user input before proceeding (if not empty).
 
 ## Outline
 
-### Mandatory `<CARD-ID>` Validation & Ephemeral Worktree Isolation
-- The user **MUST** provide `<CARD-ID>` (e.g. `/speckit-clarify FAL-58`).
+### Mandatory `<CARD-ID>` Validation, Worktree Isolation & GitHub Remote Sync
+- The user **MUST** provide `<CARD-ID>` (e.g. `/speckit-clarify FAL-60`).
 - If `<CARD-ID>` is missing or invalid (`^[A-Z]{2,10}-\d+$`), **ABORT** immediately:
   `Uso obrigatório: /speckit-clarify <CARD-ID>`
-- If the current workspace branch is not on the card's branch (`feat/<CARD-ID>-*`), execute in an ephemeral Git worktree `.worktrees/<CARD-ID>` (`linear_api.create_ephemeral_worktree`).
-- After recording clarifications, commit to the Draft PR (`docs(clarify): update spec clarifications for <CARD-ID>`) and push.
+- If the current workspace branch is not on the card's branch (`feat/<CARD-ID>-*`), execute in an ephemeral Git worktree `.worktrees/<CARD-ID>`.
+- **GitHub Remote Sync (`git pull --rebase origin <branch>`)**:
+  Before analyzing the spec, fetch and rebase latest commits from the remote branch to incorporate developer edits or review suggestions made directly on GitHub:
+  ```bash
+  git fetch origin "<branch>"
+  git pull --rebase origin "<branch>"
+  ```
+- Scan `spec.md` and checklists for ambiguities or resolve developer clarifications.
+- After recording clarifications, commit to the Draft PR:
+  ```bash
+  git commit -m "docs(clarify): resolve ambiguities and sync GitHub review for <CARD-ID>"
+  git push origin "<branch>"
+  ```
+- **NO CONSENT GATE**: Operates autonomously without in-chat question prompts. Output an Executive Report with clickable links to the Draft PR and Linear issue.
 - Next step: `Próximo passo: /speckit-plan <CARD-ID>`
 
 Goal: Detect and reduce ambiguity or missing decision points in the active feature specification and record the clarifications directly in the spec file.

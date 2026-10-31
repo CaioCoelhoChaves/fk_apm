@@ -1538,6 +1538,7 @@ def cmd_update_issue(
                 output["comment"] = c_res
 
     print(json.dumps(output, indent=2, ensure_ascii=False))
+    return output
 
 
 def cmd_sync_boards(api_key: str, team_id: Optional[str] = None, dry_run: bool = False):
@@ -1858,7 +1859,7 @@ def main():
     u_issue = subparsers.add_parser("update-issue", help="Update issue state, title, description, and/or add comment with idempotency protection")
     u_issue.add_argument("issue_id", help="Linear Issue ID or identifier")
     u_issue.add_argument("--team-id", help="Linear Team ID (optional, automatically resolved from issue if omitted)")
-    u_issue.add_argument("--state", help="New state name (e.g., 'Technical Analysis', 'Todo', 'In Progress', 'In Review', 'Done')")
+    u_issue.add_argument("--state", help="New state name (e.g., 'Planned', 'Todo', 'In Progress', 'In Review')")
     u_issue.add_argument("--title", help="New issue title")
     u_issue.add_argument("--description", help="New issue description markdown")
     u_issue.add_argument("--description-file", help="Path to UTF-8 file containing new description markdown")

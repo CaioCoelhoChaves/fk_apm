@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Autonomia total no ciclo de vida do Spec Kit (/speckit-specify, /speckit-plan, /speckit-tasks, /speckit-taskstoissues) sem bloqueios de Consent Gate no chat (FAL-60)
+- Sincronização remota via git pull --rebase no /speckit-clarify para absorver alterações e revisões feitas diretamente no GitHub (FAL-60)
+- Elevação da Constituição do repositório para a versão 1.2.0 ratificando esteira contínua e salvaguarda manual estrita de Done (FAL-60)
 - Adicionar comando /fk-new-manual-issue e subcomando CLI create-manual-issues para criação rápida e isolada de cards operacionais no Linear em Backlog com tag manual e salvaguardas estritas de zero mutações Git (FAL-59)
 - Modernizar linear-workflow com ciclo de vida de Living Specs acoplado a GitHub Draft PRs abertos na etapa de especificação (/speckit-specify) e vinculados ao card no Linear (FAL-58)
 - Implementar máquina de estados canônica de 6 estágios (Backlog ➔ Planned ➔ Todo ➔ In Progress ➔ In Review ➔ Done + Canceled) com avanço para Planned no /speckit-plan e para Todo no /speckit-tasks (FAL-58)
@@ -23,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Integrate official `github/spec-kit` package (`.specify/` runtime, `specs/<feature>/` pipeline, and 10 `/speckit-*` skills coupled to Linear state transitions), `bootstrap-specify`, `validate-plan`, Executive Briefing Pre-Render Gate, and `sanitize_markdown_payload` into `linear-workflow` and `bundles/default`, replacing legacy `/fk-*` lifecycle commands (FAL-53)
 
 ### Changed
+- Centralizar governança e inspeção técnica no GitHub Draft PR por meio de Living Specs desacoplados de prompts interativos (FAL-60)
 - Priorizar leitura da especificacao tecnica completa persistida no /fk-develop garantindo transferencia de contexto sem degradacao (FAL-34)
 - Tornar /fk-develop autônomo sem Consent Gate, iniciando imediatamente em In Progress e avançando para In Review ao abrir o PR (FAL-29)
 - Padronizar criação de cards em Backlog por padrão no /fk-new-issue e linear-workflow, permitindo Todo apenas como exceção explícita (FAL-33)
@@ -30,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Deprecated
 
 ### Removed
+- Eliminar prompts síncronos de confirmação (ask_question / AskUserQuestion) entre as fases de especificação e planejamento (FAL-60)
 - Expurgar completamente referências e menções legadas aos comandos /fk-* em prompts, instruções, documentação e templates (FAL-58)
 - Remover aliases curtos (fk-dev, fk-ta e fk-issue) das sub-skills e documentação do linear-workflow (FAL-26)
 

@@ -8,10 +8,10 @@ This reference details the official 6-stage lifecycle state progression, rules f
 
 ```mermaid
 stateDiagram-v2
-    [*] --> Backlog: /speckit-specify (3-Stage Consent Gate + Draft PR Criado)
-    Backlog --> Backlog: /speckit-clarify <CARD-ID> (Sync spec.md no Draft PR)
-    Backlog --> Planned: /speckit-plan <CARD-ID> (3-Stage Consent Gate)
-    Planned --> Todo: /speckit-tasks <CARD-ID> + validate-plan (3-Stage Consent Gate)
+    [*] --> Backlog: /speckit-specify (Autônomo + Draft PR Criado)
+    Backlog --> Backlog: /speckit-clarify <CARD-ID> (Sync remoto via git pull rebase)
+    Backlog --> Planned: /speckit-plan <CARD-ID> (Autônomo)
+    Planned --> Todo: /speckit-tasks <CARD-ID> + validate-plan (Autônomo)
     Todo --> In_Progress: /speckit-implement <CARD-ID> (Autônomo)
     In_Progress --> In_Review: gh pr ready + PR aberto (Autônomo)
     In_Review --> In_Progress: /speckit-converge <CARD-ID> (Autônomo - PR Review Fixes)
@@ -25,9 +25,9 @@ stateDiagram-v2
 
 | Posição | Nome do Estado | Tipo Linear (`type`) | Cor Hex | Gatilho / Comando | Modo de Execução |
 | :---: | :--- | :--- | :--- | :--- | :--- |
-| **0.0** | `Backlog` | `backlog` | `#BEC2C8` | `/speckit-specify <descrição>` | **3-Stage Consent Gate** (Cria branch Gitflow & Draft PR) |
-| **1.0** | `Planned` | `unstarted` | `#F2C94C` | `/speckit-plan <CARD-ID>` | **3-Stage Consent Gate** (Pesquisa, arquitetura & data model) |
-| **2.0** | `Todo` | `unstarted` | `#4EA7FC` | `/speckit-tasks <CARD-ID>` | **3-Stage Consent Gate** (Checklist de tasks & `validate-plan`) |
+| **0.0** | `Backlog` | `backlog` | `#BEC2C8` | `/speckit-specify <descrição>` | **Autônomo** (Cria branch Gitflow & Draft PR) |
+| **1.0** | `Planned` | `unstarted` | `#F2C94C` | `/speckit-plan <CARD-ID>` | **Autônomo** (Pesquisa, arquitetura & data model) |
+| **2.0** | `Todo` | `unstarted` | `#4EA7FC` | `/speckit-tasks <CARD-ID>` | **Autônomo** (Checklist de tasks & `validate-plan`) |
 | **3.0** | `In Progress` | `started` | `#F2994A` | `/speckit-implement <CARD-ID>`, `/speckit-converge <CARD-ID>` | **Autônomo (Sem Consent Gate)** |
 | **4.0** | `In Review` | `started` | `#BB87FC` | Ao concluir tasks (`gh pr ready`) ou após fixes no `/speckit-converge` | **Autônomo (Sem Consent Gate)** |
 | **5.0** | `Done` | `completed` | `#56D364` | Merge manual do Pull Request no GitHub | **Exclusivamente Manual pelo Desenvolvedor** |

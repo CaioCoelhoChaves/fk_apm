@@ -1,6 +1,6 @@
 ---
 name: "speckit-specify"
-description: "Create or update a Spec Kit feature specification (specs/<feature>/spec.md) and create/link atomic Linear card(s) in Backlog using the 3-Stage Consent Gate. Living Specs & GitHub Draft PR Lifecycle."
+description: "Create or update a Spec Kit feature specification (specs/<feature>/spec.md) and autonomously create/link atomic Linear card(s) in Backlog with Living Spec GitHub Draft PR. Living Specs & GitHub Draft PR Lifecycle."
 compatibility: "Requires spec-kit project structure with .specify/ directory and linear-workflow CLI"
 metadata:
   author: "github-spec-kit + fk_apm"
@@ -267,50 +267,34 @@ Check if `.specify/extensions.yml` exists in the project root.
     To execute: `/{command}`
     ```
 
-## Linear Workflow Integration & 3-Stage Consent Gate (Card Creation in `Backlog`)
+## Linear Workflow Integration & Autonomous Living Spec Draft PR (Card Creation in `Backlog`)
 
 > **Bootstrap Guarantee**: If `.specify/` does not exist in the repository root, run `python skills/linear-workflow/scripts/linear_api.py bootstrap-specify` (or from `.agents/skills/linear-workflow/scripts/linear_api.py`) before running `.specify/scripts/python/create_new_feature.py`.
 
-When `/speckit-specify` is used to specify a new feature or decompose requirements into Linear card(s) (replacing `/fk-new-issue`), you **MUST** execute the **3-Stage Consent Gate** after generating `SPEC_FILE` (`specs/<feature>/spec.md`) and `checklists/requirements.md`:
+> **NO CONSENT GATE**: `/speckit-specify` operates with **100% autonomous execution**. Do **NOT** ask for interactive user confirmation (`ask_question` / `AskUserQuestion`) before creating the branch, committing artifacts, opening the Draft PR, or creating the Linear card. Developer inspection and review occur centrally and asynchronously on GitHub via the Living Spec Draft PR.
 
-### Stage 1 — Pre-Render Gate (Zero Mutation on Linear)
-- **NEVER** create or mutate cards in Linear during Stage 1.
-- Identify the target Linear project (`linear_api.py find-project "<repo-or-subproject>"`) and check existing issues (`linear_api.py search-issues "<term>"`) to avoid duplicates.
-- Determine the appropriate label (`Front`, `Back`, `Feature` for full-stack cross-cutting work, or no tag for docs/DevOps/infra) and initial state (**`Backlog`** by default, unless the user explicitly requested `Technical Analysis` or `Todo`).
-- **Pre-Render in Chat**: Output a visible Markdown table and specification summary directly in the chat message **before** calling any question tool:
-
-| # | Título Proposto (Conventional Commits) | Coluna Inicial | Label | Projeto Linear | Resumo & Critérios de Aceite (`spec.md`) |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| 1 | `feat(<escopo>): <título>` | `Backlog` | `<Front/Back/Feature/Sem tag>` | `<Projeto>` | `<Resumo dos User Scenarios & FRs>` |
-
-### Stage 2 — Interactive Confirmation via Native Question Tool
-- Immediately invoke the harness question tool (`ask_question` in Antigravity, `AskUserQuestion` in Claude Code / Cursor / Copilot):
-  - `question`: Self-contained summary listing the `SPEC_FILE` path, proposed card title(s), target Linear column (`Backlog`), and label(s), asking: *"Deseja criar este(s) card(s) no Linear vinculados à especificação?"*
-  - `options`: `["(Recommended) Sim, aprovar", "Editar..."]`
-  - `is_multi_select`: `false`
-- Wait for the user's response. If the user selects `"Editar..."`, apply their adjustments to `spec.md` and repeat Stage 1 & Stage 2.
-
-### Stage 3 — Atomic Execution on Linear & Living Spec Draft PR (File-First UTF-8)
-- Only after explicit approval in Stage 2:
-  1. Create the Gitflow branch `<type>/<CARD-ID>-<slug>` (e.g. `feat/FAL-58-modernizar-linear-workflow-draft-prs`).
-  2. Commit the initial specification artifact: `git add specs/<feature>/spec.md checklists/requirements.md && git commit -m "docs(spec): specify <CARD-ID> - <slug>"` and push: `git push -u origin <branch>`.
-  3. Open a Pull Request on GitHub in Draft mode via `gh pr create --draft`:
-     ```bash
-     gh pr create --draft --base develop --head "<branch>" --title "<conventional-title>" --body-file ".tmp-pr-body.md"
-     ```
-  4. Write the Linear card description Markdown (referencing `specs/<feature>/spec.md`, user stories, functional requirements, acceptance scenarios, and the Draft PR link `* **Pull Request (Draft)**: [#<num> — <title>](<url>)`) to a temporary UTF-8 file (`.tmp-linear-desc.md`).
-  5. **NEVER** pass multi-line Markdown inline via `--description "..."`. Always use `--description-file`:
-     ```bash
-     python skills/linear-workflow/scripts/linear_api.py create-issue \
-       --team-id "<team-id>" \
-       --project-id "<project-id>" \
-       --title "<conventional-title>" \
-       --state "Backlog" \
-       --label "<label>" \
-       --description-file ".tmp-linear-desc.md"
-     ```
-  6. Clean up temporary files and orient the developer with the next steps:
-     `Próximo passo: /speckit-clarify <CARD-ID> ou /speckit-plan <CARD-ID>`
+### Autonomous Execution Steps:
+1. Identify the target Linear project (`linear_api.py find-project "<repo-or-subproject>"`) and check existing issues (`linear_api.py search-issues "<term>"`) to avoid duplicates.
+2. Determine the appropriate label (`Front`, `Back`, `Feature` for full-stack cross-cutting work, or no tag for docs/DevOps/infra) and initial state (**`Backlog`**).
+3. Create the Gitflow branch `<type>/<CARD-ID>-<slug>` (e.g. `feat/FAL-58-modernizar-linear-workflow-draft-prs`).
+4. Commit the initial specification artifact: `git add specs/<feature>/spec.md checklists/requirements.md && git commit -m "docs(spec): specify <CARD-ID> - <slug>"` and push: `git push -u origin <branch>`.
+5. Open a Pull Request on GitHub in Draft mode via `gh pr create --draft`:
+   ```bash
+   gh pr create --draft --base develop --head "<branch>" --title "<conventional-title>" --body-file ".tmp-pr-body.md"
+   ```
+6. Write the Linear card description Markdown (referencing `specs/<feature>/spec.md`, user stories, functional requirements, acceptance scenarios, and the Draft PR link `* **Pull Request (Draft)**: [#<num> — <title>](<url>)`) to a temporary UTF-8 file (`.tmp-linear-desc.md`).
+7. **NEVER** pass multi-line Markdown inline via `--description "..."`. Always use `--description-file`:
+   ```bash
+   python skills/linear-workflow/scripts/linear_api.py create-issue \
+     --team-id "<team-id>" \
+     --project-id "<project-id>" \
+     --title "<conventional-title>" \
+     --state "Backlog" \
+     --label "<label>" \
+     --description-file ".tmp-linear-desc.md"
+   ```
+8. Clean up temporary files.
+9. **Executive Report in Chat**: Output a visible Markdown summary with clickable links to the Draft PR, Linear card, and next steps (`Próximo passo: /speckit-clarify <CARD-ID> ou /speckit-plan <CARD-ID>`).
 
 ## Completion Report
 
