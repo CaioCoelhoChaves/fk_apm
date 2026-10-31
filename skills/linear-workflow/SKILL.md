@@ -1,6 +1,6 @@
 ---
 name: linear-workflow
-description: Synchronize Spec-Driven Development (official github/spec-kit package) and planning tasks with Linear issue tracking across any project and harness (Google Antigravity, Claude Code, Cursor, Copilot, OpenCode). Provides the 10 official /speckit-* lifecycle commands (/speckit-constitution, /speckit-specify, /speckit-clarify, /speckit-plan, /speckit-tasks, /speckit-analyze, /speckit-checklist, /speckit-taskstoissues, /speckit-implement, /speckit-converge) coupled with Linear state transitions (Backlog ➔ Planned ➔ Todo ➔ In Progress ➔ In Review ➔ Done), Living Specs with GitHub Draft PRs opened at spec inception, board synchronization and provisioning (sync-boards, setup-board), isolated execution via ephemeral Git worktrees (.worktrees/<CARD-ID>) requiring mandatory <CARD-ID> arguments, the mandatory 3-stage Consent Gate with Pre-Render Gate for specification/planning (/speckit-specify, /speckit-plan, /speckit-tasks, /speckit-taskstoissues), autonomous implementation (/speckit-implement) and PR review convergence (/speckit-converge), atomic state advancement (advancing to In Review upon PR ready promotion), comment idempotency (10-minute deduplication window), deterministic Markdown sanitization, and manual-only developer transitions for 'Done'.
+description: Synchronize Spec-Driven Development (official github/spec-kit package) and planning tasks with Linear issue tracking across any project and harness (Google Antigravity, Claude Code, Cursor, Copilot, OpenCode). Provides the 10 official /speckit-* lifecycle commands (/speckit-constitution, /speckit-specify, /speckit-clarify, /speckit-plan, /speckit-tasks, /speckit-analyze, /speckit-checklist, /speckit-taskstoissues, /speckit-implement, /speckit-converge) coupled with Linear state transitions (Backlog ➔ Planned ➔ Todo ➔ In Progress ➔ In Review ➔ Done), Living Specs with GitHub Draft PRs opened at spec inception, board synchronization and provisioning (sync-boards, setup-board), isolated execution via ephemeral Git worktrees (.worktrees/<CARD-ID>) requiring mandatory <CARD-ID> arguments, autonomous continuous lifecycle pipeline without in-chat consent gates, centralized GitHub PR review with Living Specs, autonomous implementation (/speckit-implement) and PR review convergence (/speckit-converge), atomic state advancement (advancing to In Review upon PR ready promotion), comment idempotency (10-minute deduplication window), deterministic Markdown sanitization, and manual-only developer transitions for 'Done'.
 allowed-tools: Read,Glob,Grep,Bash
 ---
 
@@ -28,10 +28,10 @@ A standardized workflow for AI coding agents that integrates the official [`gith
 3. **Canonical 6-Stage Lifecycle State Machine & Responsabilidades de Transição**:
    - Enforce the official 6-stage progression:
      `Backlog` (pos 0.0) ➔ `Planned` (pos 1.0) ➔ `Todo` (pos 2.0) ➔ `In Progress` (pos 3.0) ➔ `In Review` (pos 4.0) ➔ `Done` (pos 5.0) (plus `Canceled` at pos 6.0).
-   - **Transições do Agente (Anti-Estagnação)**:
-     - Especificação e Criação de Cards (`/speckit-specify`, `/speckit-taskstoissues`): Cria branch Gitflow, abre Draft PR via `gh pr create --draft`, vincula URL ao card e coloca em **`Backlog`** (após Consent Gate em 3 etapas).
-     - Conclusão do Plano de Arquitetura (`/speckit-plan <CARD-ID>`): Gera `plan.md` (com as 5 seções obrigatórias), `research.md`, `data-model.md`, comita no PR Draft e avança de `Backlog` ➔ **`Planned`** com **Título Revisado** e **Descrição Atualizada** usando `--title`, `--description-file` e `--comment-file` (após Consent Gate em 3 etapas).
-     - Decomposição de Tarefas e Prontidão (`/speckit-tasks <CARD-ID>`): Gera `tasks.md`, valida com `validate-plan`, comita no PR Draft e avança de `Planned` ➔ **`Todo`** com **Título Revisado** e **Descrição Atualizada** usando `--title`, `--description-file` e `--comment-file` (após Consent Gate em 3 etapas).
+   - **Transições Autônomas do Agente (Anti-Estagnação & Zero In-Chat Consent Gates)**:
+     - Especificação e Criação de Cards (`/speckit-specify`, `/speckit-taskstoissues`): Cria branch Gitflow, abre Draft PR via `gh pr create --draft`, vincula URL ao card e coloca em **`Backlog`** de forma 100% autônoma.
+     - Conclusão do Plano de Arquitetura (`/speckit-plan <CARD-ID>`): Gera `plan.md` (com as 5 seções obrigatórias), `research.md`, `data-model.md`, comita no PR Draft e avança de `Backlog` ➔ **`Planned`** com **Título Revisado** e **Descrição Atualizada** usando `--title`, `--description-file` e `--comment-file` de forma 100% autônoma.
+     - Decomposição de Tarefas e Prontidão (`/speckit-tasks <CARD-ID>`): Gera `tasks.md`, valida com `validate-plan`, comita no PR Draft e avança de `Planned` ➔ **`Todo`** com **Título Revisado** e **Descrição Atualizada** usando `--title`, `--description-file` e `--comment-file` de forma 100% autônoma.
      - Início de Implementação (`/speckit-implement <CARD-ID>`): Agente move imediatamente de `Todo` ➔ **`In Progress`** (sem Consent Gate) e executa as tasks.
      - Conclusão de Implementação (`/speckit-implement <CARD-ID>`): Promove o PR de Draft para pronto via `gh pr ready <num>` e move obrigatoriamente de `In Progress` ➔ **`In Review`**.
      - Convergência e Correções de Code Review (`/speckit-converge <CARD-ID>`): Agente move de `In Review` ➔ **`In Progress`** (início da convergência/fix, sem Consent Gate), aplica os fixes na branch, comenta no PR e retorna para **`In Review`**.
@@ -43,12 +43,12 @@ A standardized workflow for AI coding agents that integrates the official [`gith
    - Todos os comandos pós-especificação (`/speckit-clarify`, `/speckit-plan`, `/speckit-tasks`, `/speckit-implement`, `/speckit-converge`) exigem o identificador `<CARD-ID>` obrigatório no formato `^[A-Z]{2,10}-\d+$`.
    - Se o workspace atual não estiver na branch do card, instancia um worktree efêmero em `.worktrees/<CARD-ID>`, executa os artefatos/código, faz commit e push para o remote e remove o worktree ao concluir.
 
-5. **Mandatory 3-Stage Protocol (*Consent Gate*) for Specification/Planning & Autonomous Execution Exception**:
-   - Para `/speckit-specify`, `/speckit-plan`, `/speckit-tasks`, `/speckit-taskstoissues`:
-     - **Stage 1 (Initial Presentation, Pre-Render Gate & Questions)**: The agent prepares the spec/plan/tasks in workspace and chat. Zero mutation permitted in this stage. **Pre-Render Gate (Proibição de Consent Gate Cego)**: It is **strictly forbidden** to invoke `ask_question` / `AskUserQuestion` without first rendering the complete proposal (full task/card decomposition table in `/speckit-specify` / `/speckit-taskstoissues`, or the **Título Revisado**, **Descrição Atualizada**, and all **5 mandatory sections** Executive Briefing in `/speckit-plan` / `/speckit-tasks`) in the visible text of the chat message.
-     - **Stage 2 (Consent Gate Interativo)**: Aciona `ask_question` / `AskUserQuestion` com resumo conciso e opções `["(Recommended) Sim, aprovar", "Editar..."]`.
-     - **Stage 3 (Execução Atômica via Arquivos UTF-8)**: Aplica mutações no Linear usando arquivos UTF-8 sanitizados com `--title`, `--description-file`, e `--comment-file`.
-   - ⚠️ **Execução Autônoma para `/speckit-implement` e `/speckit-converge`**: Operam **100% autônomos sem Consent Gate**.
+5. **Continuous Autonomous Pipeline & Centralized GitHub Review (Zero In-Chat Consent Gates)**:
+   - Toda a esteira de especificação, planejamento e decomposição (`/speckit-specify`, `/speckit-plan`, `/speckit-tasks`, `/speckit-taskstoissues`) opera com **100% de autonomia**:
+     - **Zero In-Chat Consent Gates**: O agente NUNCA invoca ferramentas de perguntas síncronas de consentimento (`ask_question`, `AskUserQuestion`) entre as fases técnicas.
+     - **Living Specs & Centralized GitHub Review**: A revisão, governança e alinhamento do desenvolvedor ocorrem diretamente no GitHub através do Draft Pull Request criado no início da especificação. O desenvolvedor inspeciona os diffs de Markdown, comenta no PR ou edita diretamente na branch.
+     - **Executive Briefing & Links no Chat**: Ao término de cada comando, o agente renderiza no chat um relatório executivo estruturado com links clicáveis diretos para o Pull Request no GitHub, o card no Linear e orientações claras para o próximo comando.
+     - **Mutações Atômicas via Arquivos UTF-8**: Todas as alterações de título, descrição ou comentários no Linear utilizam arquivos temporários UTF-8 (`--title`, `--description-file`, `--comment-file`), prevenindo problemas de escape de shell.
 
 6. **Parent Project, Subproject & Tooling Component Labeling**:
    - Detect when a repository represents a subproject of a unified Linear project or a standalone tooling/skills package:
@@ -74,12 +74,12 @@ A standardized workflow for AI coding agents that integrates the official [`gith
 | Comando Oficial | Argumentos | Artefatos Spec Kit | Transição Linear | Modo de Execução |
 | :--- | :--- | :--- | :--- | :--- |
 | **`/speckit-constitution`** | — | `.specify/memory/constitution.md` | — | Interativo / Governança |
-| **`/speckit-specify`** | `<descrição>` | `specs/<feature>/spec.md` | Cria card em **`Backlog`** + Draft PR | **3-Stage Consent Gate** |
-| **`/speckit-clarify`** | `<CARD-ID>` | `specs/<feature>/spec.md` | Sync de spec no Draft PR | Perguntas interativas |
-| **`/speckit-plan`** | `<CARD-ID>` | `plan.md`, `research.md`, `data-model.md` | `Backlog` ➔ **`Planned`** | **3-Stage Consent Gate** |
-| **`/speckit-tasks`** | `<CARD-ID>` | `specs/<feature>/tasks.md` | `Planned` ➔ **`Todo`** | **3-Stage Consent Gate** |
+| **`/speckit-specify`** | `<descrição>` | `specs/<feature>/spec.md` | Cria card em **`Backlog`** + Draft PR | **Autônomo (Cria Draft PR e card)** |
+| **`/speckit-clarify`** | `<CARD-ID>` | `specs/<feature>/spec.md` | Sync de spec no Draft PR | **Autônomo (Sync git pull rebase)** |
+| **`/speckit-plan`** | `<CARD-ID>` | `plan.md`, `research.md`, `data-model.md` | `Backlog` ➔ **`Planned`** | **Autônomo (Avança para Planned)** |
+| **`/speckit-tasks`** | `<CARD-ID>` | `specs/<feature>/tasks.md` | `Planned` ➔ **`Todo`** | **Autônomo (Avança para Todo)** |
 | **`/speckit-analyze`** | `[<CARD-ID>]` | Relatório de consistência | — | Auditoria estática read-only |
 | **`/speckit-checklist`** | `[<CARD-ID>]` | `checklists/<domain>.md` | — | Checklist de qualidade de requisitos |
-| **`/speckit-taskstoissues`**| `[<CARD-ID>]` | `tasks.md` ➔ Sub-cards | Cria sub-cards em **`Backlog`** | **3-Stage Consent Gate** |
+| **`/speckit-taskstoissues`**| `[<CARD-ID>]` | `tasks.md` ➔ Sub-cards | Cria sub-cards em **`Backlog`** | **Autônomo (Cria sub-cards)** |
 | **`/speckit-implement`** | `<CARD-ID>` | Executa `tasks.md` (`[X]`) | `Todo` ➔ **`In Progress`** ➔ **`In Review`** | **Autônomo (SEM Consent Gate)** |
 | **`/speckit-converge`** | `<CARD-ID>` | Fixes de review em `tasks.md` | `In Review` ➔ **`In Progress`** ➔ **`In Review`** | **Autônomo (SEM Consent Gate)** |

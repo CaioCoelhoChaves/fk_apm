@@ -20,8 +20,8 @@ description: "Task list for feature implementation: Fluxo Contínuo e Autônomo 
 
 **Purpose**: Verification of testing environment and baseline API tooling
 
-- [ ] T001 Setup verification environment and baseline test suite in skills/linear-workflow/tests/test_linear_api.py
-- [ ] T002 [P] Verify GitHub CLI (`gh`) and Linear API connectivity in skills/linear-workflow/scripts/linear_api.py
+- [X] T001 Setup verification environment and baseline test suite in skills/linear-workflow/tests/test_linear_api.py
+- [X] T002 [P] Verify GitHub CLI (`gh`) and Linear API connectivity in skills/linear-workflow/scripts/linear_api.py
 
 ---
 
@@ -31,9 +31,9 @@ description: "Task list for feature implementation: Fluxo Contínuo e Autônomo 
 
 **⚠️ CRITICAL**: Foundational state machine and payload utilities must be ready before modifying skill instructions
 
-- [ ] T003 Update core Linear update helpers to support continuous transition without prompt blocking in skills/linear-workflow/scripts/linear_api.py
-- [ ] T004 [P] Verify UTF-8 payload sanitization and temporary file helpers in skills/linear-workflow/scripts/linear_api.py
-- [ ] T005 [P] Add unit test cases for automated state advancement and non-interactive transitions in skills/linear-workflow/tests/test_linear_api.py
+- [X] T003 Update core Linear update helpers to support continuous transition without prompt blocking in skills/linear-workflow/scripts/linear_api.py
+- [X] T004 [P] Verify UTF-8 payload sanitization and temporary file helpers in skills/linear-workflow/scripts/linear_api.py
+- [X] T005 [P] Add unit test cases for automated state advancement and non-interactive transitions in skills/linear-workflow/tests/test_linear_api.py
 
 **Checkpoint**: Foundational helpers verified — User stories can now proceed
 
@@ -47,15 +47,15 @@ description: "Task list for feature implementation: Fluxo Contínuo e Autônomo 
 
 ### Implementation for User Story 1
 
-- [ ] T006 [P] [US1] Remove Consent Gate and configure autonomous Living Spec Draft PR creation in skills/linear-workflow/.apm/prompts/speckit-specify.prompt.md
-- [ ] T007 [P] [US1] Remove Consent Gate and configure autonomous Backlog card creation in skills/linear-workflow/.apm/skills/speckit-specify/SKILL.md
-- [ ] T008 [P] [US1] Remove Consent Gate and configure autonomous Planned transition in skills/linear-workflow/.apm/prompts/speckit-plan.prompt.md
-- [ ] T009 [P] [US1] Remove Consent Gate and configure autonomous technical comment upload in skills/linear-workflow/.apm/skills/speckit-plan/SKILL.md
-- [ ] T010 [P] [US1] Remove Consent Gate and configure autonomous Todo transition in skills/linear-workflow/.apm/prompts/speckit-tasks.prompt.md
-- [ ] T011 [P] [US1] Remove Consent Gate and configure autonomous plan validation in skills/linear-workflow/.apm/skills/speckit-tasks/SKILL.md
-- [ ] T012 [P] [US1] Remove Consent Gate and configure autonomous issue creation batching in skills/linear-workflow/.apm/prompts/speckit-taskstoissues.prompt.md
-- [ ] T013 [P] [US1] Remove Consent Gate and configure autonomous issue batching in skills/linear-workflow/.apm/skills/speckit-taskstoissues/SKILL.md
-- [ ] T014 [US1] Update lifecycle instruction guide removing interactive confirmation requirements in skills/linear-workflow/.apm/instructions/linear-lifecycle-commands.instructions.md
+- [X] T006 [P] [US1] Remove Consent Gate and configure autonomous Living Spec Draft PR creation in skills/linear-workflow/.apm/prompts/speckit-specify.prompt.md
+- [X] T007 [P] [US1] Remove Consent Gate and configure autonomous Backlog card creation in skills/linear-workflow/.apm/skills/speckit-specify/SKILL.md
+- [X] T008 [P] [US1] Remove Consent Gate and configure autonomous Planned transition in skills/linear-workflow/.apm/prompts/speckit-plan.prompt.md
+- [X] T009 [P] [US1] Remove Consent Gate and configure autonomous technical comment upload in skills/linear-workflow/.apm/skills/speckit-plan/SKILL.md
+- [X] T010 [P] [US1] Remove Consent Gate and configure autonomous Todo transition in skills/linear-workflow/.apm/prompts/speckit-tasks.prompt.md
+- [X] T011 [P] [US1] Remove Consent Gate and configure autonomous plan validation in skills/linear-workflow/.apm/skills/speckit-tasks/SKILL.md
+- [X] T012 [P] [US1] Remove Consent Gate and configure autonomous issue creation batching in skills/linear-workflow/.apm/prompts/speckit-taskstoissues.prompt.md
+- [X] T013 [P] [US1] Remove Consent Gate and configure autonomous issue batching in skills/linear-workflow/.apm/skills/speckit-taskstoissues/SKILL.md
+- [X] T014 [US1] Update lifecycle instruction guide removing interactive confirmation requirements in skills/linear-workflow/.apm/instructions/linear-lifecycle-commands.instructions.md
 
 **Checkpoint**: At this point, User Story 1 is fully functional — all lifecycle phases execute autonomously without interactive question gates.
 
@@ -69,9 +69,9 @@ description: "Task list for feature implementation: Fluxo Contínuo e Autônomo 
 
 ### Implementation for User Story 2
 
-- [ ] T015 [P] [US2] Standardize Executive Report format with clickable Draft PR links in skills/linear-workflow/SKILL.md
-- [ ] T016 [P] [US2] Document GitHub PR review guidelines and living specs lifecycle in skills/linear-workflow/references/multi-harness-commands.md
-- [ ] T017 [P] [US2] Update state machine documentation asserting autonomous transitions and manual Done safeguard in skills/linear-workflow/references/states-and-labels.md
+- [X] T015 [P] [US2] Standardize Executive Report format with clickable Draft PR links in skills/linear-workflow/SKILL.md
+- [X] T016 [P] [US2] Document GitHub PR review guidelines and living specs lifecycle in skills/linear-workflow/references/multi-harness-commands.md
+- [X] T017 [P] [US2] Update state machine documentation asserting autonomous transitions and manual Done safeguard in skills/linear-workflow/references/states-and-labels.md
 
 **Checkpoint**: User Story 2 complete — Developer review is centralized in GitHub with structured executive reporting.
 
@@ -85,9 +85,9 @@ description: "Task list for feature implementation: Fluxo Contínuo e Autônomo 
 
 ### Implementation for User Story 3
 
-- [ ] T018 [P] [US3] Add git pull rebase synchronization step before spec clarification in skills/linear-workflow/.apm/prompts/speckit-clarify.prompt.md
-- [ ] T019 [P] [US3] Configure autonomous ambiguity resolution and push to remote Draft PR in skills/linear-workflow/.apm/skills/speckit-clarify/SKILL.md
-- [ ] T020 [US3] Add unit tests for git pull rebase clarify synchronization flow in skills/linear-workflow/tests/test_linear_api.py
+- [X] T018 [P] [US3] Add git pull rebase synchronization step before spec clarification in skills/linear-workflow/.apm/prompts/speckit-clarify.prompt.md
+- [X] T019 [P] [US3] Configure autonomous ambiguity resolution and push to remote Draft PR in skills/linear-workflow/.apm/skills/speckit-clarify/SKILL.md
+- [X] T020 [US3] Add unit tests for git pull rebase clarify synchronization flow in skills/linear-workflow/tests/test_linear_api.py
 
 **Checkpoint**: User Story 3 complete — `/speckit-clarify` seamlessly integrates remote GitHub modifications.
 
@@ -101,11 +101,11 @@ description: "Task list for feature implementation: Fluxo Contínuo e Autônomo 
 
 ### Implementation for User Story 4
 
-- [ ] T021 [P] [US4] Elevate constitution to v1.2.0 ratifying continuous autonomous pipeline and manual Done in .specify/memory/constitution.md
-- [ ] T022 [P] [US4] Synchronize constitution template asset to v1.2.0 in skills/linear-workflow/assets/.specify/memory/constitution.md
-- [ ] T023 [P] [US4] Update skill description and prompt declarations in apm.yml
-- [ ] T024 [P] [US4] Update documentation tables and skill references in README.md
-- [ ] T025 [P] [US4] Add Unreleased entries in CHANGELOG.md documenting removal of consent gates and GitHub review workflow
+- [X] T021 [P] [US4] Elevate constitution to v1.2.0 ratifying continuous autonomous pipeline and manual Done in .specify/memory/constitution.md
+- [X] T022 [P] [US4] Synchronize constitution template asset to v1.2.0 in skills/linear-workflow/assets/.specify/memory/constitution.md
+- [X] T023 [P] [US4] Update skill description and prompt declarations in apm.yml
+- [X] T024 [P] [US4] Update documentation tables and skill references in README.md
+- [X] T025 [P] [US4] Add Unreleased entries in CHANGELOG.md documenting removal of consent gates and GitHub review workflow
 
 **Checkpoint**: User Story 4 complete — Governance, constitutions, manifests, and documentation are unified.
 
@@ -115,9 +115,9 @@ description: "Task list for feature implementation: Fluxo Contínuo e Autônomo 
 
 **Purpose**: Validation across the entire suite, bundle compilation, and quickstart scenario checks
 
-- [ ] T026 Execute complete unit test suite across all packages in skills/linear-workflow/tests/test_linear_api.py
-- [ ] T027 [P] Validate multi-harness bundle compilation with APM in apm.yml
-- [ ] T028 Validate quickstart verification scenarios in specs/056-autonomous-speckit-workflow/quickstart.md
+- [X] T026 Execute complete unit test suite across all packages in skills/linear-workflow/tests/test_linear_api.py
+- [X] T027 [P] Validate multi-harness bundle compilation with APM in apm.yml
+- [X] T028 Validate quickstart verification scenarios in specs/056-autonomous-speckit-workflow/quickstart.md
 
 ---
 

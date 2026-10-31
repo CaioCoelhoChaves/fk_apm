@@ -52,7 +52,7 @@ marketplace:
       version: 0.1.0
 
     - name: linear-workflow
-      description: Official github/spec-kit (/speckit-*) Spec-Driven Development coupled with Linear issue tracking, 3-Stage Consent Gates, autonomous implementation (/speckit-implement) and PR review convergence (/speckit-converge), and Markdown sanitization
+      description: Official github/spec-kit (/speckit-*) Spec-Driven Development coupled with Linear issue tracking, autonomous continuous pipeline without in-chat consent gates, centralized GitHub PR review with Living Specs, autonomous implementation (/speckit-implement) and PR review convergence (/speckit-converge), and Markdown sanitization
       source: ./skills/linear-workflow
       version: 0.1.0
 

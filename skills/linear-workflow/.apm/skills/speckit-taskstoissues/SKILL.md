@@ -1,6 +1,6 @@
 ---
 name: "speckit-taskstoissues"
-description: "Convert Spec Kit tasks.md (or user story phases) into atomic, dependency-ordered Linear issues in Backlog using the 3-Stage Consent Gate (also supports GitHub issues)."
+description: "Convert Spec Kit tasks.md (or user story phases) into atomic, dependency-ordered Linear issues in Backlog autonomously (also supports GitHub issues)."
 compatibility: "Requires spec-kit project structure with .specify/ directory and linear-workflow CLI"
 metadata:
   author: "github-spec-kit + fk_apm"
@@ -84,25 +84,24 @@ git config --get remote.origin.url
 
 ## Linear Workflow Integration (Primary Target in `fk_apm`)
 
-In `fk_apm` projects using `linear-workflow`, `/speckit-taskstoissues` converts `tasks.md` (either per User Story phase or per task item, according to user preference) into atomic **Linear cards in `Backlog`** governed by the **3-Stage Consent Gate**:
+In `fk_apm` projects using `linear-workflow`, `/speckit-taskstoissues` converts `tasks.md` (either per User Story phase or per task item, according to user preference) into atomic **Linear cards in `Backlog`**:
 
-1. **Stage 1 — Pre-Render Gate (Zero Mutation on Linear)**:
-   - Run `python .specify/scripts/python/check_prerequisites.py --json --require-tasks --include-tasks` to locate `FEATURE_DIR/tasks.md`.
-   - Query Linear (`python skills/linear-workflow/scripts/linear_api.py find-project "<repo>"` and `project-issues "<project-id>"`) to deduplicate against existing issues.
-   - Render a complete Markdown table in chat showing every proposed Linear card (`# | Task/Story ID | Título (Conventional Commits) | Coluna Inicial (Backlog) | Label (Front/Back/Feature/Sem tag) | Critérios de Aceite`) **before** invoking any question tool.
-2. **Stage 2 — Interactive Confirmation**:
-   - Invoke `ask_question` / `AskUserQuestion` with a self-contained summary embedded in `question` and options `["(Recommended) Sim, aprovar", "Editar..."]`.
-3. **Stage 3 — Atomic Creation in Linear (`Backlog`)**:
-   - For each approved card, write its Markdown description to a UTF-8 temporary file (`.tmp-task-issue.md`) and run:
-     ```bash
-     python skills/linear-workflow/scripts/linear_api.py create-issue \
-       --team-id "<team-id>" \
-       --project-id "<project-id>" \
-       --title "<title>" \
-       --state "Backlog" \
-       --label "<label>" \
-       --description-file ".tmp-task-issue.md"
-     ```
+> **NO CONSENT GATE**: `/speckit-taskstoissues` operates with **100% autonomous execution**. Do **NOT** ask for interactive confirmation (`ask_question` / `AskUserQuestion`) between batches.
+
+### Autonomous Creation Steps:
+1. Identify the target Linear project and team.
+2. For each task or phase, write its Markdown description to a UTF-8 temporary file (`.tmp-task-issue.md`) and run:
+   ```bash
+   python skills/linear-workflow/scripts/linear_api.py create-issue \
+     --team-id "<team-id>" \
+     --project-id "<project-id>" \
+     --title "<task-title>" \
+     --state "Backlog" \
+     --label "<label>" \
+     --description-file ".tmp-task-issue.md"
+   ```
+3. Clean up temporary files.
+4. Render a Markdown summary table of created cards in the chat output with clickable Linear links.
 
 ## Post-Execution Checks
 

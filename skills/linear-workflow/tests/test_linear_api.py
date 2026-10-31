@@ -382,9 +382,9 @@ class TestLinearApiUpdateIssue(unittest.TestCase):
         speckit_tasks = (skill_root / ".apm" / "skills" / "speckit-tasks" / "SKILL.md").read_text(encoding="utf-8")
         main_skill = (skill_root / "SKILL.md").read_text(encoding="utf-8")
 
-        self.assertIn("Proibição de Consent Gate Cego", main_skill)
+        self.assertIn("Zero In-Chat Consent Gates", main_skill)
         for content in (speckit_specify, speckit_tasks, main_skill):
-            self.assertIn("Pre-Render Gate", content)
+            self.assertTrue("NO CONSENT GATE" in content or "Zero In-Chat Consent Gates" in content)
 
         self.assertIn("Feature", speckit_specify)
         self.assertIn("Feature", main_skill)
@@ -1031,6 +1031,107 @@ class TestReviewResolutionAndCommentDeduplication(unittest.TestCase):
 
         is_dup, node = linear_api.check_comment_idempotency(comments, "Completely new", window_minutes=10.0)
         self.assertFalse(is_dup)
+
+
+
+
+class TestAutonomousWorkflowAndTransitions(unittest.TestCase):
+    @patch("linear_api.execute_graphql")
+    def test_continuous_state_transitions(self, mock_execute):
+        mock_execute.side_effect = [
+            {
+                "success": True,
+                "data": {
+                    "issue": {
+                        "id": "uuid-123",
+                        "identifier": "FAL-60",
+                        "title": "Autonomous Workflow",
+                        "team": {"id": "team-1"},
+                        "comments": {"nodes": []}
+                    }
+                }
+            },
+            {
+                "success": True,
+                "data": {
+                    "team": {
+                        "states": {
+                            "nodes": [
+                                {"id": "state-planned", "name": "Planned", "type": "unstarted"},
+                                {"id": "state-todo", "name": "Todo", "type": "unstarted"},
+                                {"id": "state-in-progress", "name": "In Progress", "type": "started"},
+                                {"id": "state-in-review", "name": "In Review", "type": "started"}
+                            ]
+                        }
+                    }
+                }
+            },
+            {
+                "success": True,
+                "data": {
+                    "issueUpdate": {
+                        "success": True,
+                        "issue": {
+                            "id": "uuid-123",
+                            "identifier": "FAL-60",
+                            "title": "Autonomous Workflow",
+                            "state": {"id": "state-planned", "name": "Planned"}
+                        }
+                    }
+                }
+            },
+            {
+                "success": True,
+                "data": {
+                    "commentCreate": {
+                        "success": True,
+                        "comment": {"id": "comment-123"}
+                    }
+                }
+            }
+        ]
+
+        with tempfile.NamedTemporaryFile("w+", delete=False, encoding="utf-8") as tf:
+            tf.write("### Executive Briefing — Transição Contínua para Planned\n\n* Draft PR: #22\n")
+            comment_path = tf.name
+
+        try:
+            with patch("builtins.print"):
+                res = linear_api.cmd_update_issue(
+                    api_key="fake-key",
+                    issue_id="FAL-60",
+                    state_name="Planned",
+                    comment_file=comment_path
+                )
+            self.assertTrue(res["state_update"]["success"])
+            self.assertEqual(res["state_update"]["state"], "Planned")
+            self.assertTrue(res["comment"]["success"])
+        finally:
+            if os.path.exists(comment_path):
+                os.remove(comment_path)
+
+    def test_done_safeguard_strictly_blocked(self):
+        with patch("builtins.print"):
+            res = linear_api.cmd_update_issue(
+                api_key="fake-key",
+                issue_id="FAL-60",
+                state_name="Done"
+            )
+        self.assertFalse(res["success"])
+        self.assertIn("Transição para 'Done' é restrita a humanos", res["error"])
+
+    @patch("subprocess.run")
+    def test_clarify_git_pull_rebase_sync_flow(self, mock_subproc):
+        mock_subproc.return_value = MagicMock(returncode=0, stdout="Successfully rebased", stderr="")
+        import subprocess
+        res = subprocess.run(
+            ["git", "pull", "--rebase", "origin", "feat/FAL-60-autonomous-speckit-github-review"],
+            capture_output=True,
+            text=True,
+            check=False
+        )
+        self.assertEqual(res.returncode, 0)
+        self.assertEqual(res.stdout, "Successfully rebased")
 
 
 if __name__ == "__main__":
