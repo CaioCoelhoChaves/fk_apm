@@ -382,13 +382,35 @@ class TestLinearApiUpdateIssue(unittest.TestCase):
         speckit_tasks = (skill_root / ".apm" / "skills" / "speckit-tasks" / "SKILL.md").read_text(encoding="utf-8")
         main_skill = (skill_root / "SKILL.md").read_text(encoding="utf-8")
 
-        self.assertIn("Proibição de Consent Gate Cego", main_skill)
+        self.assertIn("Pre-Render Obrigatório", main_skill)
         for content in (speckit_specify, speckit_tasks, main_skill):
-            self.assertIn("Pre-Render Gate", content)
+            self.assertIn("Pre-Render", content)
 
         self.assertIn("Feature", speckit_specify)
         self.assertIn("Feature", main_skill)
         self.assertIn("não force `Back`", main_skill)
+
+    def test_no_final_consent_gate_rite_in_target_speckit_commands(self):
+        skill_root = Path(__file__).resolve().parent.parent
+        target_cmds = ("speckit-specify", "speckit-plan", "speckit-tasks", "speckit-implement")
+        forbidden_tokens = ("Sim, aprovar", "Editar...", "3-Stage Consent Gate")
+
+        for cmd in target_cmds:
+            skill_text = (skill_root / ".apm" / "skills" / cmd / "SKILL.md").read_text(encoding="utf-8")
+            prompt_text = (skill_root / ".apm" / "prompts" / f"{cmd}.prompt.md").read_text(encoding="utf-8")
+            self.assertEqual(skill_text, prompt_text, f"Parity mismatch between skill and prompt for {cmd}")
+            for token in forbidden_tokens:
+                self.assertNotIn(token, skill_text, f"Unexpected '{token}' in {cmd}/SKILL.md")
+                self.assertNotIn(token, prompt_text, f"Unexpected '{token}' in {cmd}.prompt.md")
+
+    def test_taskstoissues_preserves_three_stage_consent_gate(self):
+        skill_root = Path(__file__).resolve().parent.parent
+        skill_text = (skill_root / ".apm" / "skills" / "speckit-taskstoissues" / "SKILL.md").read_text(encoding="utf-8")
+        prompt_text = (skill_root / ".apm" / "prompts" / "speckit-taskstoissues.prompt.md").read_text(encoding="utf-8")
+        for content in (skill_text, prompt_text):
+            self.assertIn("Sim, aprovar", content)
+            self.assertIn("Editar...", content)
+            self.assertIn("Pre-Render Gate", content)
 
     def test_skill_files_enforce_mandatory_title_and_description_in_tech_analysis(self):
         skill_root = Path(__file__).resolve().parent.parent

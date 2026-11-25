@@ -1,4 +1,4 @@
-﻿---
+---
 name: "speckit-implement"
 description: "Autonomously execute the Spec Kit implementation plan (tasks.md) without Consent Gate: move Linear card to In Progress, create Gitflow branch, implement code and tests, open Pull Request, and advance Linear card to In Review. Autonomous Implementation & Ready Promotion."
 compatibility: "Requires spec-kit project structure with .specify/ directory and linear-workflow CLI"
@@ -222,7 +222,7 @@ Check if `.specify/extensions.yml` exists in the project root.
 
 ## Linear Autonomous Development & Gitflow PR Workflow (`In Progress` ➔ `In Review`)
 
-> **NO CONSENT GATE**: `/speckit-implement` operates with **100% autonomous execution**. Do **NOT** ask for user confirmation before moving the Linear card to `In Progress`, creating the branch, implementing tasks, or opening the PR. Only ask the user (`ask_question` / `AskUserQuestion`) if there is a genuine blocking ambiguity in `spec.md` / `plan.md`; otherwise make a sound technical decision and document the assumption.
+> **NO CONSENT GATE**: `/speckit-implement` operates with **100% autonomous execution** without any final approval rite. Do **NOT** ask for user confirmation before moving the Linear card to `In Progress`, creating the branch, implementing tasks, promoting the PR (`gh pr ready`), or moving the card to `In Review`. Use natural dialogue **only** if there is a genuine blocking ambiguity in `spec.md` / `plan.md`; otherwise make a sound technical decision and document the assumption.
 
 ### 1. Pre-Implementation Linear & Spec Kit Gate
 1. Query the Linear card (`python skills/linear-workflow/scripts/linear_api.py get-issue "<issue-key>"`).
@@ -265,4 +265,3 @@ Report final status with summary of completed work.
 - [ ] Implementation validated against specification, plan, and test coverage
 - [ ] Extension hooks dispatched or skipped according to the rules in Mandatory Post-Execution Hooks above
 - [ ] Completion reported to user with summary of completed work
-

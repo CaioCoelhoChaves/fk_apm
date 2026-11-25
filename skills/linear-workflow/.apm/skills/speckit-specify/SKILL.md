@@ -1,6 +1,6 @@
 ---
 name: "speckit-specify"
-description: "Create or update a Spec Kit feature specification (specs/<feature>/spec.md) and create/link atomic Linear card(s) in Backlog using the 3-Stage Consent Gate. Living Specs & GitHub Draft PR Lifecycle."
+description: "Create or update a Spec Kit feature specification (specs/<feature>/spec.md) and create/link atomic Linear card(s) in Backlog with mandatory chat Pre-Render and direct dialogue-driven execution (no final approval rite). Living Specs & GitHub Draft PR Lifecycle."
 compatibility: "Requires spec-kit project structure with .specify/ directory and linear-workflow CLI"
 metadata:
   author: "github-spec-kit + fk_apm"
@@ -267,31 +267,25 @@ Check if `.specify/extensions.yml` exists in the project root.
     To execute: `/{command}`
     ```
 
-## Linear Workflow Integration & 3-Stage Consent Gate (Card Creation in `Backlog`)
+## Linear Workflow Integration & Direct Execution (Pre-Render + Card Creation in `Backlog`)
 
 > **Bootstrap Guarantee**: If `.specify/` does not exist in the repository root, run `python skills/linear-workflow/scripts/linear_api.py bootstrap-specify` (or from `.agents/skills/linear-workflow/scripts/linear_api.py`) before running `.specify/scripts/python/create_new_feature.py`.
 
-When `/speckit-specify` is used to specify a new feature or decompose requirements into Linear card(s) (replacing `/fk-new-issue`), you **MUST** execute the **3-Stage Consent Gate** after generating `SPEC_FILE` (`specs/<feature>/spec.md`) and `checklists/requirements.md`:
+When `/speckit-specify` is used to specify a new feature or create a Linear card (replacing `/fk-new-issue`), execute the following steps after generating `SPEC_FILE` (`specs/<feature>/spec.md`) and `checklists/requirements.md` (**without** a final approval rite):
 
-### Stage 1 — Pre-Render Gate (Zero Mutation on Linear)
-- **NEVER** create or mutate cards in Linear during Stage 1.
+### Step 1 — Pre-Render in Chat (Mandatory Before Linear Mutation)
 - Identify the target Linear project (`linear_api.py find-project "<repo-or-subproject>"`) and check existing issues (`linear_api.py search-issues "<term>"`) to avoid duplicates.
-- Determine the appropriate label (`Front`, `Back`, `Feature` for full-stack cross-cutting work, or no tag for docs/DevOps/infra) and initial state (**`Backlog`** by default, unless the user explicitly requested `Technical Analysis` or `Todo`).
-- **Pre-Render in Chat**: Output a visible Markdown table and specification summary directly in the chat message **before** calling any question tool:
+- Determine the appropriate label (`Front`, `Back`, `Feature` for full-stack cross-cutting work, or no tag for docs/DevOps/infra) and initial state (**`Backlog`** by default, unless the user explicitly requested `Planned` or `Todo`).
+- **Pre-Render in Chat**: Output a visible Markdown table and specification summary directly in the chat message **before** mutating Linear:
 
 | # | Título Proposto (Conventional Commits) | Coluna Inicial | Label | Projeto Linear | Resumo & Critérios de Aceite (`spec.md`) |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | 1 | `feat(<escopo>): <título>` | `Backlog` | `<Front/Back/Feature/Sem tag>` | `<Projeto>` | `<Resumo dos User Scenarios & FRs>` |
 
-### Stage 2 — Interactive Confirmation via Native Question Tool
-- Immediately invoke the harness question tool (`ask_question` in Antigravity, `AskUserQuestion` in Claude Code / Cursor / Copilot):
-  - `question`: Self-contained summary listing the `SPEC_FILE` path, proposed card title(s), target Linear column (`Backlog`), and label(s), asking: *"Deseja criar este(s) card(s) no Linear vinculados à especificação?"*
-  - `options`: `["(Recommended) Sim, aprovar", "Editar..."]`
-  - `is_multi_select`: `false`
-- Wait for the user's response. If the user selects `"Editar..."`, apply their adjustments to `spec.md` and repeat Stage 1 & Stage 2.
+- If there is any genuine critical ambiguity in scope or requirements, resolve it with the user via **natural dialogue** (or orient `/speckit-clarify <CARD-ID>`) rather than imposing a mandatory final confirmation gate.
 
-### Stage 3 — Atomic Execution on Linear & Living Spec Draft PR (File-First UTF-8)
-- Only after explicit approval in Stage 2:
+### Step 2 — Direct Atomic Execution on Linear & Living Spec Draft PR (File-First UTF-8)
+- Immediately after rendering the Pre-Render table in chat (zero final approval rite):
   1. Create the Gitflow branch `<type>/<CARD-ID>-<slug>` (e.g. `feat/FAL-58-modernizar-linear-workflow-draft-prs`).
   2. Commit the initial specification artifact: `git add specs/<feature>/spec.md checklists/requirements.md && git commit -m "docs(spec): specify <CARD-ID> - <slug>"` and push: `git push -u origin <branch>`.
   3. Open a Pull Request on GitHub in Draft mode via `gh pr create --draft`:

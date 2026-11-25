@@ -48,11 +48,11 @@ Todos os comandos pós-especificação exigem obrigatoriamente o identificador `
 
 | Comando Oficial `/speckit-*` | Parâmetro Obrigatório | Papel no Ciclo Linear | Modo de Execução & Consent Gate | Next Step Prompting |
 | :--- | :--- | :--- | :--- | :--- |
-| **`/speckit-specify`** | Não (`<descrição>`) | Cria `spec.md`, branch Gitflow, Draft PR no GitHub e card em **`Backlog`** | **3-Stage Consent Gate** | `Próximo passo: /speckit-clarify <CARD-ID> ou /speckit-plan <CARD-ID>` |
+| **`/speckit-specify`** | Não (`<descrição>`) | Cria `spec.md`, branch Gitflow, Draft PR no GitHub e card em **`Backlog`** | **Execução Direta + Pre-Render (Diálogo Natural)** | `Próximo passo: /speckit-clarify <CARD-ID> ou /speckit-plan <CARD-ID>` |
 | **`/speckit-clarify`** | **Sim** (`<CARD-ID>`) | Refina até 5 dúvidas em `spec.md`, executa em worktree efêmero e comita no Draft PR | Perguntas interativas | `Próximo passo: /speckit-plan <CARD-ID>` |
-| **`/speckit-plan`** | **Sim** (`<CARD-ID>`) | Gera `plan.md` (com 5 seções obrigatórias), executa em worktree efêmero e avança para **`Planned`** | **3-Stage Consent Gate** | `Próximo passo: /speckit-tasks <CARD-ID>` |
-| **`/speckit-tasks`** | **Sim** (`<CARD-ID>`) | Gera `tasks.md`, roda `validate-plan`, executa em worktree efêmero e avança para **`Todo`** | **3-Stage Consent Gate** | `Próximo passo: /speckit-implement <CARD-ID>` |
-| **`/speckit-taskstoissues`** | Opcional (`<CARD-ID>`) | Converte tarefas ou fases de `tasks.md` em sub-cards atômicos em **`Backlog`** | **3-Stage Consent Gate** | `Próximo passo: /speckit-plan <SUB-CARD-ID>` |
+| **`/speckit-plan`** | **Sim** (`<CARD-ID>`) | Gera `plan.md` (com 5 seções obrigatórias), executa em worktree efêmero e avança para **`Planned`** | **Execução Direta + Pre-Render (Diálogo Natural)** | `Próximo passo: /speckit-tasks <CARD-ID>` |
+| **`/speckit-tasks`** | **Sim** (`<CARD-ID>`) | Gera `tasks.md`, roda `validate-plan`, executa em worktree efêmero e avança para **`Todo`** | **Execução Direta + Pre-Render (Diálogo Natural)** | `Próximo passo: /speckit-implement <CARD-ID>` |
+| **`/speckit-taskstoissues`** | Opcional (`<CARD-ID>`) | Converte tarefas ou fases de `tasks.md` em sub-cards atômicos em **`Backlog`** | **3-Stage Consent Gate** (Lote) | `Próximo passo: /speckit-plan <SUB-CARD-ID>` |
 | **`/speckit-implement`** | **Sim** (`<CARD-ID>`) | Move para **`In Progress`**, executa tasks, roda testes, promove PR (`gh pr ready`) e avança para **`In Review`** | **Autônomo (SEM Consent Gate)** | `Próximo passo: Revisar Pull Request no GitHub e acionar /speckit-converge <CARD-ID> para feedbacks` |
 | **`/speckit-converge`** | **Sim** (`<CARD-ID>`) | Move para **`In Progress`**, resolve code review na branch do PR, comita, comenta no PR e retorna para **`In Review`** | **Autônomo (SEM Consent Gate)** | `Próximo passo: Revisão final e merge manual do Pull Request pelo mantenedor` |
 | **`/speckit-constitution`** | Não | Cria ou atualiza a Constituição do projeto em `.specify/memory/constitution.md` | Interativo / Governança | — |
@@ -69,8 +69,11 @@ Para evitar trocas de branch no repositório de trabalho do desenvolvedor e gara
 
 ---
 
-## 4. Multi-Harness Interactive Consent Gate Protocol
+## 4. Multi-Harness Pre-Render, Direct Execution & Batch Consent Gate Protocol
 
-- **Pre-Render Gate (Proibição de Consent Gate Cego)**: Renderizar o Executive Briefing contendo **Título Revisado**, **Descrição Atualizada** e as 5 seções obrigatórias no chat antes de acionar a pergunta de consentimento.
-- **Stage 2 (Consent Gate Interativo)**: Acionar a ferramenta nativa de pergunta com resumo conciso.
-- **Stage 3 (Execução Atômica)**: Mutação atômica no Linear via --title, --description-file e --comment-file.
+- **Execução Direta com Pre-Render Obrigatório (`specify`, `plan`, `tasks`)**: Renderizar a tabela do card proposto ou o **Executive Briefing** contendo **Título Revisado**, **Descrição Atualizada** e as 5 seções obrigatórias diretamente no chat e executar a criação/transição atômica no Linear via `--title`, `--description-file` e `--comment-file` sem rito de aprovação final (diálogo natural apenas se houver ambiguidade crítica).
+- **Execução Autônoma (`implement`, `converge`)**: Operam 100% autônomos sem rito de aprovação final (diálogo natural apenas em ambiguidade genuinamente bloqueante).
+- **3-Stage Consent Gate Preservado em Lote (`taskstoissues`)**:
+  - **Stage 1 (Pre-Render Gate)**: Renderizar a tabela completa de sub-cards no chat sem mutar o Linear.
+  - **Stage 2 (Consent Gate Interativo)**: Acionar a ferramenta nativa de pergunta (`ask_question` / `AskUserQuestion`) com resumo conciso e opções `["(Recommended) Sim, aprovar", "Editar..."]`.
+  - **Stage 3 (Execução Atômica)**: Mutação atômica em lote no Linear via `--description-file`.

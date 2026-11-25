@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Integrate official `github/spec-kit` package (`.specify/` runtime, `specs/<feature>/` pipeline, and 10 `/speckit-*` skills coupled to Linear state transitions), `bootstrap-specify`, `validate-plan`, Executive Briefing Pre-Render Gate, and `sanitize_markdown_payload` into `linear-workflow` and `bundles/default`, replacing legacy `/fk-*` lifecycle commands (FAL-53)
 
 ### Changed
+- Remover o rito de aprovação final (3-Stage Consent Gate via `ask_question` / `AskUserQuestion`) de `/speckit-specify`, `/speckit-plan`, `/speckit-tasks` e `/speckit-implement` na skill `linear-workflow`, adotando execução direta orientada a diálogo natural com Pre-Render obrigatório no chat e preservando o Consent Gate apenas para criação em lote em `/speckit-taskstoissues` (FAL-74)
 - Priorizar leitura da especificacao tecnica completa persistida no /fk-develop garantindo transferencia de contexto sem degradacao (FAL-34)
 - Tornar /fk-develop autônomo sem Consent Gate, iniciando imediatamente em In Progress e avançando para In Review ao abrir o PR (FAL-29)
 - Padronizar criação de cards em Backlog por padrão no /fk-new-issue e linear-workflow, permitindo Todo apenas como exceção explícita (FAL-33)

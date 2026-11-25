@@ -24,8 +24,8 @@ description: "Task list for removing the final consent gate rite in linear-workf
 
 **Purpose**: Amend the project Constitution to v1.2.0 so all downstream skill, prompt, and test updates conform to the ratified dialogue-driven workflow.
 
-- [ ] T001 Amend Constitution from `v1.1.0` to `v1.2.0` (removing mandatory 3-Stage Consent Gate from `/speckit-specify`, `/speckit-plan`, `/speckit-tasks` while preserving Draft PRs, Pre-Render, `Done` manual-only, and `/speckit-taskstoissues` batch gate) in `.specify/memory/constitution.md`
-- [ ] T002 [P] Synchronize packaged Constitution template to `v1.2.0` in `skills/linear-workflow/assets/.specify/memory/constitution.md`
+- [X] T001 Amend Constitution from `v1.1.0` to `v1.2.0` (removing mandatory 3-Stage Consent Gate from `/speckit-specify`, `/speckit-plan`, `/speckit-tasks` while preserving Draft PRs, Pre-Render, `Done` manual-only, and `/speckit-taskstoissues` batch gate) in `.specify/memory/constitution.md`
+- [X] T002 [P] Synchronize packaged Constitution template to `v1.2.0` in `skills/linear-workflow/assets/.specify/memory/constitution.md`
 
 ---
 
@@ -35,8 +35,8 @@ description: "Task list for removing the final consent gate rite in linear-workf
 
 **⚠️ CRITICAL**: No user story command updates can begin until this phase is complete.
 
-- [ ] T003 Update core `linear-workflow` protocol (replacing 3-Stage Consent Gate with direct dialogue-driven execution + mandatory Pre-Render for `specify`, `plan`, `tasks` and keeping Consent Gate exclusively for `taskstoissues`) in `skills/linear-workflow/SKILL.md`
-- [ ] T004 [P] Update global multi-harness lifecycle instructions (`direct_dialogue_driven` for `specify`, `plan`, `tasks`, `autonomous` for `implement`, `three_stage_consent_gate` for `taskstoissues`) in `skills/linear-workflow/.apm/instructions/linear-lifecycle-commands.instructions.md`
+- [X] T003 Update core `linear-workflow` protocol (replacing 3-Stage Consent Gate with direct dialogue-driven execution + mandatory Pre-Render for `specify`, `plan`, `tasks` and keeping Consent Gate exclusively for `taskstoissues`) in `skills/linear-workflow/SKILL.md`
+- [X] T004 [P] Update global multi-harness lifecycle instructions (`direct_dialogue_driven` for `specify`, `plan`, `tasks`, `autonomous` for `implement`, `three_stage_consent_gate` for `taskstoissues`) in `skills/linear-workflow/.apm/instructions/linear-lifecycle-commands.instructions.md`
 
 **Checkpoint**: Core governance and global instructions ready — command-level implementation for US1 and US2 can now proceed.
 
@@ -50,14 +50,14 @@ description: "Task list for removing the final consent gate rite in linear-workf
 
 ### Implementation for User Story 1
 
-- [ ] T005 [P] [US1] Remove Stage 2 final approval rite and execute branch, Draft PR (`gh pr create --draft --body-file`), and `Backlog` issue creation (`--description-file`) directly after chat table Pre-Render in `skills/linear-workflow/.apm/skills/speckit-specify/SKILL.md`
-- [ ] T006 [P] [US1] Synchronize multi-harness prompt for `/speckit-specify` with direct execution after Pre-Render and natural dialogue for critical ambiguities in `skills/linear-workflow/.apm/prompts/speckit-specify.prompt.md`
-- [ ] T007 [P] [US1] Remove Stage 2 final approval rite and advance issue directly to `Planned` (`--title`, `--description-file`, `--comment-file`) after Draft PR commit and chat Executive Briefing Pre-Render in `skills/linear-workflow/.apm/skills/speckit-plan/SKILL.md`
-- [ ] T008 [P] [US1] Synchronize multi-harness prompt for `/speckit-plan` with direct `Planned` transition after Executive Briefing Pre-Render in `skills/linear-workflow/.apm/prompts/speckit-plan.prompt.md`
-- [ ] T009 [P] [US1] Remove Stage 2 final approval rite and advance issue directly to `Todo` (`--title`, `--description-file`, `--comment-file`) after `validate-plan`, Draft PR commit, and chat Executive Briefing Pre-Render in `skills/linear-workflow/.apm/skills/speckit-tasks/SKILL.md`
-- [ ] T010 [P] [US1] Synchronize multi-harness prompt for `/speckit-tasks` with direct `Todo` transition after `validate-plan` and Executive Briefing Pre-Render in `skills/linear-workflow/.apm/prompts/speckit-tasks.prompt.md`
-- [ ] T011 [P] [US1] Reinforce 100% autonomous execution without final approval rite (natural dialogue only on blocking ambiguity; `Todo` ➔ `In Progress` ➔ `In Review`; `Done` manual-only) in `skills/linear-workflow/.apm/skills/speckit-implement/SKILL.md`
-- [ ] T012 [P] [US1] Synchronize multi-harness prompt for `/speckit-implement` with autonomous execution and natural dialogue policy in `skills/linear-workflow/.apm/prompts/speckit-implement.prompt.md`
+- [X] T005 [P] [US1] Remove Stage 2 final approval rite and execute branch, Draft PR (`gh pr create --draft --body-file`), and `Backlog` issue creation (`--description-file`) directly after chat table Pre-Render in `skills/linear-workflow/.apm/skills/speckit-specify/SKILL.md`
+- [X] T006 [P] [US1] Synchronize multi-harness prompt for `/speckit-specify` with direct execution after Pre-Render and natural dialogue for critical ambiguities in `skills/linear-workflow/.apm/prompts/speckit-specify.prompt.md`
+- [X] T007 [P] [US1] Remove Stage 2 final approval rite and advance issue directly to `Planned` (`--title`, `--description-file`, `--comment-file`) after Draft PR commit and chat Executive Briefing Pre-Render in `skills/linear-workflow/.apm/skills/speckit-plan/SKILL.md`
+- [X] T008 [P] [US1] Synchronize multi-harness prompt for `/speckit-plan` with direct `Planned` transition after Executive Briefing Pre-Render in `skills/linear-workflow/.apm/prompts/speckit-plan.prompt.md`
+- [X] T009 [P] [US1] Remove Stage 2 final approval rite and advance issue directly to `Todo` (`--title`, `--description-file`, `--comment-file`) after `validate-plan`, Draft PR commit, and chat Executive Briefing Pre-Render in `skills/linear-workflow/.apm/skills/speckit-tasks/SKILL.md`
+- [X] T010 [P] [US1] Synchronize multi-harness prompt for `/speckit-tasks` with direct `Todo` transition after `validate-plan` and Executive Briefing Pre-Render in `skills/linear-workflow/.apm/prompts/speckit-tasks.prompt.md`
+- [X] T011 [P] [US1] Reinforce 100% autonomous execution without final approval rite (natural dialogue only on blocking ambiguity; `Todo` ➔ `In Progress` ➔ `In Review`; `Done` manual-only) in `skills/linear-workflow/.apm/skills/speckit-implement/SKILL.md`
+- [X] T012 [P] [US1] Synchronize multi-harness prompt for `/speckit-implement` with autonomous execution and natural dialogue policy in `skills/linear-workflow/.apm/prompts/speckit-implement.prompt.md`
 
 **Checkpoint**: All 4 target `/speckit-*` commands (8 skill/prompt files) now operate without final approval rites.
 
@@ -71,10 +71,10 @@ description: "Task list for removing the final consent gate rite in linear-workf
 
 ### Implementation for User Story 2
 
-- [ ] T013 [P] [US2] Update execution mode matrix (`direct_dialogue_driven`, `autonomous`, `three_stage_consent_gate`) and Pre-Render protocol documentation in `skills/linear-workflow/references/multi-harness-commands.md`
-- [ ] T014 [P] [US2] Update `stateDiagram-v2` and state transition table (removing Consent Gate from `specify`, `plan`, `tasks` while preserving `taskstoissues` batch gate and manual `Done`) in `skills/linear-workflow/references/states-and-labels.md`
-- [ ] T015 [P] [US2] Update eval 1 `expected_output` to expect direct `Backlog` creation + Draft PR after chat Pre-Render without final approval gate in `skills/linear-workflow/evals/evals.json`
-- [ ] T016 [US2] Update `test_skill_files_enforce_prerender_and_tooling_labels` (replacing legacy `"Proibição de Consent Gate Cego"` check) and add contract tests verifying absence of `"Sim, aprovar"` / `"Editar..."` in `speckit-specify`, `speckit-plan`, `speckit-tasks`, `speckit-implement`, multi-harness parity, and preservation of 3-Stage Consent Gate in `speckit-taskstoissues` in `skills/linear-workflow/tests/test_linear_api.py`
+- [X] T013 [P] [US2] Update execution mode matrix (`direct_dialogue_driven`, `autonomous`, `three_stage_consent_gate`) and Pre-Render protocol documentation in `skills/linear-workflow/references/multi-harness-commands.md`
+- [X] T014 [P] [US2] Update `stateDiagram-v2` and state transition table (removing Consent Gate from `specify`, `plan`, `tasks` while preserving `taskstoissues` batch gate and manual `Done`) in `skills/linear-workflow/references/states-and-labels.md`
+- [X] T015 [P] [US2] Update eval 1 `expected_output` to expect direct `Backlog` creation + Draft PR after chat Pre-Render without final approval gate in `skills/linear-workflow/evals/evals.json`
+- [X] T016 [US2] Update `test_skill_files_enforce_prerender_and_tooling_labels` (replacing legacy `"Proibição de Consent Gate Cego"` check) and add contract tests verifying absence of `"Sim, aprovar"` / `"Editar..."` in `speckit-specify`, `speckit-plan`, `speckit-tasks`, `speckit-implement`, multi-harness parity, and preservation of 3-Stage Consent Gate in `speckit-taskstoissues` in `skills/linear-workflow/tests/test_linear_api.py`
 
 **Checkpoint**: Reference documentation, evals, and automated contract tests fully enforce US1 and US2 invariants.
 
@@ -84,12 +84,12 @@ description: "Task list for removing the final consent gate rite in linear-workf
 
 **Purpose**: Synchronize catalog manifests, changelog, deployed `.agents/skills/` artifacts, and run final verification checks.
 
-- [ ] T017 [P] Update `linear-workflow` package description (dialogue-driven SDD without final approval rite in `specify`/`plan`/`tasks`/`implement`) in `apm.yml`
-- [ ] T018 [P] Update `linear-workflow` row in Individual Skills table in `README.md`
-- [ ] T019 [P] Document removal of final Consent Gate rite in `CHANGELOG.md` under `## [Unreleased]` (`Changed`)
-- [ ] T020 Run `apm install` to synchronize `skills/linear-workflow/` to `.agents/skills/` and update `apm.lock.yaml`
-- [ ] T021 Run `python -m unittest skills/linear-workflow/tests/test_linear_api.py` and `git grep -n "Sim, aprovar" -- skills/linear-workflow/` to verify `SC-001`, `SC-002`, and `SC-003` per `specs/055-remove-consent-gate-rite/quickstart.md`
-- [ ] T022 Run `python skills/linear-workflow/scripts/linear_api.py validate-plan FAL-74` to confirm `"valid": true` across all feature artifacts
+- [X] T017 [P] Update `linear-workflow` package description (dialogue-driven SDD without final approval rite in `specify`/`plan`/`tasks`/`implement`) in `apm.yml`
+- [X] T018 [P] Update `linear-workflow` row in Individual Skills table in `README.md`
+- [X] T019 [P] Document removal of final Consent Gate rite in `CHANGELOG.md` under `## [Unreleased]` (`Changed`)
+- [X] T020 Run `apm install` to synchronize `skills/linear-workflow/` to `.agents/skills/` and update `apm.lock.yaml`
+- [X] T021 Run `python -m unittest skills/linear-workflow/tests/test_linear_api.py` and `git grep -n "Sim, aprovar" -- skills/linear-workflow/` to verify `SC-001`, `SC-002`, and `SC-003` per `specs/055-remove-consent-gate-rite/quickstart.md`
+- [X] T022 Run `python skills/linear-workflow/scripts/linear_api.py validate-plan FAL-74` to confirm `"valid": true` across all feature artifacts
 
 ---
 

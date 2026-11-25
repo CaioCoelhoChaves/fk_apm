@@ -1,6 +1,6 @@
-﻿---
+---
 name: "speckit-plan"
-description: "Execute the Spec Kit implementation planning workflow (specs/<feature>/plan.md, research.md, data-model.md) coupled with Linear Technical Analysis (5 mandatory sections & 3-Stage Consent Gate to Todo). coupled with Linear Technical Analysis & Planned state."
+description: "Execute the Spec Kit implementation planning workflow (specs/<feature>/plan.md, research.md, data-model.md) coupled with Linear Technical Analysis (5 mandatory sections, mandatory chat Executive Briefing Pre-Render, and direct transition to Planned state without final approval rite)."
 compatibility: "Requires spec-kit project structure with .specify/ directory and linear-workflow CLI"
 metadata:
   author: "github-spec-kit + fk_apm"
@@ -125,20 +125,18 @@ When `/speckit-plan` is executed for a Linear issue (`FAL-XX` or any `<TEAM>-<NU
    - `## 4. Estratégia de Testes`: Unit, integration, and contract tests to add/run.
    - `## 5. Plano Gitflow`: Target branch `<type>/<issue-key>-<slug>` and base branch (`develop` or `main`).
 
-3. **Advance Card to `Planned` via 3-Stage Consent Gate**:
+3. **Pre-Render Executive Briefing & Direct Transition to `Planned`**:
    - Commit the generated plan artifacts (`plan.md`, `research.md`, `data-model.md`, `contracts/`, `quickstart.md`) to the Draft PR: `git commit -m "docs(plan): technical plan and architecture for <CARD-ID>"` and `git push`.
-   - Advance the Linear card from `Backlog` ➔ **`Planned`** executing the **3-Stage Consent Gate**:
-     - **Stage 1 (Pre-Render Gate — Zero Mutation on Linear)**: Output in chat the **Executive Briefing** containing **Título Revisado**, **Descrição Atualizada**, and the 5 mandatory architectural sections **before** calling any question tool.
-     - **Stage 2 (Interactive Confirmation)**: Call `ask_question` / `AskUserQuestion` with a self-contained summary embedded in `question` and options `["(Recommended) Sim, aprovar", "Editar..."]`.
-     - **Stage 3 (Atomic Execution on Linear)**: Write the updated description and Executive Briefing comment to UTF-8 temporary files and execute:
-       ```bash
-       python skills/linear-workflow/scripts/linear_api.py update-issue "<issue-id>" \
-         --state "Planned" \
-         --title "<titulo-revisado>" \
-         --description-file ".tmp-plan-desc.md" \
-         --comment-file ".tmp-plan-briefing.md"
-       ```
-   - Suggest next step: `Próximo passo: /speckit-tasks <CARD-ID>`
+   - **Pre-Render in Chat (Mandatory)**: Output in chat the full **Executive Briefing** containing **Título Revisado**, **Descrição Atualizada**, and the 5 mandatory architectural sections.
+   - **Direct Execution (Zero Final Approval Rite)**: Without invoking any final confirmation question tool, write the updated description and Executive Briefing comment to UTF-8 temporary files and immediately advance the Linear card from `Backlog` ➔ **`Planned`**:
+     ```bash
+     python skills/linear-workflow/scripts/linear_api.py update-issue "<issue-id>" \
+       --state "Planned" \
+       --title "<titulo-revisado>" \
+       --description-file ".tmp-plan-desc.md" \
+       --comment-file ".tmp-plan-briefing.md"
+     ```
+   - Clean up temporary files and suggest next step: `Próximo passo: /speckit-tasks <CARD-ID>`
 
 ## Completion Report
 
@@ -203,4 +201,3 @@ Command ends after Phase 1 design. Report branch, IMPL_PLAN path, and generated 
 - [ ] Plan workflow executed and design artifacts generated
 - [ ] Extension hooks dispatched or skipped according to the rules in Mandatory Post-Execution Hooks above
 - [ ] Completion reported to user with branch, plan path, and generated artifacts
-

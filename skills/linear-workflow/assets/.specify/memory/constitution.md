@@ -1,10 +1,9 @@
 <!--
 Sync Impact Report
-- Version change: 1.0.0 -> 1.1.0
-- Ratified Living Specs with GitHub Draft PRs opened at /speckit-specify
-- Ratified 6-Stage Canonical Linear Workflow State Machine: Backlog (0.0) -> Planned (1.0) -> Todo (2.0) -> In Progress (3.0) -> In Review (4.0) -> Done (5.0, strictly manual by developer) + Canceled (6.0)
-- Ratified Ephemeral Git Worktree isolation (.worktrees/<CARD-ID>) with mandatory <CARD-ID> parameterization
-- Ratified automated Board Synchronization (sync-boards & setup-board)
+- Version change: 1.1.0 -> 1.2.0
+- Removed mandatory final approval rite (3-Stage Consent Gate via ask_question / AskUserQuestion with "Sim, aprovar" / "Editar...") from /speckit-specify, /speckit-plan, /speckit-tasks, and /speckit-implement in favor of dialogue-driven direct execution with mandatory chat Pre-Render
+- Preserved mandatory Pre-Render in chat, UTF-8 file-first payloads, GitHub Draft PR lifecycle, manual-only Done transitions, and batch 3-Stage Consent Gate exclusively for /speckit-taskstoissues
+- Previous (1.0.0 -> 1.1.0): Living Specs with GitHub Draft PRs, 6-Stage State Machine, Ephemeral Worktrees (.worktrees/<CARD-ID>), Board Synchronization
 -->
 
 # fk_apm Constitution
@@ -16,11 +15,12 @@ Every skill and workflow distributed in `fk_apm` MUST maintain functional parity
 
 ### II. Living Specs, Draft PR Lifecycle & 6-Stage State Machine (Official `github/spec-kit` Integration)
 All planning, specification, technical analysis, implementation, and review convergence MUST flow through the official `github/spec-kit` artifact pipeline (`specs/<feature>/spec.md`, `plan.md`, `tasks.md`, `checklists/`) coupled with Linear issue state transitions, Living Specs via GitHub Draft PRs, and ephemeral worktree isolation:
-- `/speckit-specify <descrição>`: Creates Gitflow branch, opens GitHub Draft PR (`gh pr create --draft`), links PR URL in Linear card, and places card in `Backlog` (with 3-Stage Consent Gate).
+- `/speckit-specify <descrição>`: Renders the proposed card table in chat (Pre-Render), creates Gitflow branch, opens GitHub Draft PR (`gh pr create --draft`), links PR URL in Linear card, and places card directly in `Backlog` (dialogue-driven, no final approval rite).
 - `/speckit-clarify <CARD-ID>`: Mandatory `<CARD-ID>` argument, executes in ephemeral worktree (`.worktrees/<CARD-ID>`), resolves ambiguities, and pushes spec commits to the Draft PR.
-- `/speckit-plan <CARD-ID>`: Mandatory `<CARD-ID>` argument, executes in ephemeral worktree, generates `plan.md` (with 5 mandatory sections), `research.md`, `data-model.md`, `quickstart.md`, pushes commits to Draft PR, and advances card from `Backlog` ➔ `Planned` (with 3-Stage Consent Gate).
-- `/speckit-tasks <CARD-ID>`: Mandatory `<CARD-ID>` argument, executes in ephemeral worktree, generates `tasks.md`, validates with `validate-plan`, pushes commits to Draft PR, and advances card from `Planned` ➔ `Todo` (with 3-Stage Consent Gate).
-- `/speckit-implement <CARD-ID>`: Mandatory `<CARD-ID>` argument, autonomous execution without Consent Gate: moves card from `Todo` ➔ `In Progress`, executes `tasks.md` marking items `[X]`, runs tests, promotes PR to ready (`gh pr ready`), and advances card to `In Review`.
+- `/speckit-plan <CARD-ID>`: Mandatory `<CARD-ID>` argument, executes in ephemeral worktree, generates `plan.md` (with 5 mandatory sections), `research.md`, `data-model.md`, `quickstart.md`, pushes commits to Draft PR, renders the full Executive Briefing in chat (Pre-Render), and directly advances card from `Backlog` ➔ `Planned` (dialogue-driven, no final approval rite).
+- `/speckit-tasks <CARD-ID>`: Mandatory `<CARD-ID>` argument, executes in ephemeral worktree, generates `tasks.md`, validates with `validate-plan`, pushes commits to Draft PR, renders the full Executive Briefing in chat (Pre-Render), and directly advances card from `Planned` ➔ `Todo` (dialogue-driven, no final approval rite).
+- `/speckit-taskstoissues [<CARD-ID>]`: Batch sub-issue creation in `Backlog` using the **3-Stage Consent Gate** (Stage 1 Pre-Render ➔ Stage 2 `ask_question` / `AskUserQuestion` confirmation ➔ Stage 3 atomic batch creation).
+- `/speckit-implement <CARD-ID>`: Mandatory `<CARD-ID>` argument, 100% autonomous execution without Consent Gate (natural dialogue only on genuine blocking ambiguity): moves card from `Todo` ➔ `In Progress`, executes `tasks.md` marking items `[X]`, runs tests, promotes PR to ready (`gh pr ready`), and advances card to `In Review`.
 - `/speckit-converge <CARD-ID>`: Mandatory `<CARD-ID>` argument, autonomous execution without Consent Gate: moves card from `In Review` ➔ `In Progress`, applies PR review fixes on PR branch, pushes commits, comments on PR, and returns card to `In Review`.
 - `Done` transitions are strictly manual by the developer after merging the PR. Agents and tools MUST NOT move cards to `Done`.
 
@@ -37,10 +37,11 @@ All notable changes MUST be recorded under `## [Unreleased]` in `CHANGELOG.md` f
 
 - **Branch Naming**: `<type>/<CARD-ID>-<slug>` (e.g., `feat/FAL-58-modernizar-linear-workflow-draft-prs`), branched from `develop` (or `main`/`master` in single-trunk repositories).
 - **Conventional Commits**: `<type>(<scope>): <description> (<CARD-ID>)`.
-- **3-Stage Consent Gate (Planning & Specification Only)**:
-  1. **Stage 1 (Pre-Render Gate — Zero Mutation)**: Render the full Executive Briefing (`Título Revisado`, `Descrição Atualizada`, and the 5 architectural sections) or proposed issue table directly in chat before calling any question tool or mutating Linear.
+- **Mandatory Chat Pre-Render & Direct Execution (`specify`, `plan`, `tasks`)**: Render the full proposed issue table or Executive Briefing (`Título Revisado`, `Descrição Atualizada`, and the 5 architectural sections) directly in chat and immediately persist changes to Linear via `linear_api.py` using UTF-8 temporary files and idempotent comment deduplication (10-minute window), without blocking on a final approval rite.
+- **3-Stage Consent Gate (Batch Sub-Issue Creation Only — `/speckit-taskstoissues`)**:
+  1. **Stage 1 (Pre-Render Gate — Zero Mutation)**: Render the full proposed sub-issue table directly in chat before calling any question tool or mutating Linear.
   2. **Stage 2 (Interactive Confirmation)**: Prompt the user via native question tool (`ask_question` / `AskUserQuestion`) with a self-contained summary and options `["(Recommended) Sim, aprovar", "Editar..."]`.
-  3. **Stage 3 (Atomic Execution)**: Persist changes to Linear via `linear_api.py` using UTF-8 temporary files and idempotent comment deduplication (10-minute window).
+  3. **Stage 3 (Atomic Execution)**: Persist batch sub-issues to Linear via `linear_api.py` using UTF-8 temporary files.
 
 ## Quality & Security Gates
 
@@ -51,4 +52,4 @@ All notable changes MUST be recorded under `## [Unreleased]` in `CHANGELOG.md` f
 
 This Constitution supersedes ad-hoc workflow habits across `fk_apm`. Amendments require updating `.specify/memory/constitution.md` via `/speckit-constitution`, incrementing the semantic version below, and verifying template compatibility across `skills/linear-workflow`.
 
-**Version**: 1.1.0 | **Ratified**: 2026-10-29 | **Last Amended**: 2026-10-29
+**Version**: 1.2.0 | **Ratified**: 2026-10-29 | **Last Amended**: 2026-11-23
